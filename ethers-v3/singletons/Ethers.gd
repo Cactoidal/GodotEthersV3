@@ -6,70 +6,30 @@ var eth_http_request = preload("res://scenes/EthRequest.tscn")
 var header = "Content-Type: application/json"
 
 var error
+
+# Stores env-enc encrypted passwords mapped to account names
 var logins = {}
-
-var environment_encryption_key
-var environment_encryption_iv
-
-#DEBUG
-var token_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
-
 
 func _ready():
 	
 	check_for_network_info()
-	
-	var MbedTLS = Crypto.new()
-	var MbedTLS2 = Crypto.new()
-	environment_encryption_key = MbedTLS.generate_random_bytes(32)
-	environment_encryption_iv = MbedTLS2.generate_random_bytes(16)
-	
-	# DEBUG
-	login("new_key", "hfgf436gdsNv")
-	#print(get_key("new_key"))
-	#print(get_address("new_key"))
-	
-	# DEBUG
-	var calldata = get_read_calldata("new_key", "Ethereum Sepolia", token_contract, "get_token_decimals", [])
-	
-	# DEBUG
-	read_from_contract("new_key", "Ethereum Sepolia", token_contract, "get_token_decimals", [], self, "get_decimals", {})
-	
-	# DEBUG
-	#Ethers.perform_request(
-		#"eth_call", 
-		#[{"to": token_contract, "input": calldata}, "latest"], 
-		#"Ethereum Sepolia", 
-		#self,
-		#"get_erc20_name", 
-		#{}
-		#)
-	#Ethers.perform_request(
-		#"eth_blockNumber", 
-		#[], 
-		#"Ethereum Sepolia", 
-		#self,
-		#"get_erc20_name", 
-		#{}
-		#)
-	#Ethers.get_gas_balance("Ethereum Sepolia", "new_key", self)
-	
-#DEBUG
-func update_gas_balance(callback):
-	print(callback)
 
-#DEBUG
-func get_decimals(callback):
-	if callback["success"]:
-		var result = callback["result"]
-		print(result)
-		print(Ethers.decode_uint256(result))
-	
-	
+	# New env-enc created each session
+	FileAccess.open("user://env_enc_key", FileAccess.WRITE).store_buffer(Crypto.new().generate_random_bytes(32))
+	FileAccess.open("user://env_enc_iv", FileAccess.WRITE).store_buffer(Crypto.new().generate_random_bytes(16))
+
 
 #########  KEY MANAGEMENT  #########
 
-func key_exists(account):
+# DEBUG
+# NOTE
+# In addition to implementing an env-enc key/iv for encrypting the user's password,
+# I've also limited the overall usage of get_key(), and tried to avoid declaring  
+# the unencrypted password, env-enc key/iv, and private key as local variables.  
+# The program will also generate a random one-time key whenever reading from contracts. 
+# I don't know if these measures enhance security, but presumably they don't make it worse.
+
+func account_exists(account):
 	var path = "user://" + account
 	if FileAccess.file_exists(path):
 		return true
@@ -77,16 +37,12 @@ func key_exists(account):
 		return false
 
 
-func create_key(account, _password):
+func create_account(account, _password):
 	if _password.length() > 15 || _password.length() < 8:
 		emit_error("Password of invalid length for " + account)
 		return
 	var path = "user://" + account
-	var MbedTLS = Crypto.new()
-	var key = MbedTLS.generate_random_bytes(32)
-	var file = FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _password)
-	file.store_buffer(key)
-	file.close()
+	FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _password).store_buffer(Crypto.new().generate_random_bytes(32))
 
 
 func login(account, _password):
@@ -94,28 +50,36 @@ func login(account, _password):
 	var file = FileAccess.open_encrypted_with_pass(path, FileAccess.READ, _password)
 	if file:
 		var aes = AESContext.new()
-		aes.start(AESContext.MODE_CBC_ENCRYPT, environment_encryption_key, environment_encryption_iv)
-		_password = pad(_password)
-		var password = aes.update(_password.to_utf8_buffer())
+		aes.start(
+			AESContext.MODE_CBC_ENCRYPT, 
+			FileAccess.open("user://env_enc_key", FileAccess.READ).get_buffer(32), 
+			FileAccess.open("user://env_enc_iv", FileAccess.READ).get_buffer(16)
+			)
+		var encrypted_password = aes.update(pad(_password).to_utf8_buffer())
 		aes.finish()
-		logins[account] = password
+		logins[account] = encrypted_password
 	else:
 		emit_error("Incorrect password for " + account)
 
 
 func get_key(account):
 	if account in logins.keys():
+		var path = "user://" + account
 		var _password = logins[account]
 		var aes = AESContext.new()
-		aes.start(AESContext.MODE_CBC_DECRYPT, environment_encryption_key, environment_encryption_iv)
-		var password = aes.update(_password)
-		aes.finish()
-		password = unpad(password.get_string_from_utf8())
-		var path = "user://" + account
-		var file = FileAccess.open_encrypted_with_pass(path, FileAccess.READ, password)
-		var key = file.get_buffer(32)
-		file.close()
-		return key
+		aes.start(
+			AESContext.MODE_CBC_DECRYPT, 
+			FileAccess.open("user://env_enc_key", FileAccess.READ).get_buffer(32), 
+			FileAccess.open("user://env_enc_iv", FileAccess.READ).get_buffer(16)
+			)
+			
+		return FileAccess.open_encrypted_with_pass(
+			path, 
+			FileAccess.READ,
+			unpad(aes.update(_password).get_string_from_utf8())
+			).get_buffer(32)
+		
+		
 	else:
 		emit_error(account + " does not exist")
 
@@ -202,8 +166,7 @@ func get_rpc(network):
 #########  HIGH LEVEL API  #########
 
 func get_address(account):
-	var key = get_key(account)
-	return GodotSigner.get_address(key)
+	return GodotSigner.get_address(get_key(account))
 	
 
 func get_gas_balance(network, account, callback_node):
@@ -219,8 +182,9 @@ func get_gas_balance(network, account, callback_node):
 					)
 
 
-func read_from_contract(account, network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
-	var calldata = get_read_calldata(account, network, contract, contract_function, contract_args)
+func read_from_contract(network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
+	var random_key = Crypto.new().generate_random_bytes(32)
+	var calldata = get_read_calldata(random_key, network, contract, contract_function, contract_args)
 	Ethers.perform_request(
 		"eth_call", 
 		[{"to": contract, "input": calldata}, "latest"], 
@@ -230,6 +194,7 @@ func read_from_contract(account, network, contract, contract_function, contract_
 		callback_args,
 		0 #default "retries" value
 		)
+
 
 
 func send_transaction(account, network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
@@ -273,11 +238,10 @@ func decode_bool(hex):
 
 #########  LOW LEVEL API  #########
 
-func get_read_calldata(account, network, contract, contract_function, contract_args=[]):
-	var key = get_key(account)
+func get_read_calldata(random_key, network, contract, contract_function, contract_args=[]):
 	var chain_id = network_info[network]["chain_id"]
 	var rpc = network_info[network]["rpcs"][0]
-	var params = [key, chain_id, rpc, contract]
+	var params = [random_key, chain_id, rpc, contract]
 	for arg in contract_args:
 		params.push_back(arg)
 	var calldata = GodotSigner.callv(contract_function, params)
@@ -457,7 +421,7 @@ var default_network_info = {
 #########  DOCS  #########
 
 
-#Ethers.read_from_contract(account, network, contract, function, [], self, "get_data", {})
+#Ethers.read_from_contract(network, contract, function, [], self, "get_data", {})
 #Ethers.send_transaction(account, network, contract, function, [], self, "check_receipt". {})
 
 #read_from_contract(

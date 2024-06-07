@@ -133,11 +133,11 @@ func get_gas_price(callback):
 				emit_error("Gas fee too high", network)
 				return
 		
-		var key = Ethers.get_key(transaction["account"])
-		var params = [key, chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
+		var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
 		for arg in transaction["contract_args"]:
 			params.push_back(arg)
-		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params)
+		temp_account = transaction["account"]
+		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params.map(merge))
 		
 		if transaction["autoconfirm"]:
 			Ethers.perform_request(
@@ -155,6 +155,14 @@ func get_gas_price(callback):
 	else:
 		emit_error("RPC error: Failed to get gas price", network)
 
+# Workaround to avoid declaring the private key as a local variable, while still
+# retaining the ability to use callv()
+var temp_account
+func merge(value):
+	if value == "key_placeholder":
+		return Ethers.get_key(temp_account)
+	else:
+		return value
 
 func get_transaction_hash(callback):
 	var transaction = callback["callback_args"]["transaction"]
