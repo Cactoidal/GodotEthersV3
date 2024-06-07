@@ -77,8 +77,6 @@ func update_gas_balance(callback):
 		var balance = str(callback["result"].hex_to_int())
 		balance = Ethers.convert_to_smallnum(balance, 18)
 		
-		Ethers.network_info[network]["gas_balance"] = balance
-		
 		var network_info = Ethers.network_info.duplicate()
 		
 		var user_address = Ethers.get_address(transaction["account"])
@@ -126,7 +124,7 @@ func get_gas_price(callback):
 		var network_info = Ethers.network_info.duplicate()
 		var chain_id = network_info[network]["chain_id"]
 		var maximum_gas_fee = network_info[network]["maximum_gas_fee"]
-		var rpc = network_info[network][0]
+		var rpc = network_info[network]["rpcs"][0]
 		
 		if maximum_gas_fee != "":
 			if transaction["gas_price"] > int(maximum_gas_fee):
@@ -139,7 +137,7 @@ func get_gas_price(callback):
 		temp_account = transaction["account"]
 		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params.map(merge))
 		
-		if transaction["autoconfirm"]:
+		if transaction["auto_confirm"]:
 			Ethers.perform_request(
 				"eth_sendRawTransaction", 
 				[calldata], 
@@ -159,17 +157,22 @@ func get_gas_price(callback):
 # retaining the ability to use callv()
 var temp_account
 func merge(value):
-	if value == "key_placeholder":
-		return Ethers.get_key(temp_account)
-	else:
-		return value
+	if typeof(value) == 4:
+		if value == "key_placeholder":
+			return Ethers.get_key(temp_account)		
+	return value
 
 func get_transaction_hash(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
+	var scan_url = Ethers.network_info[network]["scan_url"]
 	
 	if callback["success"]:
 			transaction["tx_hash"] = callback["result"]
+			
+			# DEBUG
+			print(scan_url + "tx/" + transaction["tx_hash"])
+			
 			transaction["check_for_receipt"] = true
 	else:
 		emit_error("RPC error: Failed to get TX hash", network)
@@ -185,7 +188,7 @@ func check_for_tx_receipt(transaction, delta):
 			transaction["network"], 
 			self, 
 			"check_transaction_receipt",
-			{}
+			{"transaction": transaction}
 			)
 
 

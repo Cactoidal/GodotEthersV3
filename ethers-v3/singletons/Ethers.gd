@@ -7,16 +7,29 @@ var header = "Content-Type: application/json"
 
 var error
 
-# Stores env-enc encrypted passwords mapped to account names
-var logins = {}
+var logins = []
+
+var filepaths = []
 
 func _ready():
 	
-	check_for_network_info()
-
 	# New env-enc created each session
 	FileAccess.open("user://env_enc_key", FileAccess.WRITE).store_buffer(Crypto.new().generate_random_bytes(32))
 	FileAccess.open("user://env_enc_iv", FileAccess.WRITE).store_buffer(Crypto.new().generate_random_bytes(16))
+	filepaths = ["user://env_enc_key", "user://env_enc_iv"]
+	
+	check_for_network_info()
+
+
+# Env-enc deleted on quit
+func _notification(quit):
+	if quit == NOTIFICATION_WM_CLOSE_REQUEST:
+		
+		for file in filepaths:
+			DirAccess.remove_absolute(file)
+		
+		get_tree().quit()
+
 
 
 #########  KEY MANAGEMENT  #########
@@ -47,6 +60,7 @@ func create_account(account, _password):
 
 func login(account, _password):
 	var path = "user://" + account
+	var password_path = path + "_encrypted_password"
 	var file = FileAccess.open_encrypted_with_pass(path, FileAccess.READ, _password)
 	if file:
 		var aes = AESContext.new()
@@ -55,28 +69,30 @@ func login(account, _password):
 			FileAccess.open("user://env_enc_key", FileAccess.READ).get_buffer(32), 
 			FileAccess.open("user://env_enc_iv", FileAccess.READ).get_buffer(16)
 			)
-		var encrypted_password = aes.update(pad(_password).to_utf8_buffer())
+		FileAccess.open(password_path, FileAccess.WRITE).store_buffer(aes.update(pad(_password).to_utf8_buffer()))
 		aes.finish()
-		logins[account] = encrypted_password
+		logins.push_back(account)
+		filepaths.push_back(password_path)
+		
 	else:
 		emit_error("Incorrect password for " + account)
 
 
 func get_key(account):
-	if account in logins.keys():
+	if account in logins:
 		var path = "user://" + account
-		var _password = logins[account]
+		var password_path = path + "_encrypted_password"
 		var aes = AESContext.new()
 		aes.start(
 			AESContext.MODE_CBC_DECRYPT, 
 			FileAccess.open("user://env_enc_key", FileAccess.READ).get_buffer(32), 
 			FileAccess.open("user://env_enc_iv", FileAccess.READ).get_buffer(16)
 			)
-			
+		
 		return FileAccess.open_encrypted_with_pass(
 			path, 
 			FileAccess.READ,
-			unpad(aes.update(_password).get_string_from_utf8())
+			unpad(aes.update(FileAccess.get_file_as_bytes(password_path)).get_string_from_utf8())
 			).get_buffer(32)
 		
 		
@@ -166,7 +182,8 @@ func get_rpc(network):
 #########  HIGH LEVEL API  #########
 
 func get_address(account):
-	return GodotSigner.get_address(get_key(account))
+	if account in logins:
+		return GodotSigner.get_address(get_key(account))
 	
 
 func get_gas_balance(network, account, callback_node, callback_function, callback_args={}):
@@ -228,7 +245,7 @@ func send_transaction(account, network, contract, contract_function, contract_ar
 		callback_node, 
 		callback_function, 
 		callback_args, 
-		true #default "autoconfirm" value
+		true #default "auto_confirm" value
 		)
 
 
@@ -237,7 +254,19 @@ func pending_transaction(network):
 		return Transaction.pending_transactions[network]
 	else:
 		return false
-		
+
+
+func transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}):
+	Transaction.start_transaction(
+		account,
+		network,
+		"placeholder",
+		"transfer",
+		[recipient, amount],
+		callback_node,
+		callback_function,
+		callback_args
+	)
 
 
 #########  DECODING  #########
@@ -315,17 +344,23 @@ func perform_request(method, params, network, callback_node, callback_function, 
 
 #########  UTILITY  #########
 
-func get_biguint(number, token_decimals):
+# NOTE:
+# With Godot 4+, the .right() and .left() string methods were completely changed,
+# and some methods, such as .erase(), no longer change the string in place
+
+func convert_to_big_uint(number, token_decimals):
 	if number.begins_with("."):
 		number = "0" + number
 		
 	var zero_filler = int(token_decimals)
 	var decimal_index = number.find(".")
+	
 	var big_uint = number
 	if decimal_index != -1:
-		zero_filler -= number.right(decimal_index+1).length()
-		big_uint.erase(decimal_index,decimal_index)
-			
+		var segment = number.right(-(decimal_index+1) )
+		zero_filler -= segment.length()
+		big_uint = big_uint.erase(decimal_index,decimal_index)
+
 	for zero in range(zero_filler):
 		big_uint += "0"
 	
@@ -336,7 +371,8 @@ func get_biguint(number, token_decimals):
 				zero_parse_index += 1
 			else:
 				break
-	big_uint = big_uint.right(zero_parse_index)
+	if zero_parse_index > 0:
+		big_uint = big_uint.right(-zero_parse_index)
 
 	if big_uint == "":
 		big_uint = "0"
@@ -392,7 +428,6 @@ var default_network_info = {
 		"chain_id": "11155111",
 		"rpcs": ["https://ethereum-sepolia-rpc.publicnode.com"],
 		"rpc_cycle": 0,
-		"gas_balance": "0", 
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
 		"scan_url": "https://sepolia.etherscan.io/",
@@ -404,7 +439,6 @@ var default_network_info = {
 		"chain_id": "421614",
 		"rpcs": ["https://sepolia-rollup.arbitrum.io/rpc"],
 		"rpc_cycle": 0,
-		"gas_balance": "0", 
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
 		"scan_url": "https://sepolia.arbiscan.io/",
@@ -415,7 +449,6 @@ var default_network_info = {
 		"chain_id": "11155420",
 		"rpcs": ["https://sepolia.optimism.io"],
 		"rpc_cycle": 0,
-		"gas_balance": "0", 
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
 		"scan_url": "https://sepolia-optimism.etherscan.io/",
@@ -426,7 +459,6 @@ var default_network_info = {
 		"chain_id": "84532",
 		"rpcs": ["https://sepolia.base.org"],
 		"rpc_cycle": 0,
-		"gas_balance": "0", 
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
 		"scan_url": "https://sepolia.basescan.org/",
@@ -437,10 +469,9 @@ var default_network_info = {
 		"chain_id": "43113",
 		"rpcs": ["https://avalanche-fuji-c-chain-rpc.publicnode.com"],
 		"rpc_cycle": 0,
-		"gas_balance": "0", 
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
-		"scan_url": "https://testnet.snowtrace.io",
+		"scan_url": "https://testnet.snowtrace.io/",
 		"logo": "res://assets/Avalanche.png"
 	}
 }
@@ -452,10 +483,13 @@ var default_network_info = {
 
 #########  ERC20 API  #########
 
-func get_erc20_info(network, account, contract, callback_node, callback_function):
+
+# "get_erc20_info" bounces through three calls: NAME, DECIMALS, and BALANCE for a supplied address,
+# and returns all 3 values as part of the callback_args sent to the callback_node
+func get_erc20_info(network, address, contract, callback_node, callback_function):
 	var callback_args = {
 		"network": network, 
-		"account": account, 
+		"address": address, 
 		"contract": contract,
 		"callback_node": callback_node,
 		"callback_function": callback_function
@@ -464,33 +498,35 @@ func get_erc20_info(network, account, contract, callback_node, callback_function
 
 
 func get_erc20_name(network, contract, callback_node, callback_function, callback_args={}):
-	read_from_contract(network, contract, "get_token_name", [], self, "return_erc20_name", callback_args)
+	read_from_contract(network, contract, "get_erc20_name", [], self, "return_erc20_name", callback_args)
 
 
 func return_erc20_name(callback):
 	var callback_args = callback["callback_args"]
 	var contract = callback_args["contract"]
+	var network = callback_args["network"]
 	if callback["success"]:
 		callback_args["name"] = decode_string(callback["result"])
-		get_erc20_decimals("Ethereum Sepolia", contract, self, "get_erc20_decimals", callback_args)
+		get_erc20_decimals(network, contract, self, "get_erc20_decimals", callback_args)
 
 
 func get_erc20_decimals(network, contract, callback_node, callback_function, callback_args={}):
-	read_from_contract(network, contract, "get_token_decimals", [], self, "return_erc20_decimals", callback_args)
+	read_from_contract(network, contract, "get_erc20_decimals", [], self, "return_erc20_decimals", callback_args)
 
 
 func return_erc20_decimals(callback):
 	var callback_args = callback["callback_args"]
 	var contract = callback_args["contract"]
+	var network = callback_args["network"]
 	if callback["success"]:
 		var decimals = decode_uint256(callback["result"])
 		callback_args["decimals"] = decimals
-		var address = Ethers.get_address("test_keystore")
-		get_erc20_balance(address, decimals, "Ethereum Sepolia", contract, self, "get_erc20_balance", callback_args)
+		var address = callback_args["address"]
+		get_erc20_balance(address, decimals, network, contract, self, "get_erc20_balance", callback_args)
 
 
 func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
-	read_from_contract(network, contract, "check_token_balance", [address], self, "return_erc20_balance", callback_args)
+	read_from_contract(network, contract, "check_erc20_balance", [address], self, "return_erc20_balance", callback_args)
 
 
 func return_erc20_balance(callback):
@@ -507,12 +543,24 @@ func return_erc20_balance(callback):
 	
 	if callback["success"]:
 		next_callback["success"] = true
-		next_callback["result"] = convert_to_smallnum(decode_uint256(callback["result"]), decimals)
+		var balance = convert_to_smallnum(decode_uint256(callback["result"]), decimals)
+		next_callback["result"] = balance
+		next_callback["callback_args"]["balance"] = balance
 	
 	callback_node.call(callback_function, next_callback)
 
 
-
+func transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}):
+	Transaction.start_transaction(
+		account,
+		network,
+		token_address,
+		"transfer_erc20",
+		[recipient, amount],
+		callback_node,
+		callback_function,
+		callback_args
+	)
 
 
 

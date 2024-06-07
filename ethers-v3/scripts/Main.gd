@@ -1,6 +1,21 @@
 extends Control
 
-var token_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
+var sepolia_link_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
+var base_bnm_contract = "0x88A2d74F47a237a62e7A51cdDa67270CE381555e"
+
+
+var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
+
+# Approached with the philosophy that the "Ethers" singleton 
+# should be the primary API for the developer
+
+
+# implement erc20 transfers and allowances
+# multi-chain wallet; cross-chain functionality?
+
+# fix gas limit
+
+
 
 func _ready():
 	if !Ethers.account_exists("test_keystore"):
@@ -10,9 +25,15 @@ func _ready():
 	
 	print(Ethers.get_address("test_keystore"))
 	
-	Ethers.get_gas_balance("Ethereum Sepolia", "test_keystore", self, "update_gas_balance")
-	Ethers.get_erc20_info("Ethereum Sepolia", "test_keystore", token_contract, self, "get_erc20_info")
-
+	#Ethers.get_gas_balance("Base Sepolia", "test_keystore", self, "update_gas_balance")
+	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore"), sepolia_link_contract, self, "get_erc20_info")
+	Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
+	
+	#var amount = Ethers.convert_to_big_uint("0.000000001", 18)
+	var amount = Ethers.convert_to_big_uint("0.001", 18)
+	print(amount)
+	#Ethers.transfer("test_keystore", "Base Sepolia", recipient, amount, self, "get_receipt")
+	Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
 
 func update_gas_balance(callback):
 	var network = callback["callback_args"]["network"]
@@ -23,16 +44,18 @@ func update_gas_balance(callback):
 	
 
 func get_erc20_info(callback):
-	var erc20_name = callback["callback_args"]["name"]
-	var decimals = callback["callback_args"]["decimals"]
-	var network = callback["callback_args"]["network"]
-	var account = callback["callback_args"]["account"]
+	var callback_args = callback["callback_args"]
+	var network = callback_args["network"]
+	var address = callback_args["address"]
 	if callback["success"]:
-		var balance = callback["result"]
-		print(account + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
+		var erc20_name = callback_args["name"]
+		var decimals = callback_args["decimals"]
+		var balance = callback_args["balance"]
+		print(address + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
 #
 
-
+func get_receipt(callback):
+	print(callback)
 
 
 
