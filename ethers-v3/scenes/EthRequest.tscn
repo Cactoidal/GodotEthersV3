@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b2v1otk38p7im"]
+
+[ext_resource type="Script" path="res://scripts/EthRequest.gd" id="1_y8jqh"]
+
+[node name="EthRequest" type="HTTPRequest"]
+script = ExtResource("1_y8jqh")
