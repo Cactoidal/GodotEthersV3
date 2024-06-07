@@ -169,17 +169,39 @@ func get_address(account):
 	return GodotSigner.get_address(get_key(account))
 	
 
-func get_gas_balance(network, account, callback_node):
+func get_gas_balance(network, account, callback_node, callback_function, callback_args={}):
 	var user_address = get_address(account)
+	callback_args["network"] = network
+	callback_args["account"] = account
 	perform_request(
 					"eth_getBalance", 
 					[user_address, "latest"], 
 					network, 
-					callback_node, 
-					"update_gas_balance", 
+					self, 
+					"return_gas_balance", 
 					{"network": network,
-					"account": account}
+					"account": account,
+					"callback_node": callback_node,
+					"callback_function": callback_function,
+					"callback_args": callback_args}
 					)
+
+func return_gas_balance(_callback):
+	var callback_node = _callback["callback_args"]["callback_node"]
+	var callback_function = _callback["callback_args"]["callback_function"]
+	
+	var next_callback = {
+		"callback_args": _callback["callback_args"]["callback_args"],
+		"success": false,
+		"result": ""
+	}
+	
+	if _callback["success"]:
+		next_callback["success"] = true
+		var balance = str(_callback["result"].hex_to_int())
+		next_callback["result"] = convert_to_smallnum(balance, 18)
+	
+	callback_node.call(callback_function, next_callback)
 
 
 func read_from_contract(network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
@@ -196,7 +218,6 @@ func read_from_contract(network, contract, contract_function, contract_args, cal
 		)
 
 
-
 func send_transaction(account, network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
 	Transaction.start_transaction(
 		account, 
@@ -211,6 +232,12 @@ func send_transaction(account, network, contract, contract_function, contract_ar
 		)
 
 
+func pending_transaction(network):
+	if Transaction.pending_transaction(network):
+		return Transaction.pending_transactions[network]
+	else:
+		return false
+		
 
 
 #########  DECODING  #########
@@ -232,7 +259,8 @@ func decode_uint8(hex):
 
 func decode_bool(hex):
 	return GodotSigner.decode_bool(hex)
-
+	
+	
 
 
 
@@ -416,6 +444,163 @@ var default_network_info = {
 		"logo": "res://assets/Avalanche.png"
 	}
 }
+
+
+
+
+
+
+#########  ERC20 API  #########
+
+func get_erc20_info(network, account, contract, callback_node, callback_function):
+	var callback_args = {
+		"network": network, 
+		"account": account, 
+		"contract": contract,
+		"callback_node": callback_node,
+		"callback_function": callback_function
+		}
+	get_erc20_name(network, contract, self, "return_erc20_name", callback_args)
+
+
+func get_erc20_name(network, contract, callback_node, callback_function, callback_args={}):
+	read_from_contract(network, contract, "get_token_name", [], self, "return_erc20_name", callback_args)
+
+
+func return_erc20_name(callback):
+	var callback_args = callback["callback_args"]
+	var contract = callback_args["contract"]
+	if callback["success"]:
+		callback_args["name"] = decode_string(callback["result"])
+		get_erc20_decimals("Ethereum Sepolia", contract, self, "get_erc20_decimals", callback_args)
+
+
+func get_erc20_decimals(network, contract, callback_node, callback_function, callback_args={}):
+	read_from_contract(network, contract, "get_token_decimals", [], self, "return_erc20_decimals", callback_args)
+
+
+func return_erc20_decimals(callback):
+	var callback_args = callback["callback_args"]
+	var contract = callback_args["contract"]
+	if callback["success"]:
+		var decimals = decode_uint256(callback["result"])
+		callback_args["decimals"] = decimals
+		var address = Ethers.get_address("test_keystore")
+		get_erc20_balance(address, decimals, "Ethereum Sepolia", contract, self, "get_erc20_balance", callback_args)
+
+
+func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
+	read_from_contract(network, contract, "check_token_balance", [address], self, "return_erc20_balance", callback_args)
+
+
+func return_erc20_balance(callback):
+	var callback_args = callback["callback_args"]
+	var callback_node = callback_args["callback_node"]
+	var callback_function = callback_args["callback_function"]
+	var decimals = callback_args["decimals"]
+	
+	var next_callback = {
+		"callback_args": callback_args,
+		"success": false,
+		"result": ""
+	}
+	
+	if callback["success"]:
+		next_callback["success"] = true
+		next_callback["result"] = convert_to_smallnum(decode_uint256(callback["result"]), decimals)
+	
+	callback_node.call(callback_function, next_callback)
+
+
+
+
+
+
+
+
+
+
+#
+#
+##########  OLD ERC20 API  #########
+#
+## The first callback will return here for decoding, before proceeding
+## back to the originally requested callback node
+#func get_erc20_name(network, contract, callback_node, callback_function, callback_args={}):
+	#read_from_contract(network, contract, "get_token_name", [], self, "return_erc20_name", {"callback_node": callback_node, "callback_function": callback_function, "callback_args": callback_args})
+#
+#
+#func return_erc20_name(_callback):
+	#var callback_node = _callback["callback_args"]["callback_node"]
+	#var callback_function = _callback["callback_args"]["callback_function"]
+	#
+	## Create the callback for the original callback node
+	#var next_callback = {
+		#"callback_args": _callback["callback_args"]["callback_args"],
+		#"success": false,
+		#"result": ""
+	#}
+	#
+	## Decode the result
+	#if _callback["success"]:
+		#next_callback["success"] = true
+		#next_callback["result"] = decode_string(_callback["result"])
+	#
+	## Send the decoded result to the original callback node
+	#callback_node.call(callback_function, next_callback)
+#
+#
+#func get_erc20_decimals(network, contract, callback_node, callback_function, callback_args={}):
+	#read_from_contract(network, contract, "get_token_decimals", [], self, "return_erc20_decimals", {"callback_node": callback_node, "callback_function": callback_function, "callback_args": callback_args})
+#
+#
+#func return_erc20_decimals(_callback):
+	#var callback_node = _callback["callback_args"]["callback_node"]
+	#var callback_function = _callback["callback_args"]["callback_function"]
+	#
+	#var next_callback = {
+		#"callback_args": _callback["callback_args"]["callback_args"],
+		#"success": false,
+		#"result": ""
+	#}
+	#
+	#if _callback["success"]:
+		#next_callback["success"] = true
+		#next_callback["result"] = decode_uint256(_callback["result"])
+	#
+	#callback_node.call(callback_function, next_callback)
+#
+#
+#func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
+	#read_from_contract(network, contract, "check_token_balance", [address], self, "return_erc20_balance", {"callback_node": callback_node, "callback_function": callback_function, "callback_args": callback_args, "decimals": decimals})
+#
+#
+#func return_erc20_balance(_callback):
+	#var callback_node = _callback["callback_args"]["callback_node"]
+	#var callback_function = _callback["callback_args"]["callback_function"]
+	#var decimals = _callback["callback_args"]["decimals"]
+	#
+	#var next_callback = {
+		#"callback_args": _callback["callback_args"]["callback_args"],
+		#"success": false,
+		#"result": ""
+	#}
+	#
+	#if _callback["success"]:
+		#next_callback["success"] = true
+		#next_callback["result"] = convert_to_smallnum(decode_uint256(_callback["result"]), decimals)
+	#
+	#callback_node.call(callback_function, next_callback)
+
+
+
+
+
+
+
+
+
+
 
 
 #########  DOCS  #########

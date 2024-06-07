@@ -4,7 +4,7 @@ var pending_transactions = {}
 var error
 
 
-func transaction_pending(network):
+func pending_transaction(network):
 	if network in pending_transactions.keys():
 		return true
 	else:
@@ -23,7 +23,7 @@ func start_transaction(
 	auto_confirm=true
 	):
 		
-		if !transaction_pending(network):
+		if !pending_transaction(network):
 			
 			var transaction = {
 			"callback_node": callback_node,
