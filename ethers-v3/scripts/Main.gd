@@ -26,7 +26,8 @@ func _ready():
 	
 	#Ethers.get_gas_balance("Base Sepolia", "test_keystore", self, "update_gas_balance")
 	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore"), sepolia_link_contract, self, "get_erc20_info")
-	Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
+	
+	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
 	
 	#var amount = Ethers.convert_to_big_uint("0.000000001", 18)
 	var amount = Ethers.convert_to_big_uint("0.001", 18)
@@ -37,9 +38,17 @@ func _ready():
 
 	# DEBUG
 	# EXPERIMENTAL
-	var calldata = Ethers.get_calldata(Contract.ERC20, "transfer", [recipient, amount])
-	print(calldata)
-	Ethers.send_raw_transaction("test_keystore", "Base Sepolia", base_bnm_contract, calldata, self, "get_receipt")
+	
+	print("test: " + GodotSigner.encode_uint256("32"))
+	var success = Calldata.sort_args_for_encoding(Contract.IMAGINARY, "not_real", ["recipient", true, ["amount", "meow", "merrow"]])
+	if !success:
+		print("encoding failed")
+	else:
+		print("attempt: " + success)
+	
+	#var calldata = Ethers.get_calldata(Contract.ERC20, "transfer", [recipient, amount])
+	#print("target: " + calldata)
+	#Ethers.send_raw_transaction("test_keystore", "Base Sepolia", base_bnm_contract, calldata, self, "get_receipt")
 
 
 func update_gas_balance(callback):

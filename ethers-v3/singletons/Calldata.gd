@@ -1,6 +1,212 @@
 extends Node
 
 
+func sort_args_for_encoding(abi, function_name, _args=[]):
+	var args = []
+	for function in abi:
+		if function.has("name"):
+			if function["name"] == function_name:
+				if function.has("inputs"):
+					var selector = 0
+					for input in function["inputs"]:
+						var new_arg = {
+							"value": _args[selector],
+							"type": input["type"],
+							"calldata": "",
+							"length": 0,
+							"dynamic": false
+							}
+						args.push_back(new_arg)
+						selector += 1
+				
+				var function_selector = get_function_selector(function)
+				var calldata = construct_calldata(args)
+				return function_selector + calldata
+	
+	return false
+
+func construct_calldata(args):
+	var body = []
+	var tail = []
+	var calldata = ""
+	var callback_index = 0
+	for arg in args:
+		var arg_type = arg["type"]
+		if arg_type.contains("["):
+			#not true for fixed arrays with static parameters 
+			arg["dynamic"] = true
+		elif arg_type.begins_with("bytes"):
+			if arg_type.length() == 5:
+				arg["dynamic"] = true
+		else:
+			match arg_type:
+				"string": arg["dynamic"] = true
+				"tuple": arg["dynamic"] = true
+		
+		if arg["dynamic"]:
+			var placeholder = {
+				"value": "placeholder",
+				"type": "uint256",
+				"calldata": "placeholder",
+				"length": 32,
+				"dynamic": false
+			}
+			body.push_back(placeholder)
+			arg["callback_index"] = callback_index
+			tail.push_back(arg)
+		else:
+			body.push_back(arg)
+		callback_index += 1
+	
+	body.append_array(tail)
+	
+	var selector = 0
+	for chunk in body:
+		if chunk["calldata"] != "placeholder":
+			chunk["calldata"] = encode_arg(chunk)
+			chunk["length"] = chunk["calldata"].length()
+			if chunk["dynamic"]:
+				var _callback_index = chunk["callback_index"]
+				var total_offset = 0
+				for _chunk in range(selector):
+					var _length = body[_chunk]["length"]
+					total_offset += _length
+				body[_callback_index]["value"] = total_offset
+				body[_callback_index]["calldata"] = GodotSigner.encode_uint256(str(total_offset))
+			
+		selector += 1
+	
+	for _calldata in body:
+		calldata += _calldata["calldata"]
+	
+	return calldata
+
+
+func encode_arg(arg):
+	var calldata = ""
+	
+	var arg_type = arg["type"]
+	if arg_type.contains("["):
+		calldata = encode_array(arg)
+	elif arg_type.begins_with("uint"):
+		calldata = encode_general(arg)
+	elif arg_type.begins_with("int"):
+		calldata = encode_general(arg)
+	elif arg_type.begins_with("bytes"):
+		if arg_type.length() == 5:
+			calldata = encode_general(arg)
+		else:
+			calldata = encode_fixed_bytes(arg)
+	else:
+		match arg_type:
+			"string": calldata = encode_general(arg)
+			"address": calldata = encode_general(arg)
+			"bool": calldata = encode_bool(arg)
+			"enum": calldata = encode_enum(arg)
+			"tuple": calldata = encode_tuple(arg)
+		
+	return calldata
+
+
+
+##########   ENCODING   #########
+
+# Handles uint, int, address, string, and dynamic bytes
+func encode_general(arg):
+	var value = arg["value"]
+	var arg_type = arg["type"]
+	var calldata = GodotSigner.call("encode_" + arg_type, value)
+	if arg_type in ["bytes", "string"]:
+		calldata = calldata.trim_prefix("000000000000000000000000000000000000000000000000000000000000002")
+
+	return calldata
+
+func encode_fixed_bytes(arg):
+	pass
+
+func encode_bool(arg):
+	var value = arg["value"]
+	if typeof(value) == 4:
+		if value == "true":
+			value = true
+		else:
+			value = false
+	var calldata = GodotSigner.encode_bool(value)
+	return calldata
+	
+func encode_enum(arg):
+	var value = arg["value"]
+	var calldata = GodotSigner.encode_uint8(value)
+	return calldata
+
+func encode_array(_arg):
+	#add fixed array support
+	#add nested array support
+	
+	var _arg_type = _arg["type"]
+	var array = _arg["value"]
+	
+	var array_start_index = _arg_type.find("[")
+	var arg_type = _arg_type.left(array_start_index)
+	
+	var calldata = ""
+	var args = []
+	
+	for value in array:
+		var new_arg = {
+			"value": value,
+			"type": arg_type,
+			"calldata": "",
+			"length": 0,
+			"dynamic": false
+			}
+		args.push_back(new_arg)
+	
+		calldata = construct_calldata(args)
+
+	return calldata
+
+func encode_tuple(arg):
+	pass
+
+
+##########   DECODING   #########
+
+func decode_uint(arg):
+	pass
+
+func decode_int(arg):
+	pass
+
+func decode_address(arg):
+	pass
+
+func decode_fixed_bytes(arg):
+	pass
+
+func decode_bool(arg):
+	pass
+	
+func decode_enum(arg):
+	pass
+
+func decode_string(arg):
+	pass
+
+func decode_bytes(arg):
+	pass
+
+func decode_array(arg):
+	pass
+
+func decode_tuple(arg):
+	pass
+
+
+
+
+
+
 func get_function_calldata(abi, function_name, _args=[]):
 	for function in abi:
 		if function.has("name"):
@@ -217,8 +423,6 @@ func get_function_selector(function):
 	
 	return function_selector
 
-func encode_fixed_bytes(arg):
-	pass
 
 func encode_fixed_size_array(arg, type):
 	pass
@@ -227,8 +431,7 @@ func get_offset(length, shift):
 	var offset = (32 * length) + shift
 	return GodotSigner.encode_uint256(String(offset))
 
-func encode_string(arg):
-	pass
+
 
 #
 ##This works when the Bytes are pulled directly from the blockchain
