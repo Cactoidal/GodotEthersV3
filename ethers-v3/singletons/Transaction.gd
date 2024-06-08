@@ -143,8 +143,6 @@ func get_gas_price(callback):
 		# without declaring the key locally; see below
 		temp_account = transaction["account"]
 		
-		# DEBUG
-		# EXPERIMENTAL
 		if transaction["raw_transaction"]:
 			
 			var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_limit"], transaction["gas_price"], transaction["tx_count"], transaction["value"], transaction["calldata"]]
@@ -256,11 +254,6 @@ func emit_error(error_string, network):
 	print(error + " on " + network)
 	finish_transaction(network)
 
-
-# DEBUG
-# EXPERIMENTAL
-
-#perform_raw_transaction
 
 func send_raw_transaction(
 	account,

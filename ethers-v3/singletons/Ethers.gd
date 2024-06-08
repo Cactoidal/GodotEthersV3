@@ -198,6 +198,7 @@ func get_gas_balance(network, account, callback_node, callback_function, callbac
 					"callback_args": callback_args}
 					)
 
+
 func return_gas_balance(_callback):
 	var callback_node = _callback["callback_args"]["callback_node"]
 	var callback_function = _callback["callback_args"]["callback_function"]
@@ -305,169 +306,6 @@ func perform_request(method, params, network, callback_node, callback_function, 
 
 
 
-#########  DECODING  #########
-
-func decode_string(hex):
-	return GodotSigner.decode_string(hex)
-	
-func decode_address(hex):
-	return GodotSigner.decode_address(hex)
-
-func decode_bytes(hex):
-	return GodotSigner.decode_bytes(hex)
-
-func decode_uint256(hex):
-	return GodotSigner.decode_uint256(hex)
-
-func decode_uint8(hex):
-	return GodotSigner.decode_uint8(hex)
-
-func decode_bool(hex):
-	return GodotSigner.decode_bool(hex)
-
-
-
-
-
-#########  UTILITY  #########
-
-# NOTE:
-# With Godot 4+, the .right() and .left() string methods were completely changed,
-# and some methods, such as .erase(), no longer change the string in place
-
-func convert_to_big_uint(number, token_decimals):
-	if number.begins_with("."):
-		number = "0" + number
-		
-	var zero_filler = int(token_decimals)
-	var decimal_index = number.find(".")
-	
-	var big_uint = number
-	if decimal_index != -1:
-		var segment = number.right(-(decimal_index+1) )
-		zero_filler -= segment.length()
-		big_uint = big_uint.erase(decimal_index,decimal_index)
-
-	for zero in range(zero_filler):
-		big_uint += "0"
-	
-	var zero_parse_index = 0
-	if big_uint.begins_with("0"):
-		for digit in big_uint:
-			if digit == "0":
-				zero_parse_index += 1
-			else:
-				break
-	if zero_parse_index > 0:
-		big_uint = big_uint.right(-zero_parse_index)
-
-	if big_uint == "":
-		big_uint = "0"
-
-	return big_uint
-
-
-func convert_to_smallnum(bignum, token_decimals):
-	var size = bignum.length()
-	var smallnum = ""
-	if size <= int(token_decimals):
-		smallnum = "0."
-		var fill_length = int(token_decimals) - size
-		for zero in range(fill_length):
-			smallnum += "0"
-		smallnum += String(bignum)
-	elif size > 18:
-		smallnum = bignum
-		var decimal_index = size - 18
-		smallnum = smallnum.insert(decimal_index, ".")
-	
-	var index = 0
-	var zero_parse_index = 0
-	var prune = false
-	for digit in smallnum:
-		if digit == "0":
-			if !prune:
-				zero_parse_index = index
-				prune = true
-		else:
-			prune = false
-		index += 1
-	if prune:
-		smallnum = smallnum.left(zero_parse_index).trim_suffix(".")
-	
-	return smallnum
-
-
-func emit_error(error_string):
-	error = error_string
-	print(error)
-
-
-
-
-
-#########  NETWORK DEFAULTS #########	
-
-var default_network_info = {
-	
-	"Ethereum Sepolia": 
-		{
-		"chain_id": "11155111",
-		"rpcs": ["https://ethereum-sepolia-rpc.publicnode.com"],
-		"rpc_cycle": 0,
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia.etherscan.io/",
-		"logo": "res://assets/Ethereum.png"
-		},
-		
-	"Arbitrum Sepolia": 
-		{
-		"chain_id": "421614",
-		"rpcs": ["https://sepolia-rollup.arbitrum.io/rpc"],
-		"rpc_cycle": 0,
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia.arbiscan.io/",
-		"logo": "res://assets/Arbitrum.png"
-		},
-		
-	"Optimism Sepolia": {
-		"chain_id": "11155420",
-		"rpcs": ["https://sepolia.optimism.io"],
-		"rpc_cycle": 0,
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia-optimism.etherscan.io/",
-		"logo": "res://assets/Optimism.png"
-	},
-	
-	"Base Sepolia": {
-		"chain_id": "84532",
-		"rpcs": ["https://sepolia.base.org"],
-		"rpc_cycle": 0,
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia.basescan.org/",
-		"logo": "res://assets/Base.png"
-	},
-	
-	"Avalanche Fuji": {
-		"chain_id": "43113",
-		"rpcs": ["https://avalanche-fuji-c-chain-rpc.publicnode.com"],
-		"rpc_cycle": 0,
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"scan_url": "https://testnet.snowtrace.io/",
-		"logo": "res://assets/Avalanche.png"
-	}
-}
-
-
-
-
-
-
 #########  ERC20 API  #########
 
 
@@ -555,116 +393,157 @@ func approve_erc20_allowance(account, network, token_address, spender_address, c
 
 
 
+#########  DECODING  #########
+
+func decode_string(hex):
+	return GodotSigner.decode_string(hex)
+	
+func decode_address(hex):
+	return GodotSigner.decode_address(hex)
+
+func decode_bytes(hex):
+	return GodotSigner.decode_bytes(hex)
+
+func decode_uint256(hex):
+	return GodotSigner.decode_uint256(hex)
+
+func decode_uint8(hex):
+	return GodotSigner.decode_uint8(hex)
+
+func decode_bool(hex):
+	return GodotSigner.decode_bool(hex)
 
 
 
-#
-#
-##########  OLD ERC20 API  #########
-#
-## The first callback will return here for decoding, before proceeding
-## back to the originally requested callback node
-#func get_erc20_name(network, contract, callback_node, callback_function, callback_args={}):
-	#read_from_contract(network, contract, "get_token_name", [], self, "return_erc20_name", {"callback_node": callback_node, "callback_function": callback_function, "callback_args": callback_args})
-#
-#
-#func return_erc20_name(_callback):
-	#var callback_node = _callback["callback_args"]["callback_node"]
-	#var callback_function = _callback["callback_args"]["callback_function"]
-	#
-	## Create the callback for the original callback node
-	#var next_callback = {
-		#"callback_args": _callback["callback_args"]["callback_args"],
-		#"success": false,
-		#"result": ""
-	#}
-	#
-	## Decode the result
-	#if _callback["success"]:
-		#next_callback["success"] = true
-		#next_callback["result"] = decode_string(_callback["result"])
-	#
-	## Send the decoded result to the original callback node
-	#callback_node.call(callback_function, next_callback)
-#
-#
-#func get_erc20_decimals(network, contract, callback_node, callback_function, callback_args={}):
-	#read_from_contract(network, contract, "get_token_decimals", [], self, "return_erc20_decimals", {"callback_node": callback_node, "callback_function": callback_function, "callback_args": callback_args})
-#
-#
-#func return_erc20_decimals(_callback):
-	#var callback_node = _callback["callback_args"]["callback_node"]
-	#var callback_function = _callback["callback_args"]["callback_function"]
-	#
-	#var next_callback = {
-		#"callback_args": _callback["callback_args"]["callback_args"],
-		#"success": false,
-		#"result": ""
-	#}
-	#
-	#if _callback["success"]:
-		#next_callback["success"] = true
-		#next_callback["result"] = decode_uint256(_callback["result"])
-	#
-	#callback_node.call(callback_function, next_callback)
-#
-#
-#func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
-	#read_from_contract(network, contract, "check_token_balance", [address], self, "return_erc20_balance", {"callback_node": callback_node, "callback_function": callback_function, "callback_args": callback_args, "decimals": decimals})
-#
-#
-#func return_erc20_balance(_callback):
-	#var callback_node = _callback["callback_args"]["callback_node"]
-	#var callback_function = _callback["callback_args"]["callback_function"]
-	#var decimals = _callback["callback_args"]["decimals"]
-	#
-	#var next_callback = {
-		#"callback_args": _callback["callback_args"]["callback_args"],
-		#"success": false,
-		#"result": ""
-	#}
-	#
-	#if _callback["success"]:
-		#next_callback["success"] = true
-		#next_callback["result"] = convert_to_smallnum(decode_uint256(_callback["result"]), decimals)
-	#
-	#callback_node.call(callback_function, next_callback)
+#########  UTILITY  #########
+
+# NOTE:
+# With Godot 4+, the .right() and .left() string methods were completely changed,
+# and some methods, such as .erase(), no longer change the string in place
+
+func convert_to_big_uint(number, token_decimals):
+	if number.begins_with("."):
+		number = "0" + number
+		
+	var zero_filler = int(token_decimals)
+	var decimal_index = number.find(".")
+	
+	var big_uint = number
+	if decimal_index != -1:
+		var segment = number.right(-(decimal_index+1) )
+		zero_filler -= segment.length()
+		big_uint = big_uint.erase(decimal_index,decimal_index)
+
+	for zero in range(zero_filler):
+		big_uint += "0"
+	
+	var zero_parse_index = 0
+	if big_uint.begins_with("0"):
+		for digit in big_uint:
+			if digit == "0":
+				zero_parse_index += 1
+			else:
+				break
+	if zero_parse_index > 0:
+		big_uint = big_uint.right(-zero_parse_index)
+
+	if big_uint == "":
+		big_uint = "0"
+
+	return big_uint
+
+
+func convert_to_smallnum(bignum, token_decimals):
+	var size = bignum.length()
+	var smallnum = ""
+	if size <= int(token_decimals):
+		smallnum = "0."
+		var fill_length = int(token_decimals) - size
+		for zero in range(fill_length):
+			smallnum += "0"
+		smallnum += String(bignum)
+	elif size > 18:
+		smallnum = bignum
+		var decimal_index = size - 18
+		smallnum = smallnum.insert(decimal_index, ".")
+	
+	var index = 0
+	var zero_parse_index = 0
+	var prune = false
+	for digit in smallnum:
+		if digit == "0":
+			if !prune:
+				zero_parse_index = index
+				prune = true
+		else:
+			prune = false
+		index += 1
+	if prune:
+		smallnum = smallnum.left(zero_parse_index).trim_suffix(".")
+	
+	return smallnum
+
+
+func emit_error(error_string):
+	error = error_string
+	print(error)
 
 
 
 
+#########  NETWORK DEFAULTS #########	
 
-
-
-
-
-
-
-
-#########  DOCS  #########
-
-
-#Ethers.read_from_contract(network, contract, function, [], self, "get_data", {})
-#Ethers.send_transaction(account, network, contract, function, [], self, "check_receipt". {})
-
-#read_from_contract(
-	#account, STRING name of the account
-	#network, STRING name of the network 
-	#contract, STRING contract address
-	#contract_function, STRING name of contract function in Rust library
-	#contract_args, (ARRAY of contract function arguments, [] to leave blank)
-	#callback_node, (NODEPATH, typically "self")
-	#callback_function, (STRING, name of callback function on callback node)
-	#callback_args, (OPTIONAL; DICTIONARY of callback function arguments)
-#)
-#
-#send_transaction(
-	#account,
-	#network,
-	#contract,
-	#contract_function, 
-	#contract_args, ([] to leave blank)
-	#callback_node,
-	#callback_function,
-	#callback_args, (OPTIONAL)
-#)
+var default_network_info = {
+	
+	"Ethereum Sepolia": 
+		{
+		"chain_id": "11155111",
+		"rpcs": ["https://ethereum-sepolia-rpc.publicnode.com"],
+		"rpc_cycle": 0,
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"scan_url": "https://sepolia.etherscan.io/",
+		"logo": "res://assets/Ethereum.png"
+		},
+		
+	"Arbitrum Sepolia": 
+		{
+		"chain_id": "421614",
+		"rpcs": ["https://sepolia-rollup.arbitrum.io/rpc"],
+		"rpc_cycle": 0,
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"scan_url": "https://sepolia.arbiscan.io/",
+		"logo": "res://assets/Arbitrum.png"
+		},
+		
+	"Optimism Sepolia": {
+		"chain_id": "11155420",
+		"rpcs": ["https://sepolia.optimism.io"],
+		"rpc_cycle": 0,
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"scan_url": "https://sepolia-optimism.etherscan.io/",
+		"logo": "res://assets/Optimism.png"
+	},
+	
+	"Base Sepolia": {
+		"chain_id": "84532",
+		"rpcs": ["https://sepolia.base.org"],
+		"rpc_cycle": 0,
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"scan_url": "https://sepolia.basescan.org/",
+		"logo": "res://assets/Base.png"
+	},
+	
+	"Avalanche Fuji": {
+		"chain_id": "43113",
+		"rpcs": ["https://avalanche-fuji-c-chain-rpc.publicnode.com"],
+		"rpc_cycle": 0,
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"scan_url": "https://testnet.snowtrace.io/",
+		"logo": "res://assets/Avalanche.png"
+	}
+}
