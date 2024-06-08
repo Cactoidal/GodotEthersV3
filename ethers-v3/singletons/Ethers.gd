@@ -117,6 +117,11 @@ func unpad(password):
 	return password
 
 
+func get_address(account):
+	if account in logins:
+		return GodotSigner.get_address(get_key(account))
+
+
 
 
 #########  NETWORK MANAGEMENT  #########
@@ -176,16 +181,6 @@ func get_rpc(network):
 	return rpc
 
 
-
-
-
-#########  HIGH LEVEL API  #########
-
-func get_address(account):
-	if account in logins:
-		return GodotSigner.get_address(get_key(account))
-	
-
 func get_gas_balance(network, account, callback_node, callback_function, callback_args={}):
 	var user_address = get_address(account)
 	callback_args["network"] = network
@@ -221,18 +216,22 @@ func return_gas_balance(_callback):
 	callback_node.call(callback_function, next_callback)
 
 
-func read_from_contract(network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
-	var random_key = Crypto.new().generate_random_bytes(32)
-	
-	#var calldata = get_read_calldata(random_key, network, contract, contract_function, contract_args)
-	
-	
-	#DEBUG
-	#EXPERIMENTAL
-	var contract_call = callback_args["contract_call"]
-	var calldata = "0x" + get_calldata(Contract.ERC20, contract_call, contract_args)
-	print(calldata)
-	
+
+
+#########  TRANSACTION API  #########
+
+# DEBUG
+# EXPERIMENTAL
+# NOTE
+# Implementation of the Ethereum ABI specification is currently rudimentary and ongoing.
+# See the "Calldata.gd" singleton for more details.
+
+func get_calldata(abi, function_name, function_args=[]):
+	return "0x" + Calldata.get_function_calldata(abi, function_name, function_args)
+
+
+func read_from_contract(network, contract, calldata, callback_node, callback_function, callback_args={}):
+		
 	Ethers.perform_request(
 		"eth_call", 
 		[{"to": contract, "input": calldata}, "latest"], 
@@ -244,20 +243,6 @@ func read_from_contract(network, contract, contract_function, contract_args, cal
 		)
 
 
-func send_transaction(account, network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
-	Transaction.start_transaction(
-		account, 
-		network, 
-		contract, 
-		contract_function, 
-		contract_args, 
-		callback_node, 
-		callback_function, 
-		callback_args, 
-		true #default "auto_confirm" value
-		)
-
-
 func pending_transaction(network):
 	if Transaction.pending_transaction(network):
 		return Transaction.pending_transactions[network]
@@ -265,6 +250,11 @@ func pending_transaction(network):
 		return false
 
 
+func send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0", auto_confirm=true):
+	calldata = calldata.trim_prefix("0x")
+	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args, auto_confirm)
+
+# For ETH transfers
 func transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}):
 	Transaction.start_transaction(
 		account,
@@ -277,43 +267,6 @@ func transfer(account, network, recipient, amount, callback_node, callback_funct
 		callback_args
 	)
 
-
-#########  DECODING  #########
-
-func decode_string(hex):
-	return GodotSigner.decode_string(hex)
-	
-func decode_address(hex):
-	return GodotSigner.decode_address(hex)
-
-func decode_bytes(hex):
-	return GodotSigner.decode_bytes(hex)
-
-func decode_uint256(hex):
-	return GodotSigner.decode_uint256(hex)
-
-func decode_uint8(hex):
-	return GodotSigner.decode_uint8(hex)
-
-func decode_bool(hex):
-	return GodotSigner.decode_bool(hex)
-	
-	
-
-
-
-#########  LOW LEVEL API  #########
-
-func get_read_calldata(random_key, network, contract, contract_function, contract_args=[]):
-	var chain_id = network_info[network]["chain_id"]
-	var rpc = network_info[network]["rpcs"][0]
-	var params = [random_key, chain_id, rpc, contract]
-	for arg in contract_args:
-		params.push_back(arg)
-	var calldata = GodotSigner.callv(contract_function, params)
-			
-	return calldata
-	
 
 func perform_request(method, params, network, callback_node, callback_function, callback_args={}, retries=0):
 	
@@ -349,22 +302,29 @@ func perform_request(method, params, network, callback_node, callback_function, 
 	JSON.new().stringify(tx))
 
 
-# DEBUG
-# EXPERIMENTAL
-# NOTE
-# "Raw transactions" in this context are transactions with calldata that has been 
-# formatted in gdscript instead of Rust.  This should eliminate the need to recompile
-# the Rust library whenever you want to add a contract (instead only needing to paste
-# the contract ABI somewhere into your project files) and would allow "hot-loading" of ABIs.
-# Implementation of the Ethereum ABI specification is currently rudimentary and ongoing.
 
-func send_raw_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0", auto_confirm=true):
-	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args, auto_confirm)
 
-# DEBUG
-# EXPERIMENTAL
-func get_calldata(abi, function_name, function_args=[]):
-	return Calldata.get_function_calldata(abi, function_name, function_args)
+
+#########  DECODING  #########
+
+func decode_string(hex):
+	return GodotSigner.decode_string(hex)
+	
+func decode_address(hex):
+	return GodotSigner.decode_address(hex)
+
+func decode_bytes(hex):
+	return GodotSigner.decode_bytes(hex)
+
+func decode_uint256(hex):
+	return GodotSigner.decode_uint256(hex)
+
+func decode_uint8(hex):
+	return GodotSigner.decode_uint8(hex)
+
+func decode_bool(hex):
+	return GodotSigner.decode_bool(hex)
+
 
 
 
@@ -511,8 +471,8 @@ var default_network_info = {
 #########  ERC20 API  #########
 
 
-# "get_erc20_info" bounces through three calls: NAME, DECIMALS, and BALANCE for a supplied address,
-# and returns all 3 values as part of the callback_args sent to the callback_node
+# "get_erc20_info" bounces through three calls: name(), decimals(), and balanceOf() for a supplied 
+# address, and returns all 3 values as part of the callback_args sent to the callback_node
 func get_erc20_info(network, address, contract, callback_node, callback_function):
 	var callback_args = {
 		"network": network, 
@@ -520,31 +480,28 @@ func get_erc20_info(network, address, contract, callback_node, callback_function
 		"contract": contract,
 		"callback_node": callback_node,
 		"callback_function": callback_function,
-		
-		#DEBUG
-		"contract_call": "name"
 		}
 	get_erc20_name(network, contract, self, "return_erc20_name", callback_args)
 
 
 func get_erc20_name(network, contract, callback_node, callback_function, callback_args={}):
-	read_from_contract(network, contract, "get_erc20_name", [], self, "return_erc20_name", callback_args)
+	var calldata = get_calldata(Contract.ERC20, "name")
+	read_from_contract(network, contract, calldata, self, "return_erc20_name", callback_args)
 
 
 func return_erc20_name(callback):
 	var callback_args = callback["callback_args"]
 	var contract = callback_args["contract"]
 	var network = callback_args["network"]
-	
-	#DEBUG
-	callback_args["contract_call"] = "decimals"
+
 	if callback["success"]:
 		callback_args["name"] = decode_string(callback["result"])
 		get_erc20_decimals(network, contract, self, "get_erc20_decimals", callback_args)
 
 
 func get_erc20_decimals(network, contract, callback_node, callback_function, callback_args={}):
-	read_from_contract(network, contract, "get_erc20_decimals", [], self, "return_erc20_decimals", callback_args)
+	var calldata = get_calldata(Contract.ERC20, "decimals")
+	read_from_contract(network, contract, calldata, self, "return_erc20_decimals", callback_args)
 
 
 func return_erc20_decimals(callback):
@@ -552,8 +509,6 @@ func return_erc20_decimals(callback):
 	var contract = callback_args["contract"]
 	var network = callback_args["network"]
 	
-	#DEBUG
-	callback_args["contract_call"] = "balanceOf"
 	if callback["success"]:
 		var decimals = decode_uint256(callback["result"])
 		callback_args["decimals"] = decimals
@@ -562,7 +517,8 @@ func return_erc20_decimals(callback):
 
 
 func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
-	read_from_contract(network, contract, "check_erc20_balance", [address], self, "return_erc20_balance", callback_args)
+	var calldata = get_calldata(Contract.ERC20, "balanceOf", [address])
+	read_from_contract(network, contract, calldata, self, "return_erc20_balance", callback_args)
 
 
 func return_erc20_balance(callback):
@@ -587,28 +543,14 @@ func return_erc20_balance(callback):
 
 
 func transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}):
-	Transaction.start_transaction(
-		account,
-		network,
-		token_address,
-		"transfer_erc20",
-		[recipient, amount],
-		callback_node,
-		callback_function,
-		callback_args
-	)
+	var calldata = get_calldata(Contract.ERC20, "transfer", [recipient, amount])
+	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
+
 
 func approve_erc20_allowance(account, network, token_address, spender_address, callback_node, callback_function, callback_args={}):
-	Transaction.start_transaction(
-		account,
-		network,
-		token_address,
-		"approve_erc20_allowance",
-		[spender_address],
-		callback_node,
-		callback_function,
-		callback_args
-	)
+	var calldata = get_calldata(Contract.ERC20, "approve", [spender_address, "115792089237316195423570985008687907853269984665640564039457584007913129639935"])
+	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
+
 
 
 

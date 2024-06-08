@@ -22,7 +22,7 @@ extends Node
 # Automatic decoding using the ABI would be nice
 
 # I'm a bit unclear about what form "bytes" are supposed to take
-# The bytes themselves are a utf8 buffer.  But eventually they are hex encoded
+# The bytes themselves are a utf8 buffer.  But eventually they are hex encoded.
 # Before they are ABI-encoded, are "bytes"-type arguments a hex-encoded string? 
 # Or are they a buffer?
 

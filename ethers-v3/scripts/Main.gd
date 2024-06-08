@@ -32,7 +32,7 @@ func _ready():
 	#var amount = Ethers.convert_to_big_uint("0.000000001", 18)
 	var amount = Ethers.convert_to_big_uint("0.001", 18)
 	#Ethers.transfer("test_keystore", "Base Sepolia", recipient, amount, self, "get_receipt")
-	#Ethers.approve_erc20_allowance("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
+	Ethers.approve_erc20_allowance("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
 	#Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
 	#Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, amount, self, "get_receipt")
 
