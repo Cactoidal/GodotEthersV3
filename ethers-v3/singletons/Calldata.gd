@@ -1,6 +1,8 @@
 extends Node
 
-# Can encode:      (ostensibly, needs to be thoroughly tested)
+# (ostensibly, needs to be thoroughly tested)
+
+# Can encode:     
 # Uints of typical varieties
 # Ints of typical varieties
 # Strings
@@ -11,20 +13,17 @@ extends Node
 # Dynamic Tuples
 # Unnested, Dynamic Arrays of the above
 
-# Still need:
+# In theory it can support:
 # Static Tuples  (Tuples containing only static values, making the tuple static)
-# Fixed Bytes (Bytes of a defined size, up to 32; is there anything special I have to do to this?)
 # Fixed Arrays
 # Static Arrays (Fixed arrays containing only static values)
 # Nested Arrays
 
+# Unknown:
+# Fixed Bytes (Bytes of a defined size, up to 32; is there anything special I have to do to this?)
 
-#Nested Arrays are listed sequentially like so:
-#type[][][][#]
 
-# Note that a tuple's dynamic status must propagate upward, or it must be "deep checked"
-# to ensure that it is properly marked dynamic if it contains a dynamic properly somewhere.
-# Same with arrays
+
 
 # Decodings also need attention (see Ethers for these)
 # Automatic decoding using the ABI would be nice
@@ -160,15 +159,34 @@ func get_function_selector(function):
 
 
 func array_is_dynamic(arg_type):
+	
 	for dynamic_type in ["string", "bytes"]:
 		if arg_type.begins_with(dynamic_type):
 			return true
-	
-	#look through all arrays
+			
+	if arg_type.contains("[]"):
+		return true
+		
+	return false
+
 
 func tuple_is_dynamic(arg):
 	var components = arg["components"]
-	#look through all components
+	for component in components:
+		var arg_type = component["type"]
+		if arg_type.contains("["):
+			if array_is_dynamic(arg_type):
+				return true
+		elif arg_type.begins_with("bytes"):
+			if arg_type.length() == 5:
+				return true
+		elif arg_type.begins_with("tuple"):
+			if tuple_is_dynamic(arg_type):
+				return true
+		elif arg_type.begins_with("string"):
+				return true
+	
+	return false
 
 
 
@@ -185,8 +203,15 @@ func encode_general(arg):
 	return calldata
 
 
+# DEBUG
+# Just gonna need to experiment with this one
 func encode_fixed_bytes(arg):
-	pass
+	var value = arg["value"]
+	var arg_type = arg["type"]
+	var calldata = GodotSigner.call("encode_bytes", value)
+	calldata = calldata.trim_prefix("0000000000000000000000000000000000000000000000000000000000000020")
+	
+	return calldata
 
 
 func encode_bool(arg):
@@ -207,8 +232,6 @@ func encode_enum(arg):
 
 
 func encode_array(arg):
-	#add fixed array support
-	#add nested array support
 	var _arg_type = arg["type"]
 	var value_array = arg["value"]
 	
