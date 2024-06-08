@@ -3,6 +3,7 @@ extends Control
 var sepolia_link_contract = "0x779877A7B0D9E8603169DdbD7836e478b4624789"
 var base_bnm_contract = "0x88A2d74F47a237a62e7A51cdDa67270CE381555e"
 
+var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
@@ -10,10 +11,8 @@ var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 # should be the primary API for the developer
 
 
-# implement erc20 transfers and allowances
 # multi-chain wallet; cross-chain functionality?
 
-# fix gas limit
 
 
 
@@ -31,9 +30,17 @@ func _ready():
 	
 	#var amount = Ethers.convert_to_big_uint("0.000000001", 18)
 	var amount = Ethers.convert_to_big_uint("0.001", 18)
-	print(amount)
 	#Ethers.transfer("test_keystore", "Base Sepolia", recipient, amount, self, "get_receipt")
-	Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
+	#Ethers.approve_erc20_allowance("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
+	#Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
+	#Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, amount, self, "get_receipt")
+
+	# DEBUG
+	# EXPERIMENTAL
+	var calldata = Ethers.get_calldata(Contract.ERC20, "transfer", [recipient, amount])
+	print(calldata)
+	Ethers.send_raw_transaction("test_keystore", "Base Sepolia", base_bnm_contract, calldata, self, "get_receipt")
+
 
 func update_gas_balance(callback):
 	var network = callback["callback_args"]["network"]

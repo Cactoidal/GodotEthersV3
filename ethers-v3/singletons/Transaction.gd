@@ -40,7 +40,8 @@ func start_transaction(
 			"gas_price": 0,
 			"tx_hash": "",
 			"check_for_receipt": false,
-			"tx_receipt_poll_timer": 4
+			"tx_receipt_poll_timer": 4,
+			"raw_transaction": false
 			}
 		
 			pending_transactions[network] = transaction
@@ -131,25 +132,49 @@ func get_gas_price(callback):
 				emit_error("Gas fee too high", network)
 				return
 		
-		var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
-		for arg in transaction["contract_args"]:
-			params.push_back(arg)
-		temp_account = transaction["account"]
-		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params.map(merge))
+		if !transaction["auto_confirm"]:
+			# DEBUG
+			# Option is here to provide pop-up to confirm manually
+			# For now, just causes transaction to fail.
+			emit_error("Manual confirmation not implemented", network)
+			return
 		
-		if transaction["auto_confirm"]:
+		# Used for "merging" the private key with the params array 
+		# without declaring the key locally; see below
+		temp_account = transaction["account"]
+		
+		# DEBUG
+		# EXPERIMENTAL
+		if transaction["raw_transaction"]:
+			
+			var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_limit"], transaction["gas_price"], transaction["tx_count"], transaction["value"], transaction["calldata"]]
+			var signed_calldata = "0x" + GodotSigner.callv("sign_raw_calldata", params.map(merge))
 			Ethers.perform_request(
 				"eth_sendRawTransaction", 
-				[calldata], 
+				[signed_calldata], 
 				network, 
 				self, 
 				"get_transaction_hash", 
 				{"transaction": transaction}
 				)
-		else:
-			# DEBUG
-			# Option is here to provide pop-up to confirm manually
-			pass
+				
+			return
+			
+		var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
+		for arg in transaction["contract_args"]:
+			params.push_back(arg)
+		
+		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params.map(merge))
+		
+		Ethers.perform_request(
+			"eth_sendRawTransaction", 
+			[calldata], 
+			network, 
+			self, 
+			"get_transaction_hash", 
+			{"transaction": transaction}
+			)
+	
 	else:
 		emit_error("RPC error: Failed to get gas price", network)
 
@@ -230,3 +255,46 @@ func emit_error(error_string, network):
 	error = error_string
 	print(error + " on " + network)
 	finish_transaction(network)
+
+
+# DEBUG
+# EXPERIMENTAL
+
+#perform_raw_transaction
+
+func send_raw_transaction(
+	account,
+	network,
+	contract,
+	gas_limit,
+	value,
+	calldata, 
+	callback_node, 
+	callback_function, 
+	callback_args={}, 
+	auto_confirm=true
+	):
+		
+		if !pending_transaction(network):
+			
+			var transaction = {
+			"callback_node": callback_node,
+			"callback_function": callback_function,
+			"callback_args": callback_args,
+			"network": network,
+			"account": account,
+			"contract": contract,
+			"gas_limit": gas_limit,
+			"value": value,
+			"calldata": calldata,
+			"auto_confirm": auto_confirm,
+			"initialized": false,
+			"tx_count": 0,
+			"gas_price": 0,
+			"tx_hash": "",
+			"check_for_receipt": false,
+			"tx_receipt_poll_timer": 4,
+			"raw_transaction": true
+			}
+		
+			pending_transactions[network] = transaction

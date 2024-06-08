@@ -19,6 +19,8 @@ config/icon="res://icon.svg"
 
 Ethers="*res://singletons/Ethers.gd"
 Transaction="*res://singletons/Transaction.gd"
+Contract="*res://singletons/Contract.gd"
+Calldata="*res://singletons/Calldata.gd"
 
 [display]
 

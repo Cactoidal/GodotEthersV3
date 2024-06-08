@@ -304,7 +304,7 @@ func get_read_calldata(random_key, network, contract, contract_function, contrac
 	var calldata = GodotSigner.callv(contract_function, params)
 			
 	return calldata
-
+	
 
 func perform_request(method, params, network, callback_node, callback_function, callback_args={}, retries=0):
 	
@@ -338,6 +338,24 @@ func perform_request(method, params, network, callback_node, callback_function, 
 	[header], 
 	HTTPClient.METHOD_POST, 
 	JSON.new().stringify(tx))
+
+
+# DEBUG
+# EXPERIMENTAL
+# NOTE
+# "Raw transactions" in this context are transactions with calldata that has been 
+# formatted in gdscript instead of Rust.  This should eliminate the need to recompile
+# the Rust library whenever you want to add a contract (instead only needing to paste
+# the contract ABI somewhere into your project files) and would allow "hot-loading" of ABIs.
+# Implementation of the Ethereum ABI specification is currently rudimentary and ongoing.
+
+func send_raw_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0", auto_confirm=true):
+	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args, auto_confirm)
+
+# DEBUG
+# EXPERIMENTAL
+func get_calldata(abi, function_name, function_args=[]):
+	return Calldata.get_function_calldata(abi, function_name, function_args)
 
 
 
@@ -557,6 +575,18 @@ func transfer_erc20(account, network, token_address, recipient, amount, callback
 		token_address,
 		"transfer_erc20",
 		[recipient, amount],
+		callback_node,
+		callback_function,
+		callback_args
+	)
+
+func approve_erc20_allowance(account, network, token_address, spender_address, callback_node, callback_function, callback_args={}):
+	Transaction.start_transaction(
+		account,
+		network,
+		token_address,
+		"approve_erc20_allowance",
+		[spender_address],
 		callback_node,
 		callback_function,
 		callback_args
