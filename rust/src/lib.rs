@@ -349,19 +349,122 @@ fn sign_raw_calldata(_key: PackedByteArray, _chain_id: GString, _contract_addres
 }
 
 
+
 #[func]
-fn encode_uint256 (_big_uint: GString) -> GString {
-    let big_uint: BigUint = _big_uint.to_string().parse().unwrap();
-    let u256: U256 = U256::from_big_endian(big_uint.to_bytes_be().as_slice());
-    let encoded = ethers::abi::AbiEncode::encode(u256);
+fn encode_bool (_bool: bool) -> GString {
+    let encoded = ethers::abi::AbiEncode::encode(_bool);
     let return_string: GString = hex::encode(encoded).into();
     return_string
 }
 
 #[func]
 fn encode_address (_address: GString) -> GString {
-    let address: Address = _address.to_string().parse().unwrap();
+    let address = string_to_address(_address);
     let encoded = ethers::abi::AbiEncode::encode(address);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_string (_string: GString) -> GString {
+    let string: String = _string.into();
+    let encoded = ethers::abi::AbiEncode::encode(string);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_uint8 (_uint8: GString) -> GString {
+    let uint8: u8 = _uint8.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(uint8);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_uint16 (_uint16: GString) -> GString {
+    let uint16: u16 = _uint16.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(uint16);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_uint32 (_uint32: GString) -> GString {
+    let uint32: u32 = _uint32.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(uint32);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_uint64 (_uint64: GString) -> GString {
+    let uint64: u64 = _uint64.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(uint64);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_uint128 (_uint128: GString) -> GString {
+    let uint128: U128 = _uint128.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(uint128);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_uint256 (_big_uint: GString) -> GString {
+    let u256 = string_to_uint256(_big_uint);
+    let encoded = ethers::abi::AbiEncode::encode(u256);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_int8 (_int8: GString) -> GString {
+    let int8: i8 = _int8.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(int8);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_int16 (_int16: GString) -> GString {
+    let int16: i16 = _int16.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(int16);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_int32 (_int32: GString) -> GString {
+    let int32: i32 = _int32.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(int32);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_int64 (_int64: GString) -> GString {
+    let int64: i64 = _int64.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(int64);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_int128 (_int128: GString) -> GString {
+    let int128: i128 = _int128.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(int128);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_int256 (_big_int: GString) -> GString {
+    let i256: I256 = I256::try_from(_big_int.to_string()).unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(i256);
     let return_string: GString = hex::encode(encoded).into();
     return_string
 }
