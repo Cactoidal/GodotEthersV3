@@ -7,6 +7,9 @@ var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
+
+var calldata_tester_contract = "0x1CdFc424D011f3ba400B42E9067990c3D45e0889"
+
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
 
@@ -42,7 +45,7 @@ func _ready():
 	#Ethers.get_gas_balance("Base Sepolia", "test_keystore", self, "update_gas_balance")
 	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore"), sepolia_link_contract, self, "get_erc20_info")
 	
-	Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
+	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
 	
 	var amount = Ethers.convert_to_big_uint("0.001", 18)
 	#Ethers.transfer("test_keystore", "Base Sepolia", recipient, amount, self, "get_receipt")
@@ -51,6 +54,27 @@ func _ready():
 	#Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, amount, self, "get_receipt")
 
 
+	#var number_32 = GodotSigner.decode_uint256("0000000000000000000000000000000000000000000000000000000000000020")
+	#print(number_32)
+	#"0xbd3c82b00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000568656c6c6f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003776879000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000046d656f7700000000000000000000000000000000000000000000000000000000"
+	#print("96")
+	#var mystery_number = GodotSigner.decode_uint256("00000000000000000000000000000000000000000000000000000000000000a0")
+	#print(mystery_number)
+	#var another_number = GodotSigner.decode_uint256("00000000000000000000000000000000000000000000000000000000000000e0")
+	#print(another_number)
+	#print("32")
+	#print("________")
+	
+	
+	#sendStrings - works!
+	#sendStringsFixed - works!
+	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendStrings", [["hello", "why", "meow"]])
+	
+	#sendNums - works!
+	#sendNumsFixed - works!
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendNums", [["11111", "47632784", "1032848238"]])
+	print(calldata)
+	Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
 	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", [Ethers.convert_to_big_uint("12", 18), [Ethers.convert_to_big_uint("120", 18), Ethers.convert_to_big_uint("0.01", 18), Ethers.convert_to_big_uint("9000", 18)], [["hello", Ethers.convert_to_big_uint("190", 18)], ["why", Ethers.convert_to_big_uint("7428624", 18)]]])
 	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", ["recipient", true, ["amount", "meow", "merrow"], [true, "aiiieeargh", Ethers.convert_to_big_uint("120", 18)]])

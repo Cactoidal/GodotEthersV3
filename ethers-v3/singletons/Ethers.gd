@@ -224,7 +224,7 @@ func return_gas_balance(_callback):
 # DEBUG
 # EXPERIMENTAL
 # NOTE
-# Implementation of the Ethereum ABI specification is currently rudimentary and ongoing.
+# Implementation of the Ethereum ABI specification is currently ongoing.
 # See the "Calldata.gd" singleton for more details.
 
 func get_calldata(abi, function_name, function_args=[]):
@@ -384,7 +384,7 @@ func transfer_erc20(account, network, token_address, recipient, amount, callback
 	var calldata = get_calldata(Contract.ERC20, "transfer", [recipient, amount])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
 
-
+# Right now configured to approve the maximum uint256 value
 func approve_erc20_allowance(account, network, token_address, spender_address, callback_node, callback_function, callback_args={}):
 	var calldata = get_calldata(Contract.ERC20, "approve", [spender_address, "115792089237316195423570985008687907853269984665640564039457584007913129639935"])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")

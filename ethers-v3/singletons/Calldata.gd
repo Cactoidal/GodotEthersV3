@@ -13,7 +13,7 @@ extends Node
 # Dynamic Tuples
 # Unnested, Dynamic Arrays of the above
 
-# In theory it can support:
+# In theory it can also support:
 # Static Tuples  (Tuples containing only static values, making the tuple static)
 # Fixed Arrays
 # Static Arrays (Fixed arrays containing only static values)
@@ -24,10 +24,10 @@ extends Node
 
 
 
-
 # Decodings also need attention (see Ethers for these)
 # Automatic decoding using the ABI would be nice
 
+# the offsets are wrong
 
 func get_function_calldata(abi, function_name, _args=[]):
 	var args = []
@@ -66,12 +66,13 @@ func construct_calldata(args):
 		var arg_type = arg["type"]
 		if arg_type.contains("["):
 			if array_is_dynamic(arg_type):
+				print("array " + arg_type + " is dynamic")
 				arg["dynamic"] = true
 		elif arg_type.begins_with("bytes"):
 			if arg_type.length() == 5:
 				arg["dynamic"] = true
 		elif arg_type.begins_with("tuple"):
-			if tuple_is_dynamic(arg_type):
+			if tuple_is_dynamic(arg):
 				arg["dynamic"] = true
 		elif arg_type.begins_with("string"):
 				arg["dynamic"] = true
@@ -97,7 +98,7 @@ func construct_calldata(args):
 	for chunk in body:
 		if chunk["calldata"] != "placeholder":
 			chunk["calldata"] = encode_arg(chunk)
-			chunk["length"] = chunk["calldata"].length()
+			chunk["length"] = chunk["calldata"].length() / 2
 			if chunk["dynamic"]:
 				var _callback_index = chunk["callback_index"]
 				var total_offset = 0
@@ -159,7 +160,6 @@ func get_function_selector(function):
 
 
 func array_is_dynamic(arg_type):
-	
 	for dynamic_type in ["string", "bytes"]:
 		if arg_type.begins_with(dynamic_type):
 			return true
@@ -232,11 +232,21 @@ func encode_enum(arg):
 
 
 func encode_array(arg):
+
 	var _arg_type = arg["type"]
 	var value_array = arg["value"]
 	
 	var array_start_index = _arg_type.find("[")
 	var arg_type = _arg_type.left(array_start_index)
+	
+	array_start_index += 2
+	var array_checker = _arg_type.left(array_start_index)
+	if array_checker.contains("[]"):
+		arg["fixed_size"] = false
+		print("array " + _arg_type + " is not fixed size")
+	else:
+		arg["fixed_size"] = true
+		print("array " + _arg_type + " is fixed size")
 	
 	var calldata = ""
 	var args = []
@@ -254,6 +264,12 @@ func encode_array(arg):
 		args.push_back(new_arg)
 	
 	calldata = construct_calldata(args)
+	
+	if !arg["fixed_size"]:
+		var _param_count = str(arg["value"].size())
+		var param_count = GodotSigner.encode_uint256(_param_count)
+		calldata = param_count + calldata
+		
 	return calldata
 
 
