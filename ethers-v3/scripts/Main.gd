@@ -8,7 +8,7 @@ var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
 
-var calldata_tester_contract = "0x1CdFc424D011f3ba400B42E9067990c3D45e0889"
+var calldata_tester_contract = "0xC6F48EF36ee77Fe85b9fd7cEe33d976f4921C62B"
 
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
@@ -68,12 +68,28 @@ func _ready():
 	
 	#sendStrings - works!
 	#sendStringsFixed - works!
-	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendStrings", [["hello", "why", "meow"]])
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendStrings", [["hello", "why", "meow"]])
 	
 	#sendNums - works!
 	#sendNumsFixed - works!
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendNums", [["11111", "47632784", "1032848238"]])
+
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "enumAndBoolWithString", ["2", "haoollo", true])
+	
+	
+	#setStaticTuple - works!
+	#setDynamicTuple - works.!
+	#setDifficultTuple - works!
+	#intakeBytes - works!
+	#intakeFixedBytes - works... maybe!
+	
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setStaticTuple", [["2324727", true, "3467"]])
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDynamicTuple", [["hi", "3476237846", "hello"]])
+	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDifficultTuple", [[ ["hi", "meow", "hello"],  ["3748642", "45", "4876243"],  "helloooo"]])
+	
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "intakeFixedBytes", ["e0e0e0e"])
 	print(calldata)
+	
 	Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
 	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", [Ethers.convert_to_big_uint("12", 18), [Ethers.convert_to_big_uint("120", 18), Ethers.convert_to_big_uint("0.01", 18), Ethers.convert_to_big_uint("9000", 18)], [["hello", Ethers.convert_to_big_uint("190", 18)], ["why", Ethers.convert_to_big_uint("7428624", 18)]]])

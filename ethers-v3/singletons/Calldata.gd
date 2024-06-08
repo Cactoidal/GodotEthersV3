@@ -3,31 +3,30 @@ extends Node
 # (ostensibly, needs to be thoroughly tested)
 
 # Can encode:     
-# Uints of typical varieties
-# Ints of typical varieties
-# Strings
-# Bytes
-# Addresses
-# Bools
-# Enums
-# Dynamic Tuples
-# Unnested, Dynamic Arrays of the above
+# Uints of typical varieties  - works
+# Ints of typical varieties  - works
+# Strings - works
+# Addresses - works
+# Unfixed Dynamic Arrays - works
+# Fixed Dynamic Arrays - works
+# Unfixed Static Arrays - works
+# Fixed Static Arrays - works
+# Bools - works
+# Enums - works
+# Bytes - works
+# Dynamic Tuples - works
+# Static Tuples  - works
+# FixedBytes - kind of works but needs more testing (must be manually constructed)
+# Nested Arrays - ?
 
-# In theory it can also support:
-# Static Tuples  (Tuples containing only static values, making the tuple static)
-# Fixed Arrays
-# Static Arrays (Fixed arrays containing only static values)
-# Nested Arrays
 
-# Unknown:
-# Fixed Bytes (Bytes of a defined size, up to 32; is there anything special I have to do to this?)
 
 
 
 # Decodings also need attention (see Ethers for these)
 # Automatic decoding using the ABI would be nice
+# I should be able to simply reverse the process, given the ABI and the incoming calldata
 
-# the offsets are wrong
 
 func get_function_calldata(abi, function_name, _args=[]):
 	var args = []
@@ -127,13 +126,11 @@ func encode_arg(arg):
 	elif arg_type.begins_with("int"):
 		calldata = encode_general(arg)
 	elif arg_type.begins_with("bytes"):
-		
-		# Checks if the bytes have been provided as a 
-		# hex string, and converts to a PackedByteArray
-		if typeof(arg["value"]) == 4:
-			arg["value"] = arg["value"].hex_decode()
-		
 		if arg_type.length() == 5:
+			# Checks if the bytes have been provided as a 
+			# hex string, and converts to a PackedByteArray
+			if typeof(arg["value"]) == 4:
+				arg["value"] = arg["value"].hex_decode()
 			calldata = encode_general(arg)
 		else:
 			calldata = encode_fixed_bytes(arg)
@@ -151,12 +148,24 @@ func encode_arg(arg):
 func get_function_selector(function):
 	var selector_string = function["name"] + "("
 	for input in function["inputs"]:
-		selector_string += input["type"] + ","
+		if input["type"] == "tuple":
+			selector_string += get_tuple_components(input)
+		else:
+			selector_string += input["type"] + ","
 	selector_string = selector_string.trim_suffix(",") + ")"
 	var selector_bytes = selector_string.to_utf8_buffer()
 	var function_selector = GodotSigner.get_function_selector(selector_bytes).left(8)
 	
 	return function_selector
+
+func get_tuple_components(input):
+	var selector_string = ""
+	for component in input["components"]:
+		selector_string += component["type"] + ","
+		if component["type"] == "tuple":
+			selector_string += get_tuple_components(component)
+	selector_string = selector_string.trim_suffix(",")
+	return ("(" + selector_string + ")")
 
 
 func array_is_dynamic(arg_type):
@@ -204,14 +213,24 @@ func encode_general(arg):
 
 
 # DEBUG
-# Just gonna need to experiment with this one
+# Works sort of but still a bit off.  try more byte sizes
+
 func encode_fixed_bytes(arg):
 	var value = arg["value"]
 	var arg_type = arg["type"]
-	var calldata = GodotSigner.call("encode_bytes", value)
-	calldata = calldata.trim_prefix("0000000000000000000000000000000000000000000000000000000000000020")
 	
-	return calldata
+	var bytes_length = int(arg_type.right(-5))
+	var padding_length = 61 - bytes_length
+	
+	# Checks if the bytes have been provided as a PackedByteArray,
+	# and converts into a hex string
+	if typeof(value) == 29:
+		value = value.hex_encode()
+	
+	for zero in range(padding_length):
+		value += "0"
+	
+	return value
 
 
 func encode_bool(arg):
@@ -274,8 +293,10 @@ func encode_array(arg):
 
 
 func encode_tuple(arg):
+	# like unfixed arrays, likely need to state the "length" component up front
 	var value_array = arg["value"]
 	var components = arg["components"]
+	#var component_length = str(components.size())
 	var args = []
 	var selector = 0
 	for component in components:
@@ -293,6 +314,7 @@ func encode_tuple(arg):
 		selector += 1
 	
 	var calldata = construct_calldata(args)
+	#calldata = GodotSigner.encode_uint256(component_length) + calldata
 	return calldata
 	
 

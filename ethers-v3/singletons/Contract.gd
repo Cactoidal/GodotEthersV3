@@ -5,38 +5,12 @@ extends Node
 var CalldataTester = [
 	{
 		"inputs": [],
-		"name": "num1",
+		"name": "hmmm",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bytes4",
 				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "num2",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "num3",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
+				"type": "bytes4"
 			}
 		],
 		"stateMutability": "view",
@@ -45,12 +19,12 @@ var CalldataTester = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256[]",
-				"name": "_nums",
-				"type": "uint256[]"
+				"internalType": "bytes",
+				"name": "_bytes",
+				"type": "bytes"
 			}
 		],
-		"name": "sendNums",
+		"name": "intakeBytes",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -58,49 +32,23 @@ var CalldataTester = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256[3]",
-				"name": "_nums",
-				"type": "uint256[3]"
+				"internalType": "bytes4",
+				"name": "_bytes",
+				"type": "bytes4"
 			}
 		],
-		"name": "sendNumsFixed",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[]",
-				"name": "_strings",
-				"type": "string[]"
-			}
-		],
-		"name": "sendStrings",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[3]",
-				"name": "_strings",
-				"type": "string[3]"
-			}
-		],
-		"name": "sendStringsFixed",
+		"name": "intakeFixedBytes",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
 		"inputs": [],
-		"name": "string1",
+		"name": "myDifficultTuple",
 		"outputs": [
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "indeed",
 				"type": "string"
 			}
 		],
@@ -109,11 +57,21 @@ var CalldataTester = [
 	},
 	{
 		"inputs": [],
-		"name": "string2",
+		"name": "myDynamicTuple",
 		"outputs": [
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "niceString",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "awooga",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "impressiveString",
 				"type": "string"
 			}
 		],
@@ -122,12 +80,125 @@ var CalldataTester = [
 	},
 	{
 		"inputs": [],
-		"name": "string3",
+		"name": "myStaticTuple",
 		"outputs": [
 			{
-				"internalType": "string",
+				"internalType": "uint256",
+				"name": "num1",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "coolBool",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint16",
+				"name": "amazingNum",
+				"type": "uint16"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "string[]",
+						"name": "why",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "yes",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "string",
+						"name": "indeed",
+						"type": "string"
+					}
+				],
+				"internalType": "struct CallDataTester.difficultTuple",
+				"name": "_tuple",
+				"type": "tuple"
+			}
+		],
+		"name": "setDifficultTuple",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "niceString",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "awooga",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "impressiveString",
+						"type": "string"
+					}
+				],
+				"internalType": "struct CallDataTester.dynamicTuple",
+				"name": "_tuple",
+				"type": "tuple"
+			}
+		],
+		"name": "setDynamicTuple",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "num1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "coolBool",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint16",
+						"name": "amazingNum",
+						"type": "uint16"
+					}
+				],
+				"internalType": "struct CallDataTester.staticTuple",
+				"name": "_tuple",
+				"type": "tuple"
+			}
+		],
+		"name": "setStaticTuple",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "testBytes",
+		"outputs": [
+			{
+				"internalType": "bytes",
 				"name": "",
-				"type": "string"
+				"type": "bytes"
 			}
 		],
 		"stateMutability": "view",
