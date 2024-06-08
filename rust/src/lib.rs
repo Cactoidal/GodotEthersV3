@@ -166,7 +166,7 @@ fn check_erc20_allowance(_key: PackedByteArray, _chain_id: GString, _rpc: GStrin
 
 
 #[func]
-fn approve_erc20_allowance(_key: PackedByteArray, _chain_id: GString, _rpc: GString, _gas_fee: u64, _count: u64, _token_contract: GString, _spender_contract: GString) -> GString {
+fn approve_erc20_allowance(_key: PackedByteArray, _chain_id: GString, _token_contract: GString, _rpc: GString, _gas_fee: u64, _count: u64, _spender_contract: GString) -> GString {
 
     let (wallet, chain_id, user_address, client) = get_signer(_key, _chain_id, _rpc);
 
@@ -253,6 +253,7 @@ fn get_address(_key: PackedByteArray) -> GString {
 }
 
 
+
 #[func]
 fn decode_string (_message: GString) -> GString {
     let raw_hex: String = _message.to_string();
@@ -302,9 +303,70 @@ fn decode_uint256 (_message: GString) -> GString {
 }
 
 
+
+
+//  EXPERIMENTAL //
+
+#[func]
+fn get_function_selector(function_bytes: PackedByteArray) -> GString {
+    let selector_bytes = ethers::utils::keccak256(&function_bytes.to_vec()[..]);
+    
+    let selector = hex::encode(selector_bytes);
+    
+    selector.to_string().into()
+
 }
 
 
+#[func]
+fn sign_raw_calldata(_key: PackedByteArray, _chain_id: GString, _contract_address: GString, _rpc: GString, _gas_limit: GString, _gas_fee: u64, _count: u64, _value: GString, _calldata: GString) -> GString {
+             
+    let (wallet, chain_id, user_address, client) = get_signer(_key, _chain_id, _rpc);
+        
+    let contract_address: Address = _contract_address.to_string().parse().unwrap();
+
+    let gas_limit = string_to_uint256(_gas_limit);
+
+    let value = string_to_uint256(_value);
+
+    let calldata = string_to_bytes(_calldata);
+
+    let tx = Eip1559TransactionRequest::new()
+        .from(user_address)
+        .to(contract_address) 
+        .value(value)
+        .gas(gas_limit) //recommend 900000
+        .max_fee_per_gas(_gas_fee)
+        .max_priority_fee_per_gas(_gas_fee)
+        .chain_id(chain_id)
+        .nonce(_count)
+        .data(calldata);
+
+    let signed_calldata = get_signed_calldata(tx, wallet);
+
+    signed_calldata
+
+}
+
+
+#[func]
+fn encode_uint256 (_big_uint: GString) -> GString {
+    let big_uint: BigUint = _big_uint.to_string().parse().unwrap();
+    let u256: U256 = U256::from_big_endian(big_uint.to_bytes_be().as_slice());
+    let encoded = ethers::abi::AbiEncode::encode(u256);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+#[func]
+fn encode_address (_address: GString) -> GString {
+    let address: Address = _address.to_string().parse().unwrap();
+    let encoded = ethers::abi::AbiEncode::encode(address);
+    let return_string: GString = hex::encode(encoded).into();
+    return_string
+}
+
+}
 
 
 //      UTILITY FUNCTIONS       //
