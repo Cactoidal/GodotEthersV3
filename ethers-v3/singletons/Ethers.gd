@@ -223,7 +223,16 @@ func return_gas_balance(_callback):
 
 func read_from_contract(network, contract, contract_function, contract_args, callback_node, callback_function, callback_args={}):
 	var random_key = Crypto.new().generate_random_bytes(32)
-	var calldata = get_read_calldata(random_key, network, contract, contract_function, contract_args)
+	
+	#var calldata = get_read_calldata(random_key, network, contract, contract_function, contract_args)
+	
+	
+	#DEBUG
+	#EXPERIMENTAL
+	var contract_call = callback_args["contract_call"]
+	var calldata = "0x" + get_calldata(Contract.ERC20, contract_call, contract_args)
+	print(calldata)
+	
 	Ethers.perform_request(
 		"eth_call", 
 		[{"to": contract, "input": calldata}, "latest"], 
@@ -510,7 +519,10 @@ func get_erc20_info(network, address, contract, callback_node, callback_function
 		"address": address, 
 		"contract": contract,
 		"callback_node": callback_node,
-		"callback_function": callback_function
+		"callback_function": callback_function,
+		
+		#DEBUG
+		"contract_call": "name"
 		}
 	get_erc20_name(network, contract, self, "return_erc20_name", callback_args)
 
@@ -523,6 +535,9 @@ func return_erc20_name(callback):
 	var callback_args = callback["callback_args"]
 	var contract = callback_args["contract"]
 	var network = callback_args["network"]
+	
+	#DEBUG
+	callback_args["contract_call"] = "decimals"
 	if callback["success"]:
 		callback_args["name"] = decode_string(callback["result"])
 		get_erc20_decimals(network, contract, self, "get_erc20_decimals", callback_args)
@@ -536,6 +551,9 @@ func return_erc20_decimals(callback):
 	var callback_args = callback["callback_args"]
 	var contract = callback_args["contract"]
 	var network = callback_args["network"]
+	
+	#DEBUG
+	callback_args["contract_call"] = "balanceOf"
 	if callback["success"]:
 		var decimals = decode_uint256(callback["result"])
 		callback_args["decimals"] = decimals

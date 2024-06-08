@@ -310,6 +310,28 @@ var IMAGINARY = [
 				"internalType": "string[]",
 				"name": "value",
 				"type": "string[]"
+			},
+			{
+				"internalType": "tuple",
+				"name": "why",
+				"type": "tuple",
+				"components": [
+					{
+					"internalType": "bool",
+					"name": "to",
+					"type": "bool"
+					},
+					{
+					"internalType": "string",
+					"name": "yas",
+					"type": "string"
+					},
+					{
+					"internalType": "uint256",
+					"name": "ooo",
+					"type": "uint256"
+					}
+				]
 			}
 		],
 		"name": "not_real",

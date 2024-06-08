@@ -1,5 +1,31 @@
 extends Node
 
+# Can encode:
+# Uints of typical varieties
+# Ints of typical varieties
+# Strings
+# Addresses
+# Bools
+# Enums
+# Dynamic Tuples
+# Unnested, Dynamic Arrays of Strings and Dynamic Tuples
+
+# Still need:
+# Static Tuples
+# Static Arrays
+# Nested Arrays
+# Bytes
+# Fixed Bytes
+# Fixed Arrays
+
+# Decodings also need attention (see Ethers for these)
+# Automatic decoding using the ABI would be nice
+
+# I'm a bit unclear about what form "bytes" are supposed to take
+# The bytes themselves are a utf8 buffer.  But eventually they are hex encoded
+# Before they are ABI-encoded, are "bytes"-type arguments a hex-encoded string? 
+# Or are they a buffer?
+
 
 func sort_args_for_encoding(abi, function_name, _args=[]):
 	var args = []
@@ -9,6 +35,7 @@ func sort_args_for_encoding(abi, function_name, _args=[]):
 				if function.has("inputs"):
 					var selector = 0
 					for input in function["inputs"]:
+						
 						var new_arg = {
 							"value": _args[selector],
 							"type": input["type"],
@@ -16,10 +43,13 @@ func sort_args_for_encoding(abi, function_name, _args=[]):
 							"length": 0,
 							"dynamic": false
 							}
+						if input["type"].contains("tuple"):
+							new_arg["components"] = input["components"]
 						args.push_back(new_arg)
 						selector += 1
 				
 				var function_selector = get_function_selector(function)
+				
 				var calldata = construct_calldata(args)
 				return function_selector + calldata
 	
@@ -33,7 +63,7 @@ func construct_calldata(args):
 	for arg in args:
 		var arg_type = arg["type"]
 		if arg_type.contains("["):
-			#not true for fixed arrays with static parameters 
+			#not true for fixed arrays and arrays with static parameters 
 			arg["dynamic"] = true
 		elif arg_type.begins_with("bytes"):
 			if arg_type.length() == 5:
@@ -41,6 +71,7 @@ func construct_calldata(args):
 		else:
 			match arg_type:
 				"string": arg["dynamic"] = true
+				#not true for tuples with static parameters 
 				"tuple": arg["dynamic"] = true
 		
 		if arg["dynamic"]:
@@ -117,7 +148,7 @@ func encode_general(arg):
 	var arg_type = arg["type"]
 	var calldata = GodotSigner.call("encode_" + arg_type, value)
 	if arg_type in ["bytes", "string"]:
-		calldata = calldata.trim_prefix("000000000000000000000000000000000000000000000000000000000000002")
+		calldata = calldata.trim_prefix("0000000000000000000000000000000000000000000000000000000000000020")
 
 	return calldata
 
@@ -139,12 +170,11 @@ func encode_enum(arg):
 	var calldata = GodotSigner.encode_uint8(value)
 	return calldata
 
-func encode_array(_arg):
+func encode_array(arg):
 	#add fixed array support
 	#add nested array support
-	
-	var _arg_type = _arg["type"]
-	var array = _arg["value"]
+	var _arg_type = arg["type"]
+	var value_array = arg["value"]
 	
 	var array_start_index = _arg_type.find("[")
 	var arg_type = _arg_type.left(array_start_index)
@@ -152,7 +182,7 @@ func encode_array(_arg):
 	var calldata = ""
 	var args = []
 	
-	for value in array:
+	for value in value_array:
 		var new_arg = {
 			"value": value,
 			"type": arg_type,
@@ -160,14 +190,35 @@ func encode_array(_arg):
 			"length": 0,
 			"dynamic": false
 			}
+		if arg_type.contains("tuple"):
+			new_arg["components"] = arg["components"]
 		args.push_back(new_arg)
 	
-		calldata = construct_calldata(args)
-
+	calldata = construct_calldata(args)
 	return calldata
 
 func encode_tuple(arg):
-	pass
+	var value_array = arg["value"]
+	var components = arg["components"]
+	var args = []
+	var selector = 0
+	for component in components:
+		
+		var new_arg = {
+			"value": value_array[selector],
+			"type": component["type"],
+			"calldata": "",
+			"length": 0,
+			"dynamic": false
+				}
+		if component["type"].contains("tuple"):
+			new_arg["components"] = component["components"]
+		args.push_back(new_arg)
+		selector += 1
+	
+	var calldata = construct_calldata(args)
+	return calldata
+	
 
 
 ##########   DECODING   #########

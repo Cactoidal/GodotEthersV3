@@ -27,7 +27,7 @@ func _ready():
 	#Ethers.get_gas_balance("Base Sepolia", "test_keystore", self, "update_gas_balance")
 	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore"), sepolia_link_contract, self, "get_erc20_info")
 	
-	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
+	Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
 	
 	#var amount = Ethers.convert_to_big_uint("0.000000001", 18)
 	var amount = Ethers.convert_to_big_uint("0.001", 18)
@@ -39,12 +39,12 @@ func _ready():
 	# DEBUG
 	# EXPERIMENTAL
 	
-	print("test: " + GodotSigner.encode_uint256("32"))
-	var success = Calldata.sort_args_for_encoding(Contract.IMAGINARY, "not_real", ["recipient", true, ["amount", "meow", "merrow"]])
-	if !success:
-		print("encoding failed")
-	else:
-		print("attempt: " + success)
+	#var success = Calldata.sort_args_for_encoding(Contract.IMAGINARY, "not_real", [Ethers.convert_to_big_uint("12", 18), [Ethers.convert_to_big_uint("120", 18), Ethers.convert_to_big_uint("0.01", 18), Ethers.convert_to_big_uint("9000", 18)], [["hello", Ethers.convert_to_big_uint("190", 18)], ["why", Ethers.convert_to_big_uint("7428624", 18)]]])
+	#var success = Calldata.sort_args_for_encoding(Contract.IMAGINARY, "not_real", ["recipient", true, ["amount", "meow", "merrow"], [true, "aiiieeargh", Ethers.convert_to_big_uint("120", 18)]])
+	#if !success:
+		#print("encoding failed")
+	#else:
+		#print("attempt: " + success)
 	
 	#var calldata = Ethers.get_calldata(Contract.ERC20, "transfer", [recipient, amount])
 	#print("target: " + calldata)
