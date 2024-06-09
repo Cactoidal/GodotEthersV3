@@ -74,7 +74,7 @@ Callback functions should take a single argument: `callback`, which will be a di
 
 ___
 
-### `send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0", auto_confirm=true)`
+### `send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0")`
 
 `account` is the name of a user-created account.  See the note below for more information.
 
@@ -83,8 +83,6 @@ ___
 `gas_limit` is the transaction gas limit, and by default is set for 900,000, which is quite high.  You can adjust this default as needed.
 
 `value` is the amount of Ether to send with the transaction, typically 0.
-
-`auto_confirm` is present because transactions by default will be sent without asking the user to confirm.  If you want to implement manual confirms, you can do so by editing the `Transaction.gd` singleton, and setting auto-confirm to false.
 
 ___
 
