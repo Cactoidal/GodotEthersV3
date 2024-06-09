@@ -26,10 +26,10 @@ func resolve_ethereum_request(result, response_code, headers, body):
 	if callback["success"]:
 		perform_callback()
 	else:
-		if callback["retries"] < 3:
-			callback["retries"] += 1
+		if callback["retries"] == 0:
 			retry_timer = 0.2
 		else:
+			callback["retries"] -= 1
 			perform_callback()
 
 

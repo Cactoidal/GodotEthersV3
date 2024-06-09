@@ -14,18 +14,15 @@ var calldata_tester_contract = "0x6a574550b12c159736D7386c7793707b31Af694F"
 # should be the primary API for the developer
 
 
-# continue implementing ABI spec:
+# implement nested arrays
+# implement decoding
+# do more testing
 
-# For fixed and nested arrays, check for "[]" and numbers enclosed by "[]"
-# Figure out the correct way to handle bytes-type arguments
-# I believe that buffers are expected, so convert to PackedByteArray before encoding
-# Check out the bytes-handling code in the old library
-# Fixed bytes will also need to pass their length to Rust so they can be encoded properly
-# Determine the encoding rules for tuples and arrays that contain only static values
-# Arrays are dynamic unless they are fixed
-# Both will also need "deep checking" to make sure they are properly marked as dynamic
-# if they contain any dynamic values at all
-# And finally: test it with more ABIs
+# drop the autoconfirm idea; transactions could have a popup before
+# ever sending data to the Transaction.gd lane.  Transaction.gd's sole 
+# purpose is to send out a transaction as quickly as possible.  It is 
+# assumed that any transaction that gets in there does so because
+# the developer intended it, manual confirms or not.
 
 
 
@@ -92,26 +89,26 @@ func _ready():
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "intakeFixedBytes", ["e0e0e0e"])
 	
 	
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
-	
-	# theChallenge - works!
-	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "theChallenge", [   
-		
-		
-				[ 
-					
-					
-					[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ],   
-					[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ],   
-					[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ]           
-					
-					
-					]      
-				
-				
-				])
+	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
 	print(calldata)
-	Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
+	# theChallenge - works!
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "theChallenge", [   
+		#
+		#
+				#[ 
+					#
+					#
+					#[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ],   
+					#[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ],   
+					#[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ]           
+					#
+					#
+					#]      
+				#
+				#
+				#])
+	
+	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
 	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", [Ethers.convert_to_big_uint("12", 18), [Ethers.convert_to_big_uint("120", 18), Ethers.convert_to_big_uint("0.01", 18), Ethers.convert_to_big_uint("9000", 18)], [["hello", Ethers.convert_to_big_uint("190", 18)], ["why", Ethers.convert_to_big_uint("7428624", 18)]]])
 	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", ["recipient", true, ["amount", "meow", "merrow"], [true, "aiiieeargh", Ethers.convert_to_big_uint("120", 18)]])

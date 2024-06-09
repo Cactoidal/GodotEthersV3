@@ -240,7 +240,7 @@ func read_from_contract(network, contract, calldata, callback_node, callback_fun
 		callback_node,
 		callback_function, 
 		callback_args,
-		0 #default "retries" value
+		3 #default "retries" value
 		)
 
 
@@ -251,9 +251,9 @@ func pending_transaction(network):
 		return false
 
 
-func send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0", auto_confirm=true):
+func send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
 	calldata = calldata.trim_prefix("0x")
-	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args, auto_confirm)
+	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args)
 
 # For ETH transfers
 func transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}):
@@ -269,7 +269,7 @@ func transfer(account, network, recipient, amount, callback_node, callback_funct
 	)
 
 
-func perform_request(method, params, network, callback_node, callback_function, callback_args={}, retries=0):
+func perform_request(method, params, network, callback_node, callback_function, callback_args={}, retries=3):
 	
 	var callback = {
 		"callback_node": callback_node,
@@ -421,7 +421,7 @@ func decode_bool(hex):
 # With Godot 4+, the .right() and .left() string methods were completely changed,
 # and some methods, such as .erase(), no longer change the string in place
 
-func convert_to_big_uint(number, token_decimals):
+func convert_to_big_uint(number, token_decimals=18):
 	if number.begins_with("."):
 		number = "0" + number
 		
@@ -453,7 +453,7 @@ func convert_to_big_uint(number, token_decimals):
 	return big_uint
 
 
-func convert_to_smallnum(bignum, token_decimals):
+func convert_to_smallnum(bignum, token_decimals=18):
 	var size = bignum.length()
 	var smallnum = ""
 	if size <= int(token_decimals):

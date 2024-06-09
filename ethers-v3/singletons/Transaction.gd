@@ -19,8 +19,7 @@ func start_transaction(
 	contract_args,
 	callback_node, 
 	callback_function, 
-	callback_args={}, 
-	auto_confirm=true
+	callback_args={}
 	):
 		
 		if !pending_transaction(network):
@@ -34,7 +33,6 @@ func start_transaction(
 			"contract": contract,
 			"contract_function": contract_function,
 			"contract_args": contract_args,
-			"auto_confirm": auto_confirm,
 			"initialized": false,
 			"tx_count": 0,
 			"gas_price": 0,
@@ -131,13 +129,6 @@ func get_gas_price(callback):
 			if transaction["gas_price"] > int(maximum_gas_fee):
 				emit_error("Gas fee too high", network)
 				return
-		
-		if !transaction["auto_confirm"]:
-			# DEBUG
-			# Option is here to provide pop-up to confirm manually
-			# For now, just causes transaction to fail.
-			emit_error("Manual confirmation not implemented", network)
-			return
 		
 		# Used for "merging" the private key with the params array 
 		# without declaring the key locally; see below
@@ -264,8 +255,7 @@ func send_raw_transaction(
 	calldata, 
 	callback_node, 
 	callback_function, 
-	callback_args={}, 
-	auto_confirm=true
+	callback_args={}
 	):
 		
 		if !pending_transaction(network):
@@ -280,7 +270,6 @@ func send_raw_transaction(
 			"gas_limit": gas_limit,
 			"value": value,
 			"calldata": calldata,
-			"auto_confirm": auto_confirm,
 			"initialized": false,
 			"tx_count": 0,
 			"gas_price": 0,
