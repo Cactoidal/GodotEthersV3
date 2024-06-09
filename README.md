@@ -19,7 +19,9 @@ Note that every function mentioned on this page is defined in the `Ethers.gd` si
 
 ---
 
-### `get_calldata(ABI, function_name, args=[])`
+### `get_calldata(read_or_write, ABI, function_name, args=[])`
+
+`read_or_write` is a String: "READ" or "WRITE".  Use "READ" if you intend to call a view/pure function with `read_from_contract()`.
 
 `ABI` is your contract's ABI.  It needs to be pasted into a .gd file somewhere so you can call it.
 
@@ -44,6 +46,12 @@ Note that every function mentioned on this page is defined in the `Ethers.gd` si
 * __tuple__ (struct) as ARRAY containing any of these types
 
 You will notice that everything must be passed as either a String, Array of Strings, or Array of Arrays, with only a couple (optional) exceptions.
+
+This function returns a dictionary containing the following fields:
+
+"calldata": the ABI-encoded calldata for the function you want to call
+
+"outputs": the output types, which GodotEthers will use to automatically decode the RPC response.  This field will only be present if you specified "READ" in `read_or_write` above.
 
 ___
 
