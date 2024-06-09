@@ -8,7 +8,7 @@ var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
 
-var calldata_tester_contract = "0x6a574550b12c159736D7386c7793707b31Af694F"
+var calldata_tester_contract = "0xD3f61568f74ffB0cD972b39c91937CD7d47659ea"
 
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
@@ -89,6 +89,32 @@ func _ready():
 	
 	#nestedStringsAndFriend - works!
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
+	
+	
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "anotherNesteFriend", 
+	#[  
+		#[  ["hello","meow", "why"]  ,   ["why", "why", "aaiiieee"]  ], 
+		#
+		#"374673264", 
+		#
+		#[   ["346374", "4762784"], ["4276237", "134123"], ["31267", "4376327"]  ]
+		#
+	#] )
+	
+	# fails on oof and okay
+	# oof: string[][2]
+	# okay: string[2][]
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "okay", [[["yes","ok"],["aiie","ooaj"]]])
+	#print(calldata)
+	
+	#var calldata = "0x7d6138280000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000003796573000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026f6b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000004616969650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000046f6f616a00000000000000000000000000000000000000000000000000000000"
+	#var chunk_amount = (calldata.length() - 8) / 64
+	#for chunk in range(chunk_amount):
+		#var index = chunk * 64
+		#print(calldata.substr(index, 64))
+		
+		
+	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	#manyDynamicNested - works!
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "manyDynamicNested", [                      
 		#[
@@ -147,7 +173,7 @@ func _ready():
 		#
 		#
 	#])
-	#print(calldata)
+	
 	# theChallenge - works!
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "theChallenge", [   
 		#

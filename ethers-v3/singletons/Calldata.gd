@@ -51,8 +51,7 @@ func get_function_calldata(abi, function_name, _args=[]):
 				
 				var calldata = construct_calldata(args)
 				return function_selector + calldata
-	
-	return false
+
 
 func construct_calldata(args):
 	var body = []
@@ -125,7 +124,7 @@ func encode_arg(arg):
 	elif arg_type.begins_with("bytes"):
 		if arg_type.length() == 5:
 			# Checks if the bytes have been provided as a 
-			# hex string, and converts to a PackedByteArray
+			# hex String, and converts to a PackedByteArray
 			if typeof(arg["value"]) == 4:
 				arg["value"] = arg["value"].hex_decode()
 			calldata = encode_general(arg)
@@ -161,6 +160,7 @@ func get_function_selector(function):
 	
 	return function_selector
 
+
 func get_tuple_components(input):	
 	var selector_string = ""
 	
@@ -180,7 +180,8 @@ func array_is_dynamic(arg_type):
 	for dynamic_type in ["string", "bytes"]:
 		if arg_type.begins_with(dynamic_type):
 			return true
-			
+	
+	
 	if arg_type.contains("[]"):
 		return true
 		
@@ -225,7 +226,7 @@ func encode_fixed_bytes(arg):
 	var arg_type = arg["type"]
 		
 	# Checks if the bytes have been provided as a PackedByteArray,
-	# and converts into a hex string
+	# and converts into a hex String
 	if typeof(value) == 29:
 		value = value.hex_encode()
 	
@@ -237,12 +238,14 @@ func encode_fixed_bytes(arg):
 
 func encode_bool(arg):
 	var value = arg["value"]
-	# Checks if bool is string
+	
+	# Checks if bool has been given as a String
 	if typeof(value) == 4:
 		if value == "true":
 			value = true
 		else:
 			value = false
+			
 	var calldata = GodotSigner.encode_bool(value)
 	return calldata
 
@@ -258,29 +261,28 @@ func encode_array(arg):
 	var _arg_type = arg["type"]
 	var value_array = arg["value"]
 	
-	var array_start_index = _arg_type.find("[")
-	var arg_type = _arg_type.left(array_start_index)
+	# Nested Arrays are encoded right to left
+	var type_splitter = 2
+	var array_checker = _arg_type.right(type_splitter)
 	
-	array_start_index += 2
-	var array_checker = _arg_type.left(array_start_index)
-	
+	# Check if the rightmost array has a fixed size
 	if array_checker.contains("[]"):
 		arg["fixed_size"] = false
 	else:
 		arg["fixed_size"] = true
-		array_start_index += 1
+		type_splitter += 1
+	
+	# Extract the type of the rightmost array's elements
+	var arg_type = _arg_type.left(-type_splitter)
 	
 	var calldata = ""
 	var args = []
 	
 	for value in value_array:
-		var value_type = arg_type
-		# Checks if value is nested array
-		if typeof(value) == 28:
-			value_type += _arg_type.right(-array_start_index)
+	
 		var new_arg = {
 			"value": value,
-			"type": value_type,
+			"type": arg_type,
 			"calldata": "",
 			"length": 0,
 			"dynamic": false
@@ -291,6 +293,7 @@ func encode_array(arg):
 	
 	calldata = construct_calldata(args)
 	
+	# Add length component if unfixed size
 	if !arg["fixed_size"]:
 		var _param_count = str(arg["value"].size())
 		var param_count = GodotSigner.encode_uint256(_param_count)

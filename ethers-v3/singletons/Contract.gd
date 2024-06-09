@@ -56,29 +56,6 @@ var CalldataTester = [
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "string[2][3]",
-				"name": "nest",
-				"type": "string[2][3]"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_friend",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256[][2]",
-				"name": "nest2",
-				"type": "uint256[][2]"
-			}
-		],
-		"name": "anotherNesteFriend",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "challengeCleared",
 		"outputs": [
@@ -105,58 +82,6 @@ var CalldataTester = [
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "bytes13",
-				"name": "_bytes",
-				"type": "bytes13"
-			}
-		],
-		"name": "fixedBytes13",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes27",
-				"name": "_bytes",
-				"type": "bytes27"
-			}
-		],
-		"name": "fixedBytes27",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes32",
-				"name": "_bytes",
-				"type": "bytes32"
-			}
-		],
-		"name": "fixedBytes32",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bytes8",
-				"name": "_bytes",
-				"type": "bytes8"
-			}
-		],
-		"name": "fixedBytes8",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "gauntletCleared",
 		"outputs": [
@@ -178,19 +103,6 @@ var CalldataTester = [
 			}
 		],
 		"name": "manyDynamicNested",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[][][]",
-				"name": "_many",
-				"type": "uint256[][][]"
-			}
-		],
-		"name": "manyStaticNested",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -270,17 +182,25 @@ var CalldataTester = [
 	{
 		"inputs": [
 			{
-				"internalType": "string[][]",
-				"name": "nest",
-				"type": "string[][]"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_friend",
-				"type": "uint256"
+				"internalType": "string[2][]",
+				"name": "_okay",
+				"type": "string[2][]"
 			}
 		],
-		"name": "nestedStringsAndFriend",
+		"name": "okay",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string[][2]",
+				"name": "_oof",
+				"type": "string[][2]"
+			}
+		],
+		"name": "oof",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -374,184 +294,12 @@ var CalldataTester = [
 	{
 		"inputs": [
 			{
-				"components": [
-					{
-						"components": [
-							{
-								"internalType": "string",
-								"name": "niceString",
-								"type": "string"
-							},
-							{
-								"internalType": "uint256",
-								"name": "awooga",
-								"type": "uint256"
-							},
-							{
-								"internalType": "string",
-								"name": "impressiveString",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.dynamicTuple[]",
-						"name": "_dynamic",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes4[]",
-						"name": "_bytes",
-						"type": "bytes4[]"
-					},
-					{
-						"components": [
-							{
-								"internalType": "uint256",
-								"name": "num1",
-								"type": "uint256"
-							},
-							{
-								"internalType": "bool",
-								"name": "coolBool",
-								"type": "bool"
-							},
-							{
-								"internalType": "uint16",
-								"name": "amazingNum",
-								"type": "uint16"
-							}
-						],
-						"internalType": "struct CallDataTester.staticTuple",
-						"name": "_static",
-						"type": "tuple"
-					},
-					{
-						"internalType": "uint256",
-						"name": "friend",
-						"type": "uint256"
-					}
-				],
-				"internalType": "struct CallDataTester.coolTuple[2]",
-				"name": "",
-				"type": "tuple[2]"
-			},
-			{
-				"internalType": "bool",
-				"name": "niceBool",
-				"type": "bool"
+				"internalType": "string[2][2]",
+				"name": "_what",
+				"type": "string[2][2]"
 			}
 		],
-		"name": "theCoolOne",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "bytes[]",
-						"name": "why_not",
-						"type": "bytes[]"
-					},
-					{
-						"components": [
-							{
-								"internalType": "string",
-								"name": "niceString",
-								"type": "string"
-							},
-							{
-								"internalType": "uint256",
-								"name": "awooga",
-								"type": "uint256"
-							},
-							{
-								"internalType": "string",
-								"name": "impressiveString",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.dynamicTuple",
-						"name": "_dynamic",
-						"type": "tuple"
-					},
-					{
-						"components": [
-							{
-								"internalType": "uint256",
-								"name": "num1",
-								"type": "uint256"
-							},
-							{
-								"internalType": "bool",
-								"name": "coolBool",
-								"type": "bool"
-							},
-							{
-								"internalType": "uint16",
-								"name": "amazingNum",
-								"type": "uint16"
-							}
-						],
-						"internalType": "struct CallDataTester.staticTuple",
-						"name": "_static",
-						"type": "tuple"
-					},
-					{
-						"components": [
-							{
-								"internalType": "string[]",
-								"name": "why",
-								"type": "string[]"
-							},
-							{
-								"internalType": "uint256[]",
-								"name": "yes",
-								"type": "uint256[]"
-							},
-							{
-								"internalType": "string",
-								"name": "indeed",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.difficultTuple",
-						"name": "_difficult",
-						"type": "tuple"
-					}
-				],
-				"internalType": "struct CallDataTester.ultraTuple[2][][]",
-				"name": "",
-				"type": "tuple[2][][]"
-			},
-			{
-				"internalType": "uint256[]",
-				"name": "",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "bytes[]",
-				"name": "",
-				"type": "bytes[]"
-			},
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			},
-			{
-				"internalType": "string[][2]",
-				"name": "",
-				"type": "string[][2]"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "theGauntlet",
+		"name": "what",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
