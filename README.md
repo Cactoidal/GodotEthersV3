@@ -1,5 +1,5 @@
 # GodotEthersV3
-Ethers for Godot 4.3, built with Godot Rust and Ethers-rs.
+Ethers for Godot 4.3, built with Godot Rust and Ethers-rs
 
 Docs | About
 
