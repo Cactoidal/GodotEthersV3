@@ -86,6 +86,8 @@ ___
 
 `auto_confirm` is present because transactions by default will be sent without asking the user to confirm.  If you want to implement manual confirms, you can do so by editing the `Transaction.gd` singleton, and setting auto-confirm to false.
 
+When receiving a successful callback from `send_transaction()`, note that the "result" field will be the transaction receipt.
+
 ___
 
 ### A Note on Accounts
