@@ -93,7 +93,7 @@ ___
 Check if a keystore exists using `account_exists()`, then call `create_account()` to name a new keystore and encrypt it with a password.
 
 
-You then must use `login()` with the name and password.  Once the account is logged in, you can use it to call functions like `get_address()`, `send_transaction()`, and `get_key()`.
+You then must use `login()` with the name and password.  Once the account is logged in, you can use it to call functions like `get_address()` and `send_transaction()`.
 
 ___
 
