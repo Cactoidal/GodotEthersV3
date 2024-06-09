@@ -8,7 +8,7 @@ var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
 
-var calldata_tester_contract = "0xC6F48EF36ee77Fe85b9fd7cEe33d976f4921C62B"
+var calldata_tester_contract = "0x6a574550b12c159736D7386c7793707b31Af694F"
 
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
@@ -81,15 +81,36 @@ func _ready():
 	#setDynamicTuple - works.!
 	#setDifficultTuple - works!
 	#intakeBytes - works!
-	#intakeFixedBytes - works... maybe!
+	#intakeFixedBytes - works!
 	
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setStaticTuple", [["2324727", true, "3467"]])
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDynamicTuple", [["hi", "3476237846", "hello"]])
-	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDifficultTuple", [[ ["hi", "meow", "hello"],  ["3748642", "45", "4876243"],  "helloooo"]])
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDifficultTuple", [[ ["hi", "meow", "hello"],  ["3748642", "45", "4876243"],  "helloooo"]])
 	
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "fixedBytes8", ["e0e0e0e0e0e0e0e0"])
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "fixedBytes32", ["e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0"])
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "intakeFixedBytes", ["e0e0e0e"])
-	print(calldata)
 	
+	
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
+	
+	# theChallenge - works!
+	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "theChallenge", [   
+		
+		
+				[ 
+					
+					
+					[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ],   
+					[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ],   
+					[ ["e0e0e0e0e0e0e0e0", "e0e0e0e0e0e0e0e0"],["fhbshb", "2374672384", "sjshjff"],["4723847", true, "374"],[ ["sjfhdsj", "fiuhd", "dsfjhbds"], ["348723", "2746274"], "ewfwhjb"] ]           
+					
+					
+					]      
+				
+				
+				])
+	print(calldata)
 	Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
 	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", [Ethers.convert_to_big_uint("12", 18), [Ethers.convert_to_big_uint("120", 18), Ethers.convert_to_big_uint("0.01", 18), Ethers.convert_to_big_uint("9000", 18)], [["hello", Ethers.convert_to_big_uint("190", 18)], ["why", Ethers.convert_to_big_uint("7428624", 18)]]])

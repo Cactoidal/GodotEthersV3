@@ -16,10 +16,12 @@ extends Node
 # Bytes - works
 # Dynamic Tuples - works
 # Static Tuples  - works
-# FixedBytes - kind of works but needs more testing (must be manually constructed)
+# FixedBytes - works (manually constructed)
+# Arrays of Structs - works
 # Nested Arrays - ?
 
 
+# Arrays need to check somehow if they are nested
 
 
 
@@ -65,7 +67,6 @@ func construct_calldata(args):
 		var arg_type = arg["type"]
 		if arg_type.contains("["):
 			if array_is_dynamic(arg_type):
-				print("array " + arg_type + " is dynamic")
 				arg["dynamic"] = true
 		elif arg_type.begins_with("bytes"):
 			if arg_type.length() == 5:
@@ -141,31 +142,42 @@ func encode_arg(arg):
 			"bool": calldata = encode_bool(arg)
 			"enum": calldata = encode_enum(arg)
 			"tuple": calldata = encode_tuple(arg)
-		
+	
 	return calldata
 
 
 func get_function_selector(function):
 	var selector_string = function["name"] + "("
 	for input in function["inputs"]:
-		if input["type"] == "tuple":
+		
+		if input["type"].contains("tuple"):
 			selector_string += get_tuple_components(input)
+			selector_string = selector_string.trim_suffix(",")
+			if input["type"].length() > 5:
+				selector_string += input["type"].right(-5)
 		else:
 			selector_string += input["type"] + ","
+			
 	selector_string = selector_string.trim_suffix(",") + ")"
+
 	var selector_bytes = selector_string.to_utf8_buffer()
 	var function_selector = GodotSigner.get_function_selector(selector_bytes).left(8)
 	
 	return function_selector
 
-func get_tuple_components(input):
+func get_tuple_components(input):	
 	var selector_string = ""
+	
 	for component in input["components"]:
-		selector_string += component["type"] + ","
-		if component["type"] == "tuple":
+		if component["type"].contains("tuple"):
 			selector_string += get_tuple_components(component)
+			if component["type"].length() > 5:
+				selector_string += component["type"].right(-5)
+		else:
+			selector_string += component["type"] + ","
+	
 	selector_string = selector_string.trim_suffix(",")
-	return ("(" + selector_string + ")")
+	return ("(" + selector_string + "),")
 
 
 func array_is_dynamic(arg_type):
@@ -212,22 +224,16 @@ func encode_general(arg):
 	return calldata
 
 
-# DEBUG
-# Works sort of but still a bit off.  try more byte sizes
-
 func encode_fixed_bytes(arg):
 	var value = arg["value"]
 	var arg_type = arg["type"]
-	
-	var bytes_length = int(arg_type.right(-5))
-	var padding_length = 61 - bytes_length
-	
+		
 	# Checks if the bytes have been provided as a PackedByteArray,
 	# and converts into a hex string
 	if typeof(value) == 29:
 		value = value.hex_encode()
 	
-	for zero in range(padding_length):
+	while value.length() < 64:
 		value += "0"
 	
 	return value
@@ -251,6 +257,7 @@ func encode_enum(arg):
 
 
 func encode_array(arg):
+	# Needs to check for nested
 
 	var _arg_type = arg["type"]
 	var value_array = arg["value"]
@@ -262,10 +269,8 @@ func encode_array(arg):
 	var array_checker = _arg_type.left(array_start_index)
 	if array_checker.contains("[]"):
 		arg["fixed_size"] = false
-		print("array " + _arg_type + " is not fixed size")
 	else:
 		arg["fixed_size"] = true
-		print("array " + _arg_type + " is fixed size")
 	
 	var calldata = ""
 	var args = []
@@ -293,14 +298,12 @@ func encode_array(arg):
 
 
 func encode_tuple(arg):
-	# like unfixed arrays, likely need to state the "length" component up front
 	var value_array = arg["value"]
 	var components = arg["components"]
-	#var component_length = str(components.size())
+
 	var args = []
 	var selector = 0
 	for component in components:
-		
 		var new_arg = {
 			"value": value_array[selector],
 			"type": component["type"],
@@ -314,7 +317,7 @@ func encode_tuple(arg):
 		selector += 1
 	
 	var calldata = construct_calldata(args)
-	#calldata = GodotSigner.encode_uint256(component_length) + calldata
+	
 	return calldata
 	
 
