@@ -54,7 +54,7 @@ ___
 
 `calldata` is the calldata you got from get_calldata().
 
-`callback_node` is the Godot node (typically self) that will receive the decoded RPC result
+`callback_node` is the Godot node (typically self) that will receive the decoded RPC result.
 
 `callback_function` is the function that will be called on the callback node.
 
