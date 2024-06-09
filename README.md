@@ -34,7 +34,7 @@ ___
 
 * __array__ as ARRAY
 
-* __tuple__ (struct) as ARRAY containing any of the types above
+* __tuple__ (struct) as ARRAY containing any of these types
 
 You will notice that everything must be passed as either a String or an Array of Strings, with only a couple (optional) exceptions.
 
