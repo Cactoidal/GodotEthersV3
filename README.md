@@ -36,7 +36,7 @@ ___
 
 * __tuple__ (struct) as ARRAY containing any of these types
 
-You will notice that everything must be passed as either a String or an Array of Strings, with only a couple (optional) exceptions.
+You will notice that everything must be passed as either a String, Array of Strings, or Array of Arrays, with only a couple (optional) exceptions.
 
 ___
 
