@@ -12,6 +12,12 @@ You can also use `perform_request()` to call any Ethereum method.  For example, 
 Note that every function mentioned on this page is defined in the `Ethers.gd` singleton, and can be accessed by calling the singleton, e.g. `Ethers.get_calldata()`.
 ___
 
+### A Note on Security
+
+This is experimental, alpha software, in a state of ongoing development, intended for usage on testnets.  
+
+---
+
 ### `get_calldata(ABI, function_name, args=[])`
 
 `ABI` is your contract's ABI.  It needs to be pasted into a .gd file somewhere so you can call it.
