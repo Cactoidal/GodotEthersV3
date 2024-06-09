@@ -5,7 +5,7 @@ Docs | About
 
 ___
 
-Using GodotEthers is pretty straightforward.  To interact with a contract, you just have to slap an ABI somewhere in your project, use `get_calldata()` for the function you want, then call `read_from_contract()` or `send_transaction()`.  That's it!  Encoding calldata and decoding the RPC response is all taken care of for you.
+Using GodotEthers is pretty straightforward.  To interact with a contract, you just need to slap an ABI somewhere in your project, use `get_calldata()` for the function you want, then call `read_from_contract()` or `send_transaction()`.  That's it!  Encoding calldata and decoding the RPC response is all taken care of for you.
 
 You can also use `perform_request()` to call any Ethereum method.  For example, you could use this to monitor a contract's activity with `eth_getLogs`.
 
