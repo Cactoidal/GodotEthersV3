@@ -48,7 +48,7 @@ ___
 
 ### `read_from_contract(network, contract, calldata, callback_node, callback_function, callback_args={})`
 
-`network` is the name of the network you're calling, as a string.
+`network` is the name of the network you're calling, as a String.
 
 `contract` is the contract address.
 
