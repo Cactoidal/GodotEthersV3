@@ -13,8 +13,6 @@ var calldata_tester_contract = "0xD3f61568f74ffB0cD972b39c91937CD7d47659ea"
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
 
-
-# implement nested arrays
 # implement decoding
 # do more testing
 
@@ -25,7 +23,11 @@ var calldata_tester_contract = "0xD3f61568f74ffB0cD972b39c91937CD7d47659ea"
 # a single, simple call.  Is there a way to check on-chain
 # if a given token is compatible with CCIP?
 
+# I'll need to add approve_bridge().
+
 # If I deploy endpoints, I could also implement a chronomancer_bridge() function.
+
+# This can be an add-on that someone can include in the template if they want.
 
 
 
@@ -64,13 +66,13 @@ func _ready():
 	
 	#sendStrings - works!
 	#sendStringsFixed - works!
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendStrings", [["hello", "why", "meow"]])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "sendStrings", [["hello", "why", "meow"]])
 	
 	#sendNums - works!
 	#sendNumsFixed - works!
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "sendNums", [["11111", "47632784", "1032848238"]])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "sendNums", [["11111", "47632784", "1032848238"]])
 
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "enumAndBoolWithString", ["2", "haoollo", true])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "enumAndBoolWithString", ["2", "haoollo", true])
 	
 	
 	#setStaticTuple - works!
@@ -79,19 +81,19 @@ func _ready():
 	#intakeBytes - works!
 	#intakeFixedBytes - works!
 	
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setStaticTuple", [["2324727", true, "3467"]])
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDynamicTuple", [["hi", "3476237846", "hello"]])
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "setDifficultTuple", [[ ["hi", "meow", "hello"],  ["3748642", "45", "4876243"],  "helloooo"]])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "setStaticTuple", [["2324727", true, "3467"]])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "setDynamicTuple", [["hi", "3476237846", "hello"]])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "setDifficultTuple", [[ ["hi", "meow", "hello"],  ["3748642", "45", "4876243"],  "helloooo"]])
 	
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "fixedBytes8", ["e0e0e0e0e0e0e0e0"])
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "fixedBytes32", ["e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0"])
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "intakeFixedBytes", ["e0e0e0e"])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "fixedBytes8", ["e0e0e0e0e0e0e0e0"])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "fixedBytes32", ["e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0"])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "intakeFixedBytes", ["e0e0e0e"])
 	
 	#nestedStringsAndFriend - works!
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
 	
 	
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "anotherNesteFriend", 
+	#var calldata = Ethers.get_calldata("WRITE", ontract.CalldataTester, "anotherNesteFriend", 
 	#[  
 		#[  ["hello","meow", "why"]  ,   ["why", "why", "aaiiieee"]  ], 
 		#
@@ -104,7 +106,7 @@ func _ready():
 	# fails on oof and okay
 	# oof: string[][2]
 	# okay: string[2][]
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "okay", [[["yes","ok"],["aiie","ooaj"]]])
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "okay", [[["yes","ok"],["aiie","ooaj"]]])
 	#print(calldata)
 	
 	#var calldata = "0x7d6138280000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000003796573000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000026f6b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000004616969650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000046f6f616a00000000000000000000000000000000000000000000000000000000"
@@ -116,7 +118,7 @@ func _ready():
 		
 	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	#manyDynamicNested - works!
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "manyDynamicNested", [                      
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "manyDynamicNested", [                      
 		#[
 			#[
 				#[
@@ -175,7 +177,7 @@ func _ready():
 	#])
 	
 	# theChallenge - works!
-	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "theChallenge", [   
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "theChallenge", [   
 		#
 		#
 				#[ 

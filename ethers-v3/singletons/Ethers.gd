@@ -227,21 +227,61 @@ func return_gas_balance(_callback):
 # Implementation of the Ethereum ABI specification is currently ongoing.
 # See the "Calldata.gd" singleton for more details.
 
-func get_calldata(abi, function_name, function_args=[]):
-	return "0x" + Calldata.get_function_calldata(abi, function_name, function_args)
+func get_calldata(read_or_write, abi, function_name, function_args=[]):
+	var calldata = {
+		"calldata": "0x" + Calldata.get_function_calldata(abi, function_name, function_args)
+	}
+	if read_or_write == "read" || read_or_write == "READ":
+		calldata["outputs"] = get_outputs(abi, function_name)
+	
+	return(calldata)
 
 
-func read_from_contract(network, contract, calldata, callback_node, callback_function, callback_args={}):
-		
+func get_outputs(abi, function_name):
+	var function = Calldata.get_function(abi, function_name)
+	var outputs = Calldata.get_function_outputs(function)
+	return outputs
+	
+
+func read_from_contract(network, contract, _calldata, callback_node, callback_function, _callback_args={}):
+	var calldata = _calldata["calldata"]
+	var outputs = _calldata["outputs"]
+	var callback_args = {
+		"_callback_node": callback_node,
+		"_callback_function": callback_function,
+		"_callback_args": _callback_args,
+		"outputs": outputs
+	}
 	Ethers.perform_request(
 		"eth_call", 
 		[{"to": contract, "input": calldata}, "latest"], 
 		network, 
-		callback_node,
-		callback_function, 
+		self,
+		"decode_rpc_response", 
 		callback_args,
 		3 #default "retries" value
 		)
+
+
+func decode_rpc_response(_callback):
+	var _callback_args = _callback["callback_args"]
+	var callback_node = _callback_args["_callback_node"]
+	var callback_function = _callback_args["_callback_function"]
+	var callback_args = _callback_args["_callback_args"]
+	var outputs = _callback_args["outputs"]
+	
+	var callback = {
+		"success": _callback["success"],
+		"result": _callback["result"],
+		"callback_args": callback_args
+		}
+	
+	if _callback["success"]:
+		#var result = Calldata.abi_decode(outputs, callback["result")
+		callback["result"] = _callback["result"] #replace with abi_decoded result
+		
+	callback_node.call(callback_function, callback)
+
 
 
 func pending_transaction(network):
@@ -251,7 +291,8 @@ func pending_transaction(network):
 		return false
 
 
-func send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
+func send_transaction(account, network, contract, _calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
+	var calldata = _calldata["calldata"]
 	calldata = calldata.trim_prefix("0x")
 	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args)
 
@@ -323,7 +364,7 @@ func get_erc20_info(network, address, contract, callback_node, callback_function
 
 
 func get_erc20_name(network, contract, callback_node, callback_function, callback_args={}):
-	var calldata = get_calldata(Contract.ERC20, "name")
+	var calldata = get_calldata("READ", Contract.ERC20, "name")
 	read_from_contract(network, contract, calldata, self, "return_erc20_name", callback_args)
 
 
@@ -338,7 +379,7 @@ func return_erc20_name(callback):
 
 
 func get_erc20_decimals(network, contract, callback_node, callback_function, callback_args={}):
-	var calldata = get_calldata(Contract.ERC20, "decimals")
+	var calldata = get_calldata("READ", Contract.ERC20, "decimals")
 	read_from_contract(network, contract, calldata, self, "return_erc20_decimals", callback_args)
 
 
@@ -355,7 +396,7 @@ func return_erc20_decimals(callback):
 
 
 func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
-	var calldata = get_calldata(Contract.ERC20, "balanceOf", [address])
+	var calldata = get_calldata("READ", Contract.ERC20, "balanceOf", [address])
 	read_from_contract(network, contract, calldata, self, "return_erc20_balance", callback_args)
 
 
@@ -381,12 +422,12 @@ func return_erc20_balance(callback):
 
 
 func transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}):
-	var calldata = get_calldata(Contract.ERC20, "transfer", [recipient, amount])
+	var calldata = get_calldata("WRITE", Contract.ERC20, "transfer", [recipient, amount])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
 
 # Right now configured to approve the maximum uint256 value
 func approve_erc20_allowance(account, network, token_address, spender_address, callback_node, callback_function, callback_args={}):
-	var calldata = get_calldata(Contract.ERC20, "approve", [spender_address, "115792089237316195423570985008687907853269984665640564039457584007913129639935"])
+	var calldata = get_calldata("WRITE", Contract.ERC20, "approve", [spender_address, "115792089237316195423570985008687907853269984665640564039457584007913129639935"])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
 
 

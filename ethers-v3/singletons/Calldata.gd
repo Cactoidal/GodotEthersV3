@@ -21,37 +21,64 @@ extends Node
 # Nested Arrays - works
 
 
-# Decodings also need attention (see Ethers for these)
-# Automatic decoding using the ABI would be nice
-# I should be able to simply reverse the process, given the ABI and the incoming calldata
+# Decodings are next
+
+
+##########   ENCODING   #########
 
 
 func get_function_calldata(abi, function_name, _args=[]):
 	var args = []
+	var calldata = ""
+	
+	var function = get_function(abi, function_name)
+	if !function:
+		return false
+		
+	var inputs = get_function_inputs(function)
+	if inputs:
+		calldata = abi_encode(inputs, _args)
+		
+	var function_selector = get_function_selector(function)
+				
+	return function_selector + calldata
+	
+
+func get_function(abi, function_name):
 	for function in abi:
 		if function.has("name"):
 			if function["name"] == function_name:
-				if function.has("inputs"):
-					var selector = 0
-					for input in function["inputs"]:
-						
-						var new_arg = {
-							"value": _args[selector],
-							"type": input["type"],
-							"calldata": "",
-							"length": 0,
-							"dynamic": false
-							}
-						if input["type"].contains("tuple"):
-							new_arg["components"] = input["components"]
-						args.push_back(new_arg)
-						selector += 1
-				
-				var function_selector = get_function_selector(function)
-				
-				var calldata = construct_calldata(args)
-				return function_selector + calldata
+				return function
+	return false
 
+
+func get_function_inputs(function):
+	if function.has("inputs"):
+		return(function["inputs"])
+	return false
+
+
+func abi_encode(inputs, _args):
+	var args = []
+	var selector = 0
+	for input in inputs:
+						
+		var new_arg = {
+			"value": _args[selector],
+			"type": input["type"],
+			"calldata": "",
+			"length": 0,
+			"dynamic": false
+			}
+				
+		if input["type"].contains("tuple"):
+			new_arg["components"] = input["components"]
+		args.push_back(new_arg)
+		selector += 1
+	
+	var calldata = construct_calldata(args)
+	return calldata
+	
 
 func construct_calldata(args):
 	var body = []
@@ -181,7 +208,6 @@ func array_is_dynamic(arg_type):
 		if arg_type.begins_with(dynamic_type):
 			return true
 	
-	
 	if arg_type.contains("[]"):
 		return true
 		
@@ -208,7 +234,7 @@ func tuple_is_dynamic(arg):
 
 
 
-##########   ENCODING   #########
+##########   ENCODING TYPE HANDLING   #########
 
 # Handles uint, int, address, string, and dynamic bytes
 func encode_general(arg):
@@ -327,9 +353,26 @@ func encode_tuple(arg):
 	
 
 
+
+
 ##########   DECODING   #########
 
-# Potentially these will just be in Ethers instead
+
+# NOTE: 
+# Use get_function(abi, function_name) to get the function object, 
+# then pass the function object to get_function_outputs(function).
+
+func get_function_outputs(function):
+	if function.has("outputs"):
+		return(function["outputs"])
+	return false
+
+func abi_decode(outputs, calldata):
+	pass
+
+
+##########   DECODING TYPE HANDLING   #########
+
 
 func decode_uint(arg):
 	pass
