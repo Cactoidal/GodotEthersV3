@@ -111,5 +111,7 @@ ___
 
 You can use `transfer()` to send ETH.  The ERC20 ABI is also present by default, in the `Contract.gd` singleton.   You can call `get_erc20_info()` to get a token's name, decimals, and balance for a supplied address, all in one call.  You can also use `approve_erc20()` to grant the maximum spend allowance to a contract, and you can use `transfer_erc20()` to send tokens.
 
-The default networks are the following testnets: Ethereum Sepolia, Optimism Sepolia, Arbitrum Sepolia, Base Sepolia, and Avalanche Fuji.  You can edit `default_network_info` at the bottom of `Ethers.gd` to add more networks or change their configurations.  Be aware that after running the program at least once, your network defaults will be saved into a config file, and you will need to edit `check_for_network_info()` so that it will overwrite the config file with your new defaults.
+The default networks are the following testnets: Ethereum Sepolia, Optimism Sepolia, Arbitrum Sepolia, Base Sepolia, and Avalanche Fuji.
+
+You can edit `default_network_info` at the bottom of `Ethers.gd` to add more networks or change their configurations.  Be aware that after running the program at least once, your network defaults will be saved into a config file, and you will need to edit `check_for_network_info()` so that it will overwrite the config file with your new defaults.
 
