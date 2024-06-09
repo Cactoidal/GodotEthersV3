@@ -18,15 +18,14 @@ var calldata_tester_contract = "0x6a574550b12c159736D7386c7793707b31Af694F"
 # implement decoding
 # do more testing
 
-# drop the autoconfirm idea; transactions could have a popup before
-# ever sending data to the Transaction.gd lane.  Transaction.gd's sole 
-# purpose is to send out a transaction as quickly as possible.  It is 
-# assumed that any transaction that gets in there does so because
-# the developer intended it, manual confirms or not.
-
-
 
 # multi-chain wallet; cross-chain functionality?
+# If I deploy "entry point" contracts on each testnet, I could
+# implement a bridge() function that abstracts everything into a 
+# a single, simple call.  Is there a way to check on-chain
+# if a given token is compatible with CCIP?
+
+# If I deploy endpoints, I could also implement a chronomancer_bridge() function.
 
 
 
@@ -44,7 +43,7 @@ func _ready():
 	
 	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
 	
-	var amount = Ethers.convert_to_big_uint("0.001", 18)
+	var amount = Ethers.convert_to_bignum("0.001", 18)
 	#Ethers.transfer("test_keystore", "Base Sepolia", recipient, amount, self, "get_receipt")
 	#Ethers.approve_erc20_allowance("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
 	#Ethers.transfer_erc20("test_keystore", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
@@ -88,9 +87,67 @@ func _ready():
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "fixedBytes32", ["e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0"])
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "intakeFixedBytes", ["e0e0e0e"])
 	
-	
-	var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
-	print(calldata)
+	#nestedStringsAndFriend - works!
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "nestedStringsAndFriend", [[["hello","meow"],["why", "why", "aaiiieee"],["ok"]], "374673264"])
+	#manyDynamicNested - works!
+	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "manyDynamicNested", [                      
+		#[
+			#[
+				#[
+					#"why",
+					#"whee",
+					#"whoo"
+				#],
+				#[
+					#"whey",
+					#"wee",
+					#"weuao",
+					#"weean"
+				#]
+				#
+			#],
+			#[
+				#[
+					#"woo",
+					#"woaah",
+					#"waaagh"
+					#
+				#],
+				#[
+					#"weeeoo"
+				#]
+				#
+				#
+			#],
+			#[
+				#[
+					#"weeeas",
+					#"weeree"
+				#],
+				#[
+					#"waaaasaaa",
+					#"wooohhhoo",
+					#"weeaaarrgh",
+					#"weeeai",
+					#"weoaoaosas"
+					#
+				#],
+				#[
+					#"weeyeyhf",
+					#"weyeyad"
+				#]
+				#
+				#
+			#]
+			#
+			#
+			#
+			#
+		#]
+		#
+		#
+	#])
+	#print(calldata)
 	# theChallenge - works!
 	#var calldata = Calldata.get_function_calldata(Contract.CalldataTester, "theChallenge", [   
 		#
@@ -109,13 +166,6 @@ func _ready():
 				#])
 	
 	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
-	
-	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", [Ethers.convert_to_big_uint("12", 18), [Ethers.convert_to_big_uint("120", 18), Ethers.convert_to_big_uint("0.01", 18), Ethers.convert_to_big_uint("9000", 18)], [["hello", Ethers.convert_to_big_uint("190", 18)], ["why", Ethers.convert_to_big_uint("7428624", 18)]]])
-	#var success = Calldata.get_function_calldata(Contract.IMAGINARY, "not_real", ["recipient", true, ["amount", "meow", "merrow"], [true, "aiiieeargh", Ethers.convert_to_big_uint("120", 18)]])
-	#if !success:
-		#print("encoding failed")
-	#else:
-		#print("attempt: " + success)
 	
 
 func update_gas_balance(callback):

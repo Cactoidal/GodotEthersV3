@@ -417,40 +417,36 @@ func decode_bool(hex):
 
 #########  UTILITY  #########
 
-# NOTE:
-# With Godot 4+, the .right() and .left() string methods were completely changed,
-# and some methods, such as .erase(), no longer change the string in place
-
-func convert_to_big_uint(number, token_decimals=18):
+func convert_to_bignum(number, token_decimals=18):
 	if number.begins_with("."):
 		number = "0" + number
 		
 	var zero_filler = int(token_decimals)
 	var decimal_index = number.find(".")
 	
-	var big_uint = number
+	var bignum = number
 	if decimal_index != -1:
 		var segment = number.right(-(decimal_index+1) )
 		zero_filler -= segment.length()
-		big_uint = big_uint.erase(decimal_index,decimal_index)
+		bignum = bignum.erase(decimal_index,decimal_index)
 
 	for zero in range(zero_filler):
-		big_uint += "0"
+		bignum += "0"
 	
 	var zero_parse_index = 0
-	if big_uint.begins_with("0"):
-		for digit in big_uint:
+	if bignum.begins_with("0"):
+		for digit in bignum:
 			if digit == "0":
 				zero_parse_index += 1
 			else:
 				break
 	if zero_parse_index > 0:
-		big_uint = big_uint.right(-zero_parse_index)
+		bignum = bignum.right(-zero_parse_index)
 
-	if big_uint == "":
-		big_uint = "0"
+	if bignum == "":
+		bignum = "0"
 
-	return big_uint
+	return bignum
 
 
 func convert_to_smallnum(bignum, token_decimals=18):

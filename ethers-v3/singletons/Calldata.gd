@@ -18,11 +18,7 @@ extends Node
 # Static Tuples  - works
 # FixedBytes - works (manually constructed)
 # Arrays of Structs - works
-# Nested Arrays - ?
-
-
-# Arrays need to check somehow if they are nested
-
+# Nested Arrays - works
 
 
 # Decodings also need attention (see Ethers for these)
@@ -241,6 +237,7 @@ func encode_fixed_bytes(arg):
 
 func encode_bool(arg):
 	var value = arg["value"]
+	# Checks if bool is string
 	if typeof(value) == 4:
 		if value == "true":
 			value = true
@@ -257,8 +254,7 @@ func encode_enum(arg):
 
 
 func encode_array(arg):
-	# Needs to check for nested
-
+	
 	var _arg_type = arg["type"]
 	var value_array = arg["value"]
 	
@@ -267,18 +263,24 @@ func encode_array(arg):
 	
 	array_start_index += 2
 	var array_checker = _arg_type.left(array_start_index)
+	
 	if array_checker.contains("[]"):
 		arg["fixed_size"] = false
 	else:
 		arg["fixed_size"] = true
+		array_start_index += 1
 	
 	var calldata = ""
 	var args = []
 	
 	for value in value_array:
+		var value_type = arg_type
+		# Checks if value is nested array
+		if typeof(value) == 28:
+			value_type += _arg_type.right(-array_start_index)
 		var new_arg = {
 			"value": value,
-			"type": arg_type,
+			"type": value_type,
 			"calldata": "",
 			"length": 0,
 			"dynamic": false
