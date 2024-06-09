@@ -23,7 +23,7 @@ Note that every function mentioned on this page is defined in the `Ethers.gd` si
 
 `read_or_write` is a String: "READ" or "WRITE".  Use "READ" if you intend to call a view/pure function with `read_from_contract()`.
 
-`ABI` is your contract's ABI.  It needs to be pasted somewhere into a .gd file as a variable, so you can call it.
+`ABI` is your contract's ABI.  It needs to be pasted somewhere into a .gd file as a variable, so you can call it.  The `Contract.gd` singleton is available for this purpose, if you'd like to use it.
 
 `function_name` is the contract function you want to call.
 
