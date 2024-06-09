@@ -67,7 +67,7 @@ ___
 
 `contract` is the contract address.
 
-`calldata` is the calldata you got from get_calldata().
+`calldata` is the calldata-containing dictionary you got from get_calldata().
 
 `callback_node` is the Godot node (typically self) that will receive the decoded RPC result.
 
