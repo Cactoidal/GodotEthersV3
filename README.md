@@ -103,7 +103,7 @@ ___
 
 `network` and the `callback` parameters are the same as they are for `read_from_contract()` and `send_transaction()`.  Note that `perform_request()` is a lower level function call, and therefore will *not* automatically decode the RPC result.  You will need to process the result in your callback function.
 
-`retries` is the number of times the application will try to call an RPC node until it receives a successful response code.  3 is the default number of attempts. Note that in addition to retries, GodotEthers is programmed to reduce RPC load by automatically cycling through all the RPC nodes listed for a given network.
+`retries` is the number of times the application will try to call an RPC node until it receives a successful response code.  3 is the default number of attempts. Note that in addition to retries, GodotEthers is programmed to reduce RPC load and dependency by automatically cycling through all the RPC nodes listed for a given network.
 
 ___
 
