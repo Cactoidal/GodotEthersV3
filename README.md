@@ -78,15 +78,13 @@ ___
 
 `account` is the name of a user-created account.  See the note below for more information.
 
-`network`, `contract`, `calldata`, and the `callback` parameters are all the same as they are for `read_from_contract()`.
+`network`, `contract`, `calldata`, and the `callback` parameters are all the same as they are for `read_from_contract()`.  When receiving a successful callback, note that the "result" field will be the transaction receipt.
 
 `gas_limit` is the transaction gas limit, and by default is set for 900,000, which is quite high.  You can adjust this default as needed.
 
 `value` is the amount of Ether to send with the transaction, typically 0.
 
 `auto_confirm` is present because transactions by default will be sent without asking the user to confirm.  If you want to implement manual confirms, you can do so by editing the `Transaction.gd` singleton, and setting auto-confirm to false.
-
-When receiving a successful callback from `send_transaction()`, note that the "result" field will be the transaction receipt.
 
 ___
 
