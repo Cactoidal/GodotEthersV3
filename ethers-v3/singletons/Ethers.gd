@@ -278,6 +278,7 @@ func decode_rpc_response(_callback):
 	
 	if _callback["success"]:
 		var decoded_result = Calldata.abi_decode(outputs, _callback["result"])
+		print(decoded_result)
 		callback["result"] = _callback["result"] #replace with decoded_result
 		
 	callback_node.call(callback_function, callback)

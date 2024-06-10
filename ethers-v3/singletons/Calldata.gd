@@ -263,6 +263,7 @@ func encode_general(arg):
 	var arg_type = arg["type"]
 	var calldata = GodotSigner.call("encode_" + arg_type, value)
 	if arg_type in ["bytes", "string"]:
+		# Filler offset added by Ethers-rs
 		calldata = calldata.trim_prefix("0000000000000000000000000000000000000000000000000000000000000020")
 
 	return calldata
@@ -438,8 +439,8 @@ func deconstruct_calldata(outputs, calldata):
 		if output["dynamic"]:
 			# Decode the offset value and obtain the 
 			# placeholder's index.
-			var _offset = calldata.substr(position, position + 32)
-			position += 32
+			var _offset = calldata.substr(position, position + 64)
+			position += 64
 			var offset = GodotSigner.decode_uint256(_offset)
 			output["offset"] = offset
 			output["head_index"] = head_index
@@ -454,11 +455,11 @@ func deconstruct_calldata(outputs, calldata):
 			# Decode the static arg using a substring sliced using
 			# the arg length.  Track the current position in the 
 			# calldata by adding the length.
-			var _calldata = calldata.substr(position, position + arg_length)
+			var _calldata = calldata.substr(position, position + (arg_length * 2))
 			position += arg_length
 			
 			var decode_result = decode_arg(output, _calldata)
-			decoded_values.push_back(decode_result["value"])
+			decoded_values.push_back(decode_result)
 		
 		head_index += 1
 	
@@ -469,7 +470,7 @@ func deconstruct_calldata(outputs, calldata):
 			var previous_output = dynamic_outputs[dynamic_selector - 1]
 			previous_output["length"] = output["offset"] - previous_output["offset"]
 		if dynamic_selector == (dynamic_outputs.size() - 1):
-			output["length"] = calldata.length() - output["offset"]
+			output["length"] = calldata.length() - int(output["offset"])
 		dynamic_selector += 1
 	
 	# Decode dynamic values using a substring of the calldata.  Track
@@ -522,121 +523,32 @@ func get_static_size(output):
 # breaking out chunks to send back through deconstruct_calldata()
 func decode_arg(arg, calldata):
 	var arg_type = arg["type"]
-	
-
-# Giant mess below
-	
-func OLDdecode_static_arg(arg, chunks, chunk_selector):
-	
-	var decoded = {
-		"value": "",
-		"chunk_selector": chunk_selector
-	}
-	
-	var arg_type = arg["type"]
+	var decoded_value
 	if arg_type.contains("["):
-		decoded = decode_array(arg, chunks, chunk_selector)
-	elif arg_type.begins_with("uint"):
-		decoded = decode_general(arg, chunks, chunk_selector)
-	elif arg_type.begins_with("int"):
-		decoded = decode_general(arg, chunks, chunk_selector)
-	elif arg_type.begins_with("bytes"):
-		if arg_type.length() == 5:
-			# Checks if the bytes have been provided as a 
-			# hex String, and converts to a PackedByteArray
-			if typeof(arg["value"]) == 4:
-				arg["value"] = arg["value"].hex_decode()
-			decoded = decode_general(arg, chunks, chunk_selector)
-		else:
-			decoded = decode_fixed_bytes(arg, chunks, chunk_selector)
-	else:
-		match arg_type:
-			"string": decoded = decode_general(arg, chunks, chunk_selector)
-			"address": decoded = decode_general(arg, chunks, chunk_selector)
-			"bool": decoded = decode_bool(arg, chunks, chunk_selector)
-			"enum": decoded = decode_enum(arg, chunks, chunk_selector)
-			"tuple": decoded = decode_tuple(arg, chunks, chunk_selector)
-	
-	return decoded
-
-
-##########   DECODING TYPE HANDLING   #########
-
-# Handles uint, int, address, string, and dynamic bytes
-func decode_general(arg, chunks, chunk_selector):
-	var arg_type = arg["type"]
-	
-	var decoded = {
-		"value": "",
-		"chunk_selector": chunk_selector
-	}
-	
-	if arg_type in ["string", "bytes"]:
-		#Strings and bytes will need their offsets checked against chunks
+		#decode array
 		pass
+	elif arg_type.begins_with("tuple"):
+		#decode tuple
+		pass
+	elif arg_type in ["string", "bytes"]:
+		# Add filler offset to calldata, to be read by Ethers-rs
+		calldata = "0000000000000000000000000000000000000000000000000000000000000020" + calldata
+		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
+	elif arg_type.begins_with("bytes"):
+		#decode fixed bytes
+		#can be done manually
+		pass
+	elif arg_type == "enum":
+		decoded_value = GodotSigner.call("decode_uint8", calldata)
 	else:
-		decoded["value"] = GodotSigner.call("decode_" + arg_type, chunks[chunk_selector])
+		# For uints, ints, and bools
+		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
 	
-	#chunk selector needs to be incremented properly
-	decoded["chunk_selector"] += 1
-	return decoded
+	return decoded_value
+	
 
 
-func decode_fixed_bytes(arg, chunks, chunk_selector):
-	var value = arg["value"]
-	var arg_type = arg["type"]
-
-	var decoded = {
-		"value": "",
-		"chunk_selector": chunk_selector
-	}
-		
-	# Checks if the bytes have been provided as a PackedByteArray,
-	# and converts into a hex String
-	if typeof(value) == 29:
-		value = value.hex_encode()
-	
-	while value.length() < 64:
-		value += "0"
-	
-	return decoded
-
-
-func decode_bool(arg, chunks, chunk_selector):
-	var value = arg["value"]
-	
-	
-	var decoded = {
-		"value": "",
-		"chunk_selector": chunk_selector
-	}
-	
-	# Checks if bool has been given as a String
-	if typeof(value) == 4:
-		if value == "true":
-			value = true
-		else:
-			value = false
-			
-	var calldata = GodotSigner.encode_bool(value)
-	return decoded
-
-
-func decode_enum(arg, chunks, chunk_selector):
-	var value = arg["value"]
-	
-	
-	var decoded = {
-		"value": "",
-		"chunk_selector": chunk_selector
-	}
-	
-	
-	var calldata = GodotSigner.encode_uint8(value)
-	
-	
-	return decoded
-
+# To-do: add array and tuple support
 
 func decode_array(arg, chunks, chunk_selector):
 	
