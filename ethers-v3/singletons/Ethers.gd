@@ -231,7 +231,7 @@ func get_calldata(read_or_write, abi, function_name, function_args=[]):
 	var calldata = {
 		"calldata": "0x" + Calldata.get_function_calldata(abi, function_name, function_args)
 	}
-	if read_or_write == "read" || read_or_write == "READ":
+	if read_or_write in ["read", "READ"]:
 		calldata["outputs"] = get_outputs(abi, function_name)
 	
 	return(calldata)
@@ -277,11 +277,10 @@ func decode_rpc_response(_callback):
 		}
 	
 	if _callback["success"]:
-		#var result = Calldata.abi_decode(outputs, callback["result")
-		callback["result"] = _callback["result"] #replace with abi_decoded result
+		var decoded_result = Calldata.abi_decode(outputs, _callback["result"])
+		callback["result"] = _callback["result"] #replace with decoded_result
 		
 	callback_node.call(callback_function, callback)
-
 
 
 func pending_transaction(network):
@@ -294,11 +293,12 @@ func pending_transaction(network):
 func send_transaction(account, network, contract, _calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
 	var calldata = _calldata["calldata"]
 	calldata = calldata.trim_prefix("0x")
-	Transaction.send_raw_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args)
+	Transaction.send_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args)
+
 
 # For ETH transfers
 func transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}):
-	Transaction.start_transaction(
+	Transaction.start_eth_transfer(
 		account,
 		network,
 		"placeholder",
@@ -389,7 +389,7 @@ func return_erc20_decimals(callback):
 	var network = callback_args["network"]
 	
 	if callback["success"]:
-		var decimals = decode_uint256(callback["result"])
+		var decimals = decode_uint8(callback["result"])
 		callback_args["decimals"] = decimals
 		var address = callback_args["address"]
 		get_erc20_balance(address, decimals, network, contract, self, "get_erc20_balance", callback_args)

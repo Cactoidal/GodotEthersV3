@@ -10,13 +10,13 @@ func pending_transaction(network):
 	else:
 		return false
 
-
-func start_transaction(
+func send_transaction(
 	account,
 	network,
-	contract, 
-	contract_function, 
-	contract_args,
+	contract,
+	gas_limit,
+	value,
+	calldata, 
 	callback_node, 
 	callback_function, 
 	callback_args={}
@@ -31,19 +31,19 @@ func start_transaction(
 			"network": network,
 			"account": account,
 			"contract": contract,
-			"contract_function": contract_function,
-			"contract_args": contract_args,
+			"gas_limit": gas_limit,
+			"value": value,
+			"calldata": calldata,
 			"initialized": false,
 			"tx_count": 0,
 			"gas_price": 0,
 			"tx_hash": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
-			"raw_transaction": false
+			"eth_transfer": false
 			}
 		
 			pending_transactions[network] = transaction
-
 
 
 func _process(delta):
@@ -134,7 +134,11 @@ func get_gas_price(callback):
 		# without declaring the key locally; see below
 		temp_account = transaction["account"]
 		
-		if transaction["raw_transaction"]:
+		
+		
+		if !transaction["eth_transfer"]:
+			
+			# Contract Interaction
 			
 			var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_limit"], transaction["gas_price"], transaction["tx_count"], transaction["value"], transaction["calldata"]]
 			var signed_calldata = "0x" + GodotSigner.callv("sign_raw_calldata", params.map(merge))
@@ -148,7 +152,9 @@ func get_gas_price(callback):
 				)
 				
 			return
-			
+		
+		# ETH transfer
+		
 		var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
 		for arg in transaction["contract_args"]:
 			params.push_back(arg)
@@ -246,13 +252,13 @@ func emit_error(error_string, network):
 	finish_transaction(network)
 
 
-func send_raw_transaction(
+# Used by Ethers.transfer() for sending ETH
+func start_eth_transfer(
 	account,
 	network,
-	contract,
-	gas_limit,
-	value,
-	calldata, 
+	contract, 
+	contract_function, 
+	contract_args,
 	callback_node, 
 	callback_function, 
 	callback_args={}
@@ -267,16 +273,15 @@ func send_raw_transaction(
 			"network": network,
 			"account": account,
 			"contract": contract,
-			"gas_limit": gas_limit,
-			"value": value,
-			"calldata": calldata,
+			"contract_function": contract_function,
+			"contract_args": contract_args,
 			"initialized": false,
 			"tx_count": 0,
 			"gas_price": 0,
 			"tx_hash": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
-			"raw_transaction": true
+			"eth_transfer": true
 			}
 		
 			pending_transactions[network] = transaction
