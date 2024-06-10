@@ -74,7 +74,8 @@ func _ready():
 
 	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "enumAndBoolWithString", ["2", "haoollo", true])
 	
-	var calldata = Ethers.get_calldata("READ", Contract.CalldataTester, "fixedStructArrayReturn", [])
+	# fixedNestedStructArrayReturn - works!
+	var calldata = Ethers.get_calldata("READ", Contract.CalldataTester, "fixedNestedStructArrayReturn", [])
 	Ethers.read_from_contract("Base Sepolia", calldata_tester_contract, calldata, self, "get_decoded_result", {})
 	
 	#setStaticTuple - works!

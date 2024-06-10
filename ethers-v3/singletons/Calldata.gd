@@ -1,27 +1,28 @@
 extends Node
 
-# (ostensibly, needs to be thoroughly tested)
 
-# Can encode:     
-# Uints of typical varieties  - works
-# Ints of typical varieties  - works
-# Strings - works
-# Addresses - works
-# Unfixed Dynamic Arrays - works
-# Fixed Dynamic Arrays - works
-# Unfixed Static Arrays - works
-# Fixed Static Arrays - works
-# Bools - works
-# Enums - works
-# Bytes - works
-# Dynamic Tuples - works
-# Static Tuples  - works
-# FixedBytes - works (manually constructed)
-# Arrays of Structs - works
-# Nested Arrays - works
+# Should be able to encode/decode pretty much anything.
+# (Needs more testing, of course)
 
-
-# Decodings are next
+# Can encode and decode:   
+  
+# Uints of typical varieties  (8,16,32,64,128,256)
+# Ints of typical varieties   (8,16,32,64,128,256)
+# Strings
+# Addresses
+# Unfixed Dynamic Arrays
+# Fixed Dynamic Arrays
+# Unfixed Static Arrays
+# Fixed Static Arrays
+# Bools
+# Enums
+# Bytes
+# Dynamic Tuples
+# Static Tuples 
+# FixedBytes
+# Arrays of Tuples
+# Nested Arrays
+# Nested Arrays of Tuples
 
 
 ##########   ENCODING   #########
@@ -556,14 +557,6 @@ func decode_fixed_bytes(calldata):
 
 func decode_array(arg, calldata):
 
-	
-	# Figure out how many elements there are in the rightmost array:
-	# Static, they are known.
-	# Dynamic, they can be found from the very first chunk, the length component.
-	
-	# Shift the calldata position over, chop off the rightmost array, then 
-	# call abi_decode with the calldata slices for each element
-	
 	var decoded_value = []
 	var _arg_type = arg["type"]
 	var position = 0
@@ -605,6 +598,7 @@ func decode_array(arg, calldata):
 			var offset = GodotSigner.decode_uint256(value)
 			offsets.push_back(offset)
 		else:
+			# First, get the static value's size.
 			var size = get_static_size(output) * 2
 			var value = calldata.substr(position, position + size)
 			position += size
@@ -631,51 +625,3 @@ func decode_array(arg, calldata):
 			decoded_value.push_back(decode_arg(output, value))
 	
 	return decoded_value
-	
-	
-	# if the types are dynamic, the offsets will follow the
-	# length component (or will be the first elements in the array)
-	
-	#string[][3][]
-	# the first array has an offset followed by a length component.  
-	# but it contains no offsets.
-	# the second array contains no length component. but contains three offsets.
-	# the final array has a length component, and any number of offsets (the strings)
-
-	# so the first array would have the length component, telling us how many
-	# fixed arrays we have.  those fixed arrays are all encoded "in place"
-	# after the length component.  But we don't know how big they are, because
-	# the arrays they contain could be of any byte-length.
-	
-	# the fixed arrays have no length component and no offset. they each contain
-	# 3 dynamic arrays of strings. which are encoded "in place", but we don't
-	# know how big they are.
-	
-	# the triplet dynamic string arrays all start with a length component,
-	# to inform us how many strings they contain.  Then there is the offset
-	# for each string. Finally there are the strings themselves.  the offsets
-	# tell us how long the strings are.  So knowing this, we can figure out
-	# the size of each triple string array, which would tell us the total size of each
-	# array containing the triplets.  But how do we find where the strings are
-	# in the first place?
-	
-	# Let's imagine that we receive an ordinary array.  The steps are simple:
-	# Determine if the array has a fixed size.  If it doesn't, decode the length
-	# component.
-	# Next, determine if the array contains dynamic values.  If it does, those values
-	# will have an offset telling us how long they are.  If not, we can calculate
-	# the length of the static values.
-	# If the underlying type is dynamic, that means there should be offsets everywhere.
-	# If the type is static, there are no offsets.
-	# I think that's the solution.
-	
-	
-	# It would appear that fixed arrays can be abi_decoded immediately,
-	# provided you can isolate their calldata.  But how can you do that
-	# if you don't know their size?
-	
-	# and what about the dynamic arrays?
-
-		
-		
-	
