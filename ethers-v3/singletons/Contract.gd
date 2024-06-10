@@ -142,6 +142,19 @@ var CalldataTester = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "string[][3][]",
+				"name": "",
+				"type": "string[][3][]"
+			}
+		],
+		"name": "funnyArray",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "gauntletCleared",
 		"outputs": [

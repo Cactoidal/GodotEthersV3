@@ -92,7 +92,7 @@ func construct_calldata(args):
 	# Determines which types are dynamic.  If the type
 	# is dynamic, inserts a placeholder uint256 into
 	# the body of the calldata.  It will be updated 
-	# later after the offset can been calculated.
+	# later after the offset can be calculated.
 	for arg in args:
 		var arg_type = arg["type"]
 		if arg_type.contains("["):
@@ -140,9 +140,7 @@ func construct_calldata(args):
 	var selector = 0
 	for chunk in body:
 		if chunk["calldata"] != "placeholder":
-			#DEBUG
 			chunk["calldata"] = encode_arg(chunk)
-			#chunk["calldata"] = encode_arg(chunk)
 			chunk["length"] = chunk["calldata"].length() / 2
 			if chunk["dynamic"]:
 				var _callback_index = chunk["callback_index"]
@@ -382,6 +380,7 @@ func abi_decode(_outputs, calldata):
 	
 	var outputs = []
 	for output in _outputs:
+
 		var new_output = {
 			"type" = output["type"],
 			"dynamic" = false,
@@ -533,6 +532,8 @@ func decode_arg(arg, calldata):
 	
 	# Uint, Int, Address, Bool
 	else:
+		print(arg_type + ":")
+		print(calldata)
 		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
 	
 	return decoded_value
@@ -556,61 +557,125 @@ func decode_fixed_bytes(calldata):
 func decode_array(arg, calldata):
 
 	
+	# Figure out how many elements there are in the rightmost array:
+	# Static, they are known.
+	# Dynamic, they can be found from the very first chunk, the length component.
+	
+	# Shift the calldata position over, chop off the rightmost array, then 
+	# call abi_decode with the calldata slices for each element
+	
 	var decoded_value = []
-	
-	# arrays need to check if they are fixed size
-	# if unfixed size, needs to check length field
-	# to know the number of elements
-	
-	# also must check whether their values are
-	# static or dynamic. dynamic values will
-	# have offsets after the length field.
-	# (Will know how many offsets/values there are
-	# because of the length field)
-	
-	
 	var _arg_type = arg["type"]
-	var value_array = arg["value"]
-	
-	
+	var position = 0
+	var array_is_dynamic = array_is_dynamic(_arg_type)
 	
 	# Nested Arrays are encoded right to left
 	var type_splitter = 2
 	var array_checker = _arg_type.right(type_splitter)
 	
-	# Check if the rightmost array has a fixed size
+	var element_count
+	# Check if the rightmost array has a fixed size, and
+	# get the number of elements it contains
 	if array_checker.contains("[]"):
 		arg["fixed_size"] = false
+		var length_component = calldata.substr(position, position + 64)
+		element_count = GodotSigner.decode_uint256(length_component)
+		position += 64
 	else:
 		arg["fixed_size"] = true
+		element_count = _arg_type.right(2).trim_suffix("]")
 		type_splitter += 1
 	
 	# Extract the type of the rightmost array's elements
 	var arg_type = _arg_type.left(-type_splitter)
 	
-	var _calldata = ""
-	var args = []
+	var output = {
+		"type": arg_type
+	}
+	if arg_type.begins_with("tuple"):
+		output["components"] = arg["components"]
 	
-	for value in value_array:
+	# Decode static values, or get the offset for dynamic values.
+	var offsets = []
+	for element in range(int(element_count)):
 	
-		var new_arg = {
-			"value": value,
-			"type": arg_type,
-			"calldata": "",
-			"length": 0,
-			"dynamic": false
-			}
-		if arg_type.contains("tuple"):
-			new_arg["components"] = arg["components"]
-		args.push_back(new_arg)
+		if array_is_dynamic:
+			var value = calldata.substr(position, position + 64)
+			position += 64
+			var offset = GodotSigner.decode_uint256(value)
+			offsets.push_back(offset)
+		else:
+			var size = get_static_size(output) * 2
+			var value = calldata.substr(position, position + size)
+			position += size
+			decoded_value.push_back(decode_arg(output, value))
 	
-	_calldata = construct_calldata(args)
-	
-	# Add length component if unfixed size
-	if !arg["fixed_size"]:
-		var _param_count = str(arg["value"].size())
-		var param_count = GodotSigner.encode_uint256(_param_count)
-		_calldata = param_count + calldata
+	# Determine the length of each dynamic value.
+	var lengths = []
+	if !offsets.is_empty():
+		var dynamic_selector = 0
+		for offset in offsets:
+			if dynamic_selector > 0:
+				var previous_offset = offsets[dynamic_selector - 1]
+				var previous_length = offset - previous_offset
+				lengths.push_back(previous_length)
+			if dynamic_selector == (offsets.size() - 1):
+				lengths.push_back(calldata.length() - offset)
+			dynamic_selector += 1
 		
-		
+	# Decode dynamic values.
+	if !lengths.is_empty():
+		for length in lengths:
+			var value = calldata.substr(position, position + (length * 2))
+			position += (length * 2)
+			decoded_value.push_back(decode_arg(output, value))
+	
 	return decoded_value
+	
+	
+	# if the types are dynamic, the offsets will follow the
+	# length component (or will be the first elements in the array)
+	
+	#string[][3][]
+	# the first array has an offset followed by a length component.  
+	# but it contains no offsets.
+	# the second array contains no length component. but contains three offsets.
+	# the final array has a length component, and any number of offsets (the strings)
+
+	# so the first array would have the length component, telling us how many
+	# fixed arrays we have.  those fixed arrays are all encoded "in place"
+	# after the length component.  But we don't know how big they are, because
+	# the arrays they contain could be of any byte-length.
+	
+	# the fixed arrays have no length component and no offset. they each contain
+	# 3 dynamic arrays of strings. which are encoded "in place", but we don't
+	# know how big they are.
+	
+	# the triplet dynamic string arrays all start with a length component,
+	# to inform us how many strings they contain.  Then there is the offset
+	# for each string. Finally there are the strings themselves.  the offsets
+	# tell us how long the strings are.  So knowing this, we can figure out
+	# the size of each triple string array, which would tell us the total size of each
+	# array containing the triplets.  But how do we find where the strings are
+	# in the first place?
+	
+	# Let's imagine that we receive an ordinary array.  The steps are simple:
+	# Determine if the array has a fixed size.  If it doesn't, decode the length
+	# component.
+	# Next, determine if the array contains dynamic values.  If it does, those values
+	# will have an offset telling us how long they are.  If not, we can calculate
+	# the length of the static values.
+	# If the underlying type is dynamic, that means there should be offsets everywhere.
+	# If the type is static, there are no offsets.
+	# I think that's the solution.
+	
+	
+	# It would appear that fixed arrays can be abi_decoded immediately,
+	# provided you can isolate their calldata.  But how can you do that
+	# if you don't know their size?
+	
+	# and what about the dynamic arrays?
+
+		
+		
+	

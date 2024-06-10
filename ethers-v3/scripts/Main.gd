@@ -8,7 +8,7 @@ var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
 
-var calldata_tester_contract = "0xBb3199D5822eA17Fb12a6e467C44Adc1339062E0"
+var calldata_tester_contract = "0xca1EfF514Bb4E54ed437bfE9FF9625F0120c231b"
 
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
@@ -74,7 +74,7 @@ func _ready():
 
 	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "enumAndBoolWithString", ["2", "haoollo", true])
 	
-	var calldata = Ethers.get_calldata("READ", Contract.CalldataTester, "structReturn", [])
+	var calldata = Ethers.get_calldata("READ", Contract.CalldataTester, "fixedStructArrayReturn", [])
 	Ethers.read_from_contract("Base Sepolia", calldata_tester_contract, calldata, self, "get_decoded_result", {})
 	
 	#setStaticTuple - works!
@@ -195,11 +195,84 @@ func _ready():
 				#
 				#])
 	
+	# funnyArray - works!  string[][3][]
+	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "funnyArray", [                      
+		#[
+			#[
+				#[
+					#"why",
+					#"whee",
+					#"whoo"
+				#],
+				#[
+					#"whey",
+					#"wee",
+					#"weuao",
+					#"weean"
+				#],
+				#[
+					#"whey",
+					#"wee",
+					#"weuao",
+					#"weean"
+				#]
+				#
+			#],
+			#[
+				#[
+					#"woo",
+					#"woaah",
+					#"waaagh"
+					#
+				#],
+				#[
+					#"weeeoo"
+				#],
+				#[
+					#"whey",
+					#"wee",
+					#"weuao",
+					#"weean"
+				#]
+				#
+				#
+			#],
+			#[
+				#[
+					#"weeeas",
+					#"weeree"
+				#],
+				#[
+					#"waaaasaaa",
+					#"wooohhhoo",
+					#"weeaaarrgh",
+					#"weeeai",
+					#"weoaoaosas"
+					#
+				#],
+				#[
+					#"weeyeyhf",
+					#"weyeyad"
+				#]
+				#
+				#
+			#]
+			#
+			#
+			#
+			#
+		#]
+		#
+		#
+	#])
+	#
+	#
 	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
 
 func get_decoded_result(callback):
 	if callback["success"]:
+		print(callback["result"])
 		print(callback["result"][0])
 	else:
 		print("nope")
