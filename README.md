@@ -15,7 +15,7 @@ Using GodotEthers is pretty straightforward.  To interact with a contract, you j
 
 You can also use `perform_request()` to call any Ethereum method.  For example, you could use this to monitor a contract's activity with `eth_getLogs`.
 
-Note that every function mentioned on this page is defined in the `Ethers.gd` singleton, and can be accessed by calling the singleton, e.g. `Ethers.get_calldata()`.
+Every function mentioned on this page is defined in the `Ethers.gd` singleton, and can be accessed by calling the singleton, e.g. `Ethers.get_calldata()`.
 
 ---
 
