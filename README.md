@@ -1,8 +1,5 @@
 # GodotEthersV3
-Ethers for Godot 4.3, built with Godot Rust and Ethers-rs
-
-
-[Implementation of Ethereum ABI Encoding/Decoding Specification](https://github.com/Cactoidal/GodotEthersV3/blob/main/ethers-v3/singletons/Calldata.gd)
+Ethers for Godot 4.3, built with Godot Rust and Ethers-rs.  Featuring [implementation](https://github.com/Cactoidal/GodotEthersV3/blob/main/ethers-v3/singletons/Calldata.gd) of the Ethereum ABI encoding/decoding [specification](https://docs.soliditylang.org/en/latest/abi-spec.html).
 
 Docs | About
 
