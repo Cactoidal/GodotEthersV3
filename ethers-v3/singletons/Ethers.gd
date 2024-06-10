@@ -272,14 +272,13 @@ func decode_rpc_response(_callback):
 	
 	var callback = {
 		"success": _callback["success"],
-		"result": _callback["result"],
 		"callback_args": callback_args
 		}
 	
 	if _callback["success"]:
+		# The decoded_result will be an array containing the decoded values.
 		var decoded_result = Calldata.abi_decode(outputs, _callback["result"])
-		print(decoded_result)
-		callback["result"] = _callback["result"] #replace with decoded_result
+		callback["result"] = decoded_result
 		
 	callback_node.call(callback_function, callback)
 
@@ -375,7 +374,7 @@ func return_erc20_name(callback):
 	var network = callback_args["network"]
 
 	if callback["success"]:
-		callback_args["name"] = decode_string(callback["result"])
+		callback_args["name"] = callback["result"][0]
 		get_erc20_decimals(network, contract, self, "get_erc20_decimals", callback_args)
 
 
@@ -390,7 +389,7 @@ func return_erc20_decimals(callback):
 	var network = callback_args["network"]
 	
 	if callback["success"]:
-		var decimals = decode_uint8(callback["result"])
+		var decimals = callback["result"][0]
 		callback_args["decimals"] = decimals
 		var address = callback_args["address"]
 		get_erc20_balance(address, decimals, network, contract, self, "get_erc20_balance", callback_args)
@@ -415,7 +414,7 @@ func return_erc20_balance(callback):
 	
 	if callback["success"]:
 		next_callback["success"] = true
-		var balance = convert_to_smallnum(decode_uint256(callback["result"]), decimals)
+		var balance = convert_to_smallnum(callback["result"][0], decimals)
 		next_callback["result"] = balance
 		next_callback["callback_args"]["balance"] = balance
 	
@@ -430,30 +429,6 @@ func transfer_erc20(account, network, token_address, recipient, amount, callback
 func approve_erc20_allowance(account, network, token_address, spender_address, callback_node, callback_function, callback_args={}):
 	var calldata = get_calldata("WRITE", Contract.ERC20, "approve", [spender_address, "115792089237316195423570985008687907853269984665640564039457584007913129639935"])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
-
-
-
-
-
-#########  DECODING  #########
-
-func decode_string(hex):
-	return GodotSigner.decode_string(hex)
-	
-func decode_address(hex):
-	return GodotSigner.decode_address(hex)
-
-func decode_bytes(hex):
-	return GodotSigner.decode_bytes(hex)
-
-func decode_uint256(hex):
-	return GodotSigner.decode_uint256(hex)
-
-func decode_uint8(hex):
-	return GodotSigner.decode_uint8(hex)
-
-func decode_bool(hex):
-	return GodotSigner.decode_bool(hex)
 
 
 

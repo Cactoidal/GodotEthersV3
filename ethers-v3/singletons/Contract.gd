@@ -83,6 +83,66 @@ var CalldataTester = [
 	},
 	{
 		"inputs": [],
+		"name": "fixedNestedStructArrayReturn",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "num1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "coolBool",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint16",
+						"name": "amazingNum",
+						"type": "uint16"
+					}
+				],
+				"internalType": "struct CallDataTester.staticTuple[2][2]",
+				"name": "",
+				"type": "tuple[2][2]"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fixedStructArrayReturn",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "num1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "coolBool",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint16",
+						"name": "amazingNum",
+						"type": "uint16"
+					}
+				],
+				"internalType": "struct CallDataTester.staticTuple[2]",
+				"name": "",
+				"type": "tuple[2]"
+			}
+		],
+		"stateMutability": "pure",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "gauntletCleared",
 		"outputs": [
 			{
@@ -203,6 +263,36 @@ var CalldataTester = [
 		"name": "oof",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "structReturn",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "num1",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "coolBool",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint16",
+						"name": "amazingNum",
+						"type": "uint16"
+					}
+				],
+				"internalType": "struct CallDataTester.staticTuple",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "pure",
 		"type": "function"
 	},
 	{

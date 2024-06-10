@@ -58,6 +58,7 @@ func get_function_inputs(function):
 	return false
 
 
+# NOTE
 # inputs is an array of dictionaries each containing a "type" field,
 # and a "components" field if the type is a tuple
 func abi_encode(inputs, _args):
@@ -139,7 +140,9 @@ func construct_calldata(args):
 	var selector = 0
 	for chunk in body:
 		if chunk["calldata"] != "placeholder":
+			#DEBUG
 			chunk["calldata"] = encode_arg(chunk)
+			#chunk["calldata"] = encode_arg(chunk)
 			chunk["length"] = chunk["calldata"].length() / 2
 			if chunk["dynamic"]:
 				var _callback_index = chunk["callback_index"]
@@ -163,28 +166,46 @@ func encode_arg(arg):
 	var calldata = ""
 	
 	var arg_type = arg["type"]
+	var arg_value = arg["value"]
+	
+	# Array
 	if arg_type.contains("["):
 		calldata = encode_array(arg)
-	elif arg_type.begins_with("uint"):
-		calldata = encode_general(arg)
-	elif arg_type.begins_with("int"):
-		calldata = encode_general(arg)
+	
+	# Tuple
+	elif arg_type.begins_with("tuple"):
+		calldata = encode_tuple(arg)
+	
+	# String, Bytes
+	elif arg_type in ["string", "bytes"]:
+		# Checks if the bytes have been provided as a 
+		# hex String, and converts to a PackedByteArray.
+		if arg_type == "bytes":
+			if typeof(arg_value) == 4:
+				arg_value = arg_value.hex_decode()
+		calldata = GodotSigner.call("encode_" + arg_type, arg_value)
+		# Remove filler offset added by Ethers-rs
+		calldata = calldata.trim_prefix("0000000000000000000000000000000000000000000000000000000000000020")
+	
+	# Fixed Bytes
 	elif arg_type.begins_with("bytes"):
-		if arg_type.length() == 5:
-			# Checks if the bytes have been provided as a 
-			# hex String, and converts to a PackedByteArray.
-			if typeof(arg["value"]) == 4:
-				arg["value"] = arg["value"].hex_decode()
-			calldata = encode_general(arg)
-		else:
-			calldata = encode_fixed_bytes(arg)
+		calldata = encode_fixed_bytes(arg)
+	
+	# Enum
+	elif arg_type == "enum":
+		calldata = GodotSigner.call("encode_uint8", arg_value)
+	
+	# Uint, Int, Address, Bool
 	else:
-		match arg_type:
-			"string": calldata = encode_general(arg)
-			"address": calldata = encode_general(arg)
-			"bool": calldata = encode_bool(arg)
-			"enum": calldata = encode_enum(arg)
-			"tuple": calldata = encode_tuple(arg)
+		#Checks if type is bool and if it has been given as a string
+		if arg_type == "bool":
+			if typeof(arg_value) == 4:
+				if arg_value == "true":
+					arg_value = true
+				else:
+					arg_value = false
+				
+		calldata = GodotSigner.call("encode_" + arg_type, arg["value"])
 	
 	return calldata
 
@@ -254,24 +275,6 @@ func tuple_is_dynamic(arg):
 	return false
 
 
-
-##########   ENCODING TYPE HANDLING   #########
-
-# This whole section could probably be refactored to 
-# reduce the number of function definitions
-
-# Handles uint, int, address, string, and dynamic bytes
-func encode_general(arg):
-	var value = arg["value"]
-	var arg_type = arg["type"]
-	var calldata = GodotSigner.call("encode_" + arg_type, value)
-	if arg_type in ["bytes", "string"]:
-		# Filler offset added by Ethers-rs
-		calldata = calldata.trim_prefix("0000000000000000000000000000000000000000000000000000000000000020")
-
-	return calldata
-
-
 func encode_fixed_bytes(arg):
 	var value = arg["value"]
 	var arg_type = arg["type"]
@@ -285,26 +288,6 @@ func encode_fixed_bytes(arg):
 		value += "0"
 	
 	return value
-
-
-func encode_bool(arg):
-	var value = arg["value"]
-	
-	# Checks if bool has been given as a String
-	if typeof(value) == 4:
-		if value == "true":
-			value = true
-		else:
-			value = false
-			
-	var calldata = GodotSigner.encode_bool(value)
-	return calldata
-
-
-func encode_enum(arg):
-	var value = arg["value"]
-	var calldata = GodotSigner.encode_uint8(value)
-	return calldata
 
 
 func encode_array(arg):
@@ -376,7 +359,6 @@ func encode_tuple(arg):
 	
 	return calldata
 	
-
 
 
 
@@ -453,12 +435,12 @@ func deconstruct_calldata(outputs, calldata):
 			# Because static args have a fixed size, it's possible to
 			# know their length immediately. All single args take up 32 bytes.
 			# Static arrays and tuples take up multiples of 32 bytes.
-			var arg_length = get_static_size(output)
+			var arg_length = get_static_size(output) * 2
 			
 			# Decode the static arg using a substring sliced using
 			# the arg length.  Track the current position in the 
 			# calldata by adding the length.
-			var _calldata = calldata.substr(position, position + (arg_length * 2))
+			var _calldata = calldata.substr(position, position + arg_length)
 			position += arg_length
 			
 			var decode_result = decode_arg(output, _calldata)
@@ -522,25 +504,35 @@ func get_static_size(output):
 		return 32
 
 
-# In the case of arrays and tuples, must be capable of
-# breaking out chunks to send back through deconstruct_calldata()
 func decode_arg(arg, calldata):
 	var arg_type = arg["type"]
+
 	var decoded_value
+	
+	# Array
 	if arg_type.contains("["):
 		decoded_value = decode_array(arg, calldata)
+	
+	# Tuple
 	elif arg_type.begins_with("tuple"):
-		decoded_value = decode_tuple(arg, calldata)
+		decoded_value = abi_decode(arg["components"], calldata)
+	
+	# String, Bytes
 	elif arg_type in ["string", "bytes"]:
 		# Add filler offset to calldata, to be read by Ethers-rs
 		calldata = "0000000000000000000000000000000000000000000000000000000000000020" + calldata
 		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
+	
+	# Fixed Bytes
 	elif arg_type.begins_with("bytes"):
 		decoded_value = decode_fixed_bytes(calldata)
+	
+	# Enum
 	elif arg_type == "enum":
 		decoded_value = GodotSigner.call("decode_uint8", calldata)
+	
+	# Uint, Int, Address, Bool
 	else:
-		# For uints, ints, and bools
 		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
 	
 	return decoded_value
@@ -562,10 +554,19 @@ func decode_fixed_bytes(calldata):
 
 
 func decode_array(arg, calldata):
+
 	
-	var decoded_value
+	var decoded_value = []
 	
-	#if unfixed size, needs to check length field
+	# arrays need to check if they are fixed size
+	# if unfixed size, needs to check length field
+	# to know the number of elements
+	
+	# also must check whether their values are
+	# static or dynamic. dynamic values will
+	# have offsets after the length field.
+	# (Will know how many offsets/values there are
+	# because of the length field)
 	
 	
 	var _arg_type = arg["type"]
@@ -613,31 +614,3 @@ func decode_array(arg, calldata):
 		
 		
 	return decoded_value
-
-
-func decode_tuple(arg, calldata):
-	var decoded_value
-	
-	var value_array = arg["value"]
-	var components = arg["components"]
-	
-
-	var args = []
-	var selector = 0
-	for component in components:
-		var new_arg = {
-			"value": value_array[selector],
-			"type": component["type"],
-			"calldata": "",
-			"length": 0,
-			"dynamic": false
-				}
-		if component["type"].contains("tuple"):
-			new_arg["components"] = component["components"]
-		args.push_back(new_arg)
-		selector += 1
-	
-	var _calldata = construct_calldata(args)
-	
-	return decoded_value
-	

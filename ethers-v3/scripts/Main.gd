@@ -8,7 +8,7 @@ var random_base_contract = "0x24a878dD7b154547A291F756048f29693aE2F073"
 var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
 
-var calldata_tester_contract = "0xD3f61568f74ffB0cD972b39c91937CD7d47659ea"
+var calldata_tester_contract = "0xBb3199D5822eA17Fb12a6e467C44Adc1339062E0"
 
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
@@ -74,6 +74,8 @@ func _ready():
 
 	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "enumAndBoolWithString", ["2", "haoollo", true])
 	
+	var calldata = Ethers.get_calldata("READ", Contract.CalldataTester, "structReturn", [])
+	Ethers.read_from_contract("Base Sepolia", calldata_tester_contract, calldata, self, "get_decoded_result", {})
 	
 	#setStaticTuple - works!
 	#setDynamicTuple - works.!
@@ -195,6 +197,13 @@ func _ready():
 	
 	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
+
+func get_decoded_result(callback):
+	if callback["success"]:
+		print(callback["result"][0])
+	else:
+		print("nope")
+
 
 func update_gas_balance(callback):
 	var network = callback["callback_args"]["network"]
