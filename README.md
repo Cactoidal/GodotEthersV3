@@ -130,3 +130,12 @@ The default networks are the following testnets: Ethereum Sepolia, Optimism Sepo
 
 You can edit `default_network_info` at the bottom of `Ethers.gd` to add more networks or change their configurations.  Be aware that after running the program at least once, your network defaults will be saved into a config file, and you will need to edit `check_for_network_info()` so that it will overwrite the config file with your new defaults.
 
+___
+
+## About
+
+GodotEthers combines the orchestration abilities of Godot with the signing capability of Ethers-rs, made possible by Godot Rust.  The ABI encoding and decoding algorithms are written in pure gdscript.  Rust is used for encoding and decoding the elementary types after they have been sorted.  The Rust library is also responsible for ECDSA signing, address calculation, Keccak hashing, and BigNumber handling.  These four critical functions are all "drop-in", meaning they could be replaced by any other module providing the same functionality.  
+
+There are benefits, however, to using Ethers-rs and its successor, Alloy.  Namely that they have been well-tested, and they contain additional features that could be added into the Rust library later.  Having a Rust library also gives GodotEthers access to Rust crates containing useful cryptographic primitives, such as circom and openssl.
+
+In addition to games, GodotEthers can be used to decentralize dApp interfaces.  Instead of connecting to a website and using a web wallet, a contract interface can now be easily built in Godot and distributed to users in open source format.
