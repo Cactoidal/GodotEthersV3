@@ -43,9 +43,8 @@ func _ready():
 	#Ethers.get_gas_balance("Base Sepolia", "test_keystore", self, "update_gas_balance")
 	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore"), sepolia_link_contract, self, "get_erc20_info")
 	
-	Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
+	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore"), base_bnm_contract, self, "get_erc20_info")
 
-	
 	var amount = Ethers.convert_to_bignum("0.001", 18)
 	#Ethers.transfer("test_keystore", "Base Sepolia", recipient, amount, self, "get_receipt")
 	#Ethers.approve_erc20_allowance("test_keystore", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")

@@ -172,7 +172,7 @@ func encode_arg(arg):
 	elif arg_type.begins_with("bytes"):
 		if arg_type.length() == 5:
 			# Checks if the bytes have been provided as a 
-			# hex String, and converts to a PackedByteArray
+			# hex String, and converts to a PackedByteArray.
 			if typeof(arg["value"]) == 4:
 				arg["value"] = arg["value"].hex_decode()
 			calldata = encode_general(arg)
@@ -256,6 +256,9 @@ func tuple_is_dynamic(arg):
 
 
 ##########   ENCODING TYPE HANDLING   #########
+
+# This whole section could probably be refactored to 
+# reduce the number of function definitions
 
 # Handles uint, int, address, string, and dynamic bytes
 func encode_general(arg):
@@ -525,19 +528,15 @@ func decode_arg(arg, calldata):
 	var arg_type = arg["type"]
 	var decoded_value
 	if arg_type.contains("["):
-		#decode array
-		pass
+		decoded_value = decode_array(arg, calldata)
 	elif arg_type.begins_with("tuple"):
-		#decode tuple
-		pass
+		decoded_value = decode_tuple(arg, calldata)
 	elif arg_type in ["string", "bytes"]:
 		# Add filler offset to calldata, to be read by Ethers-rs
 		calldata = "0000000000000000000000000000000000000000000000000000000000000020" + calldata
 		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
 	elif arg_type.begins_with("bytes"):
-		#decode fixed bytes
-		#can be done manually
-		pass
+		decoded_value = decode_fixed_bytes(calldata)
 	elif arg_type == "enum":
 		decoded_value = GodotSigner.call("decode_uint8", calldata)
 	else:
@@ -547,19 +546,32 @@ func decode_arg(arg, calldata):
 	return decoded_value
 	
 
+func decode_fixed_bytes(calldata):
+	var reversed = calldata.reverse()
+	var zero_count = 0
+	for character in reversed:
+		if character == "0":
+			zero_count += 1
+		else:
+			break
+	var bytes = reversed.substr(zero_count)
+	if bytes.length()%2 != 0:
+		bytes += "0"
+	
+	return bytes
 
-# To-do: add array and tuple support
 
-func decode_array(arg, chunks, chunk_selector):
+func decode_array(arg, calldata):
+	
+	var decoded_value
+	
+	#if unfixed size, needs to check length field
+	
 	
 	var _arg_type = arg["type"]
 	var value_array = arg["value"]
 	
 	
-	var decoded = {
-		"value": [],
-		"chunk_selector": chunk_selector
-	}
 	
 	# Nested Arrays are encoded right to left
 	var type_splitter = 2
@@ -575,7 +587,7 @@ func decode_array(arg, chunks, chunk_selector):
 	# Extract the type of the rightmost array's elements
 	var arg_type = _arg_type.left(-type_splitter)
 	
-	var calldata = ""
+	var _calldata = ""
 	var args = []
 	
 	for value in value_array:
@@ -591,26 +603,24 @@ func decode_array(arg, chunks, chunk_selector):
 			new_arg["components"] = arg["components"]
 		args.push_back(new_arg)
 	
-	calldata = construct_calldata(args)
+	_calldata = construct_calldata(args)
 	
 	# Add length component if unfixed size
 	if !arg["fixed_size"]:
 		var _param_count = str(arg["value"].size())
 		var param_count = GodotSigner.encode_uint256(_param_count)
-		calldata = param_count + calldata
+		_calldata = param_count + calldata
 		
-	return decoded
+		
+	return decoded_value
 
 
-func decode_tuple(arg, chunks, chunk_selector):
+func decode_tuple(arg, calldata):
+	var decoded_value
+	
 	var value_array = arg["value"]
 	var components = arg["components"]
 	
-	
-	var decoded = {
-		"value": [],
-		"chunk_selector": chunk_selector
-	}
 
 	var args = []
 	var selector = 0
@@ -627,7 +637,7 @@ func decode_tuple(arg, chunks, chunk_selector):
 		args.push_back(new_arg)
 		selector += 1
 	
-	var calldata = construct_calldata(args)
+	var _calldata = construct_calldata(args)
 	
-	return decoded
+	return decoded_value
 	
