@@ -387,6 +387,7 @@ func get_function_outputs(function):
 		return(function["outputs"])
 	return false
 
+
 #NOTE:
 # _outputs is an array of dictionaries each containing a "type" field,
 # and a "components" field if the type is a tuple
@@ -445,16 +446,14 @@ func deconstruct_calldata(outputs, calldata):
 			dynamic_outputs.push_back(output)
 			decoded_values.push_back("")
 		else:
-			# Decode static values by passing the entire calldata,
-			# because their size is not yet known.  Update the 
-			# current position afterward.
-			
-			# Actually, since the values are not dynamic, it's
-			# possible to know the size, since they must take up
-			# 32 byte chunks.  All single values take up 32 bytes.
+			# Because static args have a fixed size, it's possible to
+			# know their length immediately. All single args take up 32 bytes.
 			# Static arrays and tuples take up multiples of 32 bytes.
-			var arg_length = get_static_size(output["type"])
+			var arg_length = get_static_size(output)
 			
+			# Decode the static arg using a substring sliced using
+			# the arg length.  Track the current position in the 
+			# calldata by adding the length.
 			var _calldata = calldata.substr(position, position + arg_length)
 			position += arg_length
 			
@@ -485,20 +484,44 @@ func deconstruct_calldata(outputs, calldata):
 	return decoded_values
 	
 
-func get_static_size(arg_type):
+func get_static_size(output):
+	var arg_type = output["type"]
+	var total_size = 0
+	
 	if arg_type.contains("["):
-		#stuff
-		pass
+		# Extract the type of the rightmost array's elements
+		var _arg_type = arg_type.left(-3)
+		
+		# Get the number of elements.
+		var iterator = int(arg_type.right(2).trim_suffix("]"))
+		
+		# Total the length of all elements.
+		for element in range(iterator):
+			var inner_value = {
+				"type": _arg_type,
+			}
+			if arg_type.contains("tuple"):
+				inner_value["components"] = output["components"]
+			total_size += get_static_size(inner_value)
+		
+		return total_size
+		
+		
 	elif arg_type.begins_with("tuple"):
-		#stuff
-		pass
+		var components = output["components"]
+		for component in components:
+			total_size += get_static_size(component)
+			
+		return total_size
+			
 	else:
 		return 32
 
 
-# Capable of breaking out chunks to send back through deconstruct_calldata
+# In the case of arrays and tuples, must be capable of
+# breaking out chunks to send back through deconstruct_calldata()
 func decode_arg(arg, calldata):
-	pass
+	var arg_type = arg["type"]
 	
 
 # Giant mess below
