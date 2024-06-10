@@ -140,4 +140,4 @@ The ABI encoding and decoding algorithms are written in pure gdscript.  Rust is 
 
 There are benefits, however, to using Ethers-rs and its successor, Alloy.  Namely that they have been well-tested, and they contain additional features that could be added into the Rust library later.  Having a Rust library also gives GodotEthers access to Rust crates containing useful cryptographic primitives, such as circom and openssl.
 
-In addition to games, GodotEthers can be used to decentralize dApp interfaces.  Instead of connecting to a website and using a web wallet, a contract interface can now be easily built in Godot and distributed to users in open source format.
+In addition to games, GodotEthers can be used to decentralize dApp interfaces.  Instead of connecting to a website and using a web wallet, a contract interface can now be easily built in Godot and distributed to users in open source format.  Blockchain bots can also be made more accessible, with user-friendly interfaces.
