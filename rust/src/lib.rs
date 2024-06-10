@@ -10,9 +10,6 @@ use num_bigint::{BigUint, BigInt};
 
 struct GodotEthers;
 
-//#[gdextension]
-//unsafe impl ExtensionLibrary for GodotEthers {}
-
 #[gdextension]
 unsafe impl ExtensionLibrary for GodotEthers {
     fn on_level_init(level: InitLevel) {
@@ -179,7 +176,6 @@ fn encode_bytes (_bytes: PackedByteArray) -> GString {
 
 }
 
-
 #[func]
 fn encode_string (_string: GString) -> GString {
     let string: String = _string.into();
@@ -289,25 +285,9 @@ fn encode_int256 (_big_int: GString) -> GString {
 //////      DECODING       //////
 
 #[func]
-fn decode_string (_message: GString) -> GString {
-    let raw_hex: String = _message.to_string();
-    let decoded: String = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
-    let return_string: GString = decoded.into();
-    return_string
-}
-
-#[func]
 fn decode_bool (_message: GString) -> GString {
     let raw_hex: String = _message.to_string();
     let decoded: bool = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
-    let return_string: GString = format!("{:?}", decoded).into();
-    return_string
-}
-
-#[func]
-fn decode_uint8 (_message: GString) -> GString {
-    let raw_hex: String = _message.to_string();
-    let decoded: u8 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
     let return_string: GString = format!("{:?}", decoded).into();
     return_string
 }
@@ -329,6 +309,54 @@ fn decode_bytes (_message: GString) -> GString {
 }
 
 #[func]
+fn decode_string (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: String = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = decoded.into();
+    return_string
+}
+
+#[func]
+fn decode_uint8 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: u8 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_uint16 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: u16 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_uint32 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: u32 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_uint64 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: u64 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_uint128 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: u128 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
 fn decode_uint256 (_message: GString) -> GString {
     let raw_hex: String = _message.to_string();
     let decoded: U256 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
@@ -336,6 +364,53 @@ fn decode_uint256 (_message: GString) -> GString {
     return_string
 }
 
+#[func]
+fn decode_int8 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: i8 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_int16 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: i16 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_int32 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: i32 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_int64 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: i64 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_int128 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: i128 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
+
+#[func]
+fn decode_int256 (_message: GString) -> GString {
+    let raw_hex: String = _message.to_string();
+    let decoded: I256 = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
+    let return_string: GString = format!("{:?}", decoded).into();
+    return_string
+}
 
 
 }
