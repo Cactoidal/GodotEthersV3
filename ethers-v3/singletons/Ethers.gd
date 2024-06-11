@@ -19,7 +19,7 @@ func _ready():
 	env_enc_iv = Crypto.new().generate_random_bytes(16)
 	
 	check_for_network_info()
-
+	
 
 # Env-enc wiped on quit
 func _notification(quit):

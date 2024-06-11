@@ -10,6 +10,8 @@ var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 
 var calldata_tester_contract = "0xca1EfF514Bb4E54ed437bfE9FF9625F0120c231b"
 
+var ccip_module = preload("res://modules/CCIP/CCIP.tscn")
+
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
 
@@ -54,6 +56,7 @@ func _ready():
 	#Ethers.approve_erc20_allowance("test_keystore2", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
 	#Ethers.transfer_erc20("test_keystore2", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
 	#Ethers.transfer_erc20("test_keystore2", "Base Sepolia", base_bnm_contract, random_base_contract, amount, self, "get_receipt")
+	
 	
 
 	#var number_32 = GodotSigner.decode_uint256("0000000000000000000000000000000000000000000000000000000000000020")
@@ -272,8 +275,9 @@ func _ready():
 	#])
 	#
 	#
-	#Ethers.send_transaction("test_keystore2", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
-	
+	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
+	var new_ccip = ccip_module.instantiate()
+	add_child(new_ccip)
 
 func get_decoded_result(callback):
 	if callback["success"]:

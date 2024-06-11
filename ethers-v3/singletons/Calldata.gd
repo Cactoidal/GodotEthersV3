@@ -41,7 +41,8 @@ func get_function_calldata(abi, function_name, _args=[]):
 		calldata = abi_encode(inputs, _args)
 		
 	var function_selector = get_function_selector(function)
-				
+
+	#print("done")
 	return function_selector + calldata
 	
 
@@ -206,6 +207,9 @@ func encode_arg(arg):
 				
 		calldata = GodotSigner.call("encode_" + arg_type, arg["value"])
 	
+	#print(arg_type)
+	#print("calldata: " + calldata)
+	
 	return calldata
 
 
@@ -217,7 +221,9 @@ func get_function_selector(function):
 			selector_string += get_tuple_components(input)
 			selector_string = selector_string.trim_suffix(",")
 			if input["type"].length() > 5:
+				selector_string = selector_string.trim_suffix(",")
 				selector_string += input["type"].right(-5)
+				selector_string += ","
 		else:
 			selector_string += input["type"] + ","
 			
@@ -236,7 +242,9 @@ func get_tuple_components(input):
 		if component["type"].contains("tuple"):
 			selector_string += get_tuple_components(component)
 			if component["type"].length() > 5:
+				selector_string = selector_string.trim_suffix(",")
 				selector_string += component["type"].right(-5)
+				selector_string += ","
 		else:
 			selector_string += component["type"] + ","
 	

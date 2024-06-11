@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8snfdsueffog"]
+
+[ext_resource type="Script" path="res://modules/EtherealTraveler/EtherealTraveler.gd" id="1_u5csm"]
+
+[node name="EtherealTraveler" type="Node3D"]
+script = ExtResource("1_u5csm")

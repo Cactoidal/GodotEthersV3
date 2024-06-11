@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://cl6fx2bk51ruu"]
+
+[ext_resource type="Script" path="res://modules/dInterfaceStandardExample/dInterfaceStandardExample.gd" id="1_h58wx"]
+
+[node name="dInterfaceStandardExample" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_h58wx")
