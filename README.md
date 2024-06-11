@@ -9,6 +9,8 @@ ___
 
 This is experimental, alpha software, in a state of ongoing development, intended for usage on testnets.  
 
+When exporting a project, __*do not*__ "Export With Debug".
+
 ___
 
 Using GodotEthers is pretty straightforward.  To interact with a contract, you just need to slap an ABI somewhere in your project, use `get_calldata()` for the function you want, then call `read_from_contract()` or `send_transaction()`.  That's it!  Encoding calldata and decoding the RPC response is all taken care of for you.
