@@ -11,6 +11,13 @@ var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 var calldata_tester_contract = "0xca1EfF514Bb4E54ed437bfE9FF9625F0120c231b"
 
 var ccip_module = preload("res://modules/CCIP/CCIP.tscn")
+var dInterface_standard_example_module = preload("res://modules/dInterfaceStandardExample/dInterfaceStandardExample.tscn")
+var ethereal_traveler_module = preload("res://modules/EtherealTraveler/EtherealTraveler.tscn")
+
+# Simple interface for loading and deloading modules.
+
+
+
 
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer

@@ -42,7 +42,7 @@ func send_transaction(
 			"tx_receipt_poll_timer": 4,
 			"eth_transfer": false
 			}
-		
+			
 			pending_transactions[network] = transaction
 
 

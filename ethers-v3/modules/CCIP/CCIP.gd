@@ -7,6 +7,29 @@ extends Node
 
 # Router and BnM token contracts need to be added
 
+
+# Choose Sender Network.
+
+# Loads gas and BnM token balance, BnM token drip button.
+# Unhides all destination buttons, then hides the sender
+# network's button on the destination side, deselects 
+# any currently-selected Destination Network, and hides
+# the send transaction button.
+
+
+# Choose Destination Network.
+
+# Loads send transaction button.
+
+
+# Send Transaction.
+
+# Deselects and hides everything.
+# When it receives the callback, 
+# updates rudimentary "transaction log"
+# and unhides the sender and destination
+# buttons.
+
 func _ready():
 	var address = Ethers.get_address("test_keystore2")
 	
@@ -31,15 +54,25 @@ func bridge(account, from_network, to_network, token, amount):
 		amount
 	]
 	
-	var EVMExtraArgsV2 = [
-		"900000", # Destination gas limit
-		true # Allow out of order execution
+	# ExtraArgsV2 appears to be broken, at least on the Base Sepolia -> Arbitrum Sepolia lane.
+	# Or I'm missing something.
+	
+	#var EVMExtraArgsV2 = [
+		#"90000", # Destination gas limit
+		#false # Allow out of order execution
+	#]
+	#
+	#var extra_args = "181dcf10" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}, {"type": "bool"}]}], [EVMExtraArgsV2] )
+	
+	
+	# ExtraArgsV1 works, however.
+	
+	var EVMExtraArgsV1 = [
+		"90000" # Destination gas limit
 	]
 	
-	# This will send, but something is broken
-	# What is this object actually supposed to look like?
-	# On-chain, it uses abi.encodeWithSelector 
-	var extra_args = "0x181dcf10" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}, {"type": "bool"}]}], [EVMExtraArgsV2] )
+	var extra_args = "97a657c9" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}]}], [EVMExtraArgsV1] )
+	
 	
 	var EVM2AnyMessage = [
 		Calldata.abi_encode( [{"type": "address"}], [address] ), # ABI-encoded recipient address
@@ -71,11 +104,11 @@ func get_native_fee(callback):
 		var network = callback_args["network"]
 		var contract = callback_args["contract"]
 		var calldata = Ethers.get_calldata("READ", CCIP_ROUTER, "getFee", [chain_selector, EVM2AnyMessage])
+		
 		Ethers.read_from_contract(network, contract, calldata, self, "ccip_bridge", callback_args)
 
 
 func ccip_bridge(callback):
-
 	if callback["success"]:
 	
 		var callback_args = callback["callback_args"]
@@ -94,6 +127,10 @@ func ccip_bridge(callback):
 func get_receipt(callback):
 	print(callback)
 
+
+func get_bnm_address(network):
+	return ccip_network_info[network]["bnm_address"]
+	
 
 func get_test_tokens(address, network):
 	var contract

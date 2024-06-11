@@ -42,7 +42,6 @@ func get_function_calldata(abi, function_name, _args=[]):
 		
 	var function_selector = get_function_selector(function)
 
-	#print("done")
 	return function_selector + calldata
 	
 
@@ -206,9 +205,6 @@ func encode_arg(arg):
 					arg_value = false
 				
 		calldata = GodotSigner.call("encode_" + arg_type, arg["value"])
-	
-	#print(arg_type)
-	#print("calldata: " + calldata)
 	
 	return calldata
 
