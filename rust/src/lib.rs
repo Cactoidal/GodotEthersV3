@@ -7,6 +7,8 @@ use ethers::core::types::transaction::eip2718::TypedTransaction;
 use std::{convert::TryFrom, sync::Arc};
 use hex::*;
 use num_bigint::{BigUint, BigInt};
+use pbkdf2::{pbkdf2_hmac, pbkdf2_hmac_array};
+use sha2::Sha256;
 
 struct GodotEthers;
 
@@ -53,6 +55,27 @@ pub struct GodotSigner {
 
 #[godot_api]
 impl GodotSigner {
+
+
+    
+//////      PBKDF2 KEY DERIVATION       //////
+
+#[func]
+fn derive_key(_password: GString, _salt: GString) -> Array<u8> {
+    let password = _password.to_string();
+    let salt = _salt.to_string();
+    let password_bytes = password.as_bytes();
+    let salt_bytes = salt.as_bytes();
+
+    let n = 600_000;
+
+    let key = pbkdf2_hmac_array::<Sha256, 32>(password_bytes, salt_bytes, n);
+
+    let key_array: Array<u8> = key.iter().map(|e| *e as u8).collect();
+    
+    key_array
+}
+
 
 
 //////      TRANSACTION CALLDATA SIGNING       //////
