@@ -52,20 +52,26 @@ func account_exists(account):
 
 
 func create_account(account, _password):
-	if _password.length() > 15 || _password.length() < 8:
-		emit_error("Password of invalid length for " + account)
-		return
 	var path = "user://" + account
 	var key = Crypto.new().generate_random_bytes(32)
-	FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _password).store_buffer(key)
+	var salt = Crypto.new().generate_random_bytes(32)
+	
+	# Uses PBKDF2 algorithm to derive key
+	var password = GodotSigner.derive_key(_password, salt.hex_encode())
+	
+	FileAccess.open_encrypted(path, FileAccess.WRITE, password).store_buffer(key)
+	FileAccess.open(path + "_SALT", FileAccess.WRITE).store_buffer(salt)
 	key = clear_memory()
 	key.clear()
+	password = clear_memory()
+	password.clear()
 
 
 func login(account, _password):
 	var path = "user://" + account
-	var password_path = path + "_encrypted_password"
-	var file = FileAccess.open_encrypted_with_pass(path, FileAccess.READ, _password)
+	var salt = FileAccess.open(path + "_SALT", FileAccess.READ).get_buffer(32)
+	var password = GodotSigner.derive_key(_password, salt.hex_encode())
+	var file = FileAccess.open_encrypted(path, FileAccess.READ, password)
 	if file:
 		var aes = AESContext.new()
 		aes.start(
@@ -73,8 +79,7 @@ func login(account, _password):
 			env_enc_key, 
 			env_enc_iv
 			)
-		var password = _password
-		logins[account] = aes.update(pad(password).to_utf8_buffer())
+		logins[account] = aes.update(password)
 		password = clear_memory()
 		password.clear()
 		aes.finish()
@@ -93,31 +98,14 @@ func get_key(account):
 			env_enc_iv
 			)
 		
-		return FileAccess.open_encrypted_with_pass(
+		return FileAccess.open_encrypted(
 			path, 
 			FileAccess.READ, 
-			unpad(aes.update(logins[account]).get_string_from_utf8())
+			aes.update(logins[account])
 			).get_buffer(32)
 
 	else:
 		emit_error(account + " does not exist")
-
-
-func pad(password):
-	var padding_length = 16%password.length()
-	padding_length -= 1
-	for zero in range(padding_length):
-		password += "0"
-	password += str(padding_length)
-	return password
-
-
-func unpad(password):
-	var padding_length = int(password.right(1))
-	padding_length += 1
-	var password_length = 16 - padding_length
-	password = password.left(password_length)
-	return password
 
 
 func get_address(account):
