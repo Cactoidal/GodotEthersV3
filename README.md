@@ -142,6 +142,8 @@ The ABI encoding and decoding algorithms are written in pure gdscript.  Rust is 
 
 The Rust library is also responsible for ECDSA signing, address calculation, Keccak hashing, and BigNumber handling.  These four critical functions are all "drop-in", meaning they could be replaced by any other module providing the same functionality.  
 
-There are benefits, however, to using Ethers-rs and its successor, Alloy.  Namely that they have been well-tested, and they contain additional features that could be added into the Rust library later.  Having a Rust library also gives GodotEthers access to Rust crates containing useful cryptographic primitives, such as circom and openssl.  For example, the pbkdf2 crate is used to derive the ancryption/decryption key from an account password.
+There are benefits, however, to using Ethers-rs and its successor, Alloy.  Namely that they have been well-tested, and they contain additional features that could be added into the Rust library later.  Having a Rust library also gives GodotEthers access to Rust crates containing useful cryptographic primitives, such as circom and openssl.
+
+For example, the pbkdf2 crate is used to derive the ancryption/decryption key from an account password.
 
 In addition to games, GodotEthers can be used to decentralize dApp interfaces.  Instead of connecting to a website and using a web wallet, a contract interface can now be easily built in Godot and distributed to users in open source format.  Blockchain bots can also be made more accessible, with user-friendly interfaces.
