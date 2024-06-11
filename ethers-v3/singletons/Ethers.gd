@@ -7,40 +7,41 @@ var header = "Content-Type: application/json"
 
 var error
 
-var logins = []
+var logins = {}
 
-var filepaths = []
+var env_enc_key
+var env_enc_iv
 
 func _ready():
 	
 	# New env-enc created each session
-	FileAccess.open("user://env_enc_key", FileAccess.WRITE).store_buffer(Crypto.new().generate_random_bytes(32))
-	FileAccess.open("user://env_enc_iv", FileAccess.WRITE).store_buffer(Crypto.new().generate_random_bytes(16))
-	filepaths = ["user://env_enc_key", "user://env_enc_iv"]
+	env_enc_key = Crypto.new().generate_random_bytes(32)
+	env_enc_iv = Crypto.new().generate_random_bytes(16)
 	
 	check_for_network_info()
 
 
-# Env-enc deleted on quit
+# Env-enc wiped on quit
 func _notification(quit):
 	if quit == NOTIFICATION_WM_CLOSE_REQUEST:
 		
-		for file in filepaths:
-			DirAccess.remove_absolute(file)
+		env_enc_key = clear_memory()
+		env_enc_key.clear()
+		env_enc_iv = clear_memory()
+		env_enc_iv.clear()
+		for account in logins:
+			account = clear_memory()
+			account.clear()
 		
 		get_tree().quit()
 
 
+func clear_memory():
+	return Crypto.new().generate_random_bytes(256)
+
 
 #########  KEY MANAGEMENT  #########
 
-# DEBUG
-# NOTE
-# In addition to implementing an env-enc key/iv for encrypting the user's password,
-# I've also limited the overall usage of get_key(), and tried to avoid declaring  
-# the unencrypted password, env-enc key/iv, and private key as local variables.  
-# The program will also generate a random one-time key whenever reading from contracts. 
-# I don't know if these measures enhance security, but presumably they don't make it worse.
 
 func account_exists(account):
 	var path = "user://" + account
@@ -55,7 +56,10 @@ func create_account(account, _password):
 		emit_error("Password of invalid length for " + account)
 		return
 	var path = "user://" + account
-	FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _password).store_buffer(Crypto.new().generate_random_bytes(32))
+	var key = Crypto.new().generate_random_bytes(32)
+	FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, _password).store_buffer(key)
+	key = clear_memory()
+	key.clear()
 
 
 func login(account, _password):
@@ -66,36 +70,35 @@ func login(account, _password):
 		var aes = AESContext.new()
 		aes.start(
 			AESContext.MODE_CBC_ENCRYPT, 
-			FileAccess.open("user://env_enc_key", FileAccess.READ).get_buffer(32), 
-			FileAccess.open("user://env_enc_iv", FileAccess.READ).get_buffer(16)
+			env_enc_key, 
+			env_enc_iv
 			)
-		FileAccess.open(password_path, FileAccess.WRITE).store_buffer(aes.update(pad(_password).to_utf8_buffer()))
+		var password = _password
+		logins[account] = aes.update(pad(password).to_utf8_buffer())
+		password = clear_memory()
+		password.clear()
 		aes.finish()
-		logins.push_back(account)
-		filepaths.push_back(password_path)
 		
 	else:
 		emit_error("Incorrect password for " + account)
 
 
 func get_key(account):
-	if account in logins:
+	if account in logins.keys():
 		var path = "user://" + account
-		var password_path = path + "_encrypted_password"
 		var aes = AESContext.new()
 		aes.start(
 			AESContext.MODE_CBC_DECRYPT, 
-			FileAccess.open("user://env_enc_key", FileAccess.READ).get_buffer(32), 
-			FileAccess.open("user://env_enc_iv", FileAccess.READ).get_buffer(16)
+			env_enc_key, 
+			env_enc_iv
 			)
 		
 		return FileAccess.open_encrypted_with_pass(
 			path, 
-			FileAccess.READ,
-			unpad(aes.update(FileAccess.get_file_as_bytes(password_path)).get_string_from_utf8())
+			FileAccess.READ, 
+			unpad(aes.update(logins[account]).get_string_from_utf8())
 			).get_buffer(32)
-		
-		
+
 	else:
 		emit_error(account + " does not exist")
 

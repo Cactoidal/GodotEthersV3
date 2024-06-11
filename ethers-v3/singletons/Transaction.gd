@@ -130,9 +130,7 @@ func get_gas_price(callback):
 				emit_error("Gas fee too high", network)
 				return
 		
-		# Used for "merging" the private key with the params array 
-		# without declaring the key locally; see below
-		temp_account = transaction["account"]
+		var account = transaction["account"]
 		
 		
 		
@@ -140,8 +138,11 @@ func get_gas_price(callback):
 			
 			# Contract Interaction
 			
-			var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_limit"], transaction["gas_price"], transaction["tx_count"], transaction["value"], transaction["calldata"]]
-			var signed_calldata = "0x" + GodotSigner.callv("sign_raw_calldata", params.map(merge))
+			var params = [Ethers.get_key(account), chain_id, transaction["contract"], rpc, transaction["gas_limit"], transaction["gas_price"], transaction["tx_count"], transaction["value"], transaction["calldata"]]
+			var signed_calldata = "0x" + GodotSigner.callv("sign_raw_calldata", params)
+			params = Ethers.clear_memory()
+			params.clear()
+			
 			Ethers.perform_request(
 				"eth_sendRawTransaction", 
 				[signed_calldata], 
@@ -155,11 +156,13 @@ func get_gas_price(callback):
 		
 		# ETH transfer
 		
-		var params = ["key_placeholder", chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
+		var params = [Ethers.get_key(account), chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
 		for arg in transaction["contract_args"]:
 			params.push_back(arg)
 		
-		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params.map(merge))
+		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params)
+		params = Ethers.clear_memory()
+		params.clear()
 		
 		Ethers.perform_request(
 			"eth_sendRawTransaction", 
@@ -173,14 +176,6 @@ func get_gas_price(callback):
 	else:
 		emit_error("RPC error: Failed to get gas price", network)
 
-# Workaround to avoid declaring the private key as a local variable, while still
-# retaining the ability to use callv()
-var temp_account
-func merge(value):
-	if typeof(value) == 4:
-		if value == "key_placeholder":
-			return Ethers.get_key(temp_account)		
-	return value
 
 func get_transaction_hash(callback):
 	var transaction = callback["callback_args"]["transaction"]

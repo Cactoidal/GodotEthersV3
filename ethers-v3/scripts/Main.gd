@@ -13,9 +13,13 @@ var calldata_tester_contract = "0xca1EfF514Bb4E54ed437bfE9FF9625F0120c231b"
 # Approached with the philosophy that the "Ethers" singleton 
 # should be the primary API for the developer
 
-# implement decoding
+
 # do more testing
 
+#bridge module
+#swap module
+#
+#erc721
 
 # multi-chain wallet; cross-chain functionality?
 # If I deploy "entry point" contracts on each testnet, I could

@@ -17,9 +17,9 @@ extends Node
 # Bools
 # Enums
 # Bytes
+# Fixed Bytes
 # Dynamic Tuples
 # Static Tuples 
-# FixedBytes
 # Arrays of Tuples
 # Nested Arrays
 # Nested Arrays of Tuples
@@ -154,7 +154,7 @@ func construct_calldata(args):
 			
 		selector += 1
 	
-	# The calldata chunks are concatenated.
+	# Concatenate the calldata chunks.
 	for _calldata in body:
 		calldata += _calldata["calldata"]
 	
@@ -533,8 +533,6 @@ func decode_arg(arg, calldata):
 	
 	# Uint, Int, Address, Bool
 	else:
-		print(arg_type + ":")
-		print(calldata)
 		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
 	
 	return decoded_value
