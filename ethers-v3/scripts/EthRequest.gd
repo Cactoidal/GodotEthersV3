@@ -50,7 +50,8 @@ func _process(delta):
 				callback["callback_node"], 
 				callback["callback_function"], 
 				callback["callback_args"],
-				callback["retries"])
+				callback["retries"],
+				callback["specified_rpc"])
 			queue_free()
 			
 	prune_timer -= delta

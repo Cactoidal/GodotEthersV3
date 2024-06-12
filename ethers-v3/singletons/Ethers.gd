@@ -278,11 +278,6 @@ func return_gas_balance(_callback):
 
 #########  TRANSACTION API  #########
 
-# DEBUG
-# EXPERIMENTAL
-# NOTE
-# Implementation of the Ethereum ABI specification is currently ongoing.
-# See the "Calldata.gd" singleton for more details.
 
 func get_calldata(read_or_write, abi, function_name, function_args=[]):
 	var calldata = {
@@ -307,16 +302,18 @@ func read_from_contract(network, contract, _calldata, callback_node, callback_fu
 		"_callback_node": callback_node,
 		"_callback_function": callback_function,
 		"_callback_args": _callback_args,
-		"outputs": outputs
+		
+		# Used to decode the RPC response 
+		"_function_outputs": outputs
 	}
+	
 	Ethers.perform_request(
 		"eth_call", 
 		[{"to": contract, "input": calldata}, "latest"], 
 		network, 
 		self,
 		"decode_rpc_response", 
-		callback_args,
-		3 #default "retries" value
+		callback_args
 		)
 
 
@@ -325,7 +322,7 @@ func decode_rpc_response(_callback):
 	var callback_node = _callback_args["_callback_node"]
 	var callback_function = _callback_args["_callback_function"]
 	var callback_args = _callback_args["_callback_args"]
-	var outputs = _callback_args["outputs"]
+	var outputs = _callback_args["_function_outputs"]
 	
 	var callback = {
 		"success": _callback["success"],
@@ -367,7 +364,7 @@ func transfer(account, network, recipient, amount, callback_node, callback_funct
 	)
 
 
-func perform_request(method, params, network, callback_node, callback_function, callback_args={}, retries=3):
+func perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3):
 	
 	var callback = {
 		"callback_node": callback_node,
@@ -378,10 +375,16 @@ func perform_request(method, params, network, callback_node, callback_function, 
 		"params": params,
 		"success": false,
 		"retries": retries,
-		"result": "error"
+		"result": "error",
+		"specified_rpc": false
 	}
+
+	var rpc = specified_rpc
 	
-	var rpc = get_rpc(network)
+	if !rpc:
+		rpc = get_rpc(network)
+	else:
+		callback["specified_rpc"] = rpc
 	
 	if !rpc:
 		emit_error("Network " + network + " not listed in network info")
@@ -568,7 +571,7 @@ var default_network_info = {
 	"Ethereum Sepolia": 
 		{
 		"chain_id": "11155111",
-		"rpcs": ["https://ethereum-sepolia-rpc.publicnode.com"],
+		"rpcs": ["https://ethereum-sepolia-rpc.publicnode.com", "https://rpc2.sepolia.org"],
 		"rpc_cycle": 0,
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",

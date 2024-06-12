@@ -11,7 +11,6 @@ var recipient = "0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba"
 var calldata_tester_contract = "0xca1EfF514Bb4E54ed437bfE9FF9625F0120c231b"
 
 var ccip_module = preload("res://modules/CCIP/CCIP.tscn")
-var dInterface_standard_example_module = preload("res://modules/dInterfaceStandardExample/dInterfaceStandardExample.tscn")
 var ethereal_traveler_module = preload("res://modules/EtherealTraveler/EtherealTraveler.tscn")
 
 # Simple interface for loading and deloading modules.
@@ -42,26 +41,116 @@ var ethereal_traveler_module = preload("res://modules/EtherealTraveler/EtherealT
 
 # This can be an add-on that someone can include in the template if they want.
 
+var rpc_filter_ids = {}
+var filter_ids_pending = true
+var block_timer = 0.1
 
+func _process(delta):
+	
+	prune_blocks(delta)
+	
+	if filter_ids_pending:
+		var all_found = true
+		for _rpc in rpc_filter_ids.keys():
+			var rpc = rpc_filter_ids[_rpc]
+			if str(rpc["filter_id"]) == "pending":
+				all_found = false
+		if all_found:
+			filter_ids_pending = false
+			return
+		
+		for _rpc in rpc_filter_ids.keys():
+			var rpc = rpc_filter_ids[_rpc]
+			rpc["timer"] -= delta
+			if rpc["timer"] < 0:
+				rpc["timer"] = 5
+				
+				var current_rpc = Ethers.network_info["Ethereum Sepolia"]["rpc_cycle"]
+				if _rpc == Ethers.network_info["Ethereum Sepolia"]["rpcs"][current_rpc]:
+					if str(rpc["filter_id"]) == "pending":
+						Ethers.perform_request(
+						"eth_newBlockFilter", 
+						[], 
+						"Ethereum Sepolia", 
+						self, 
+						"get_filter_id"
+						)
+	else:
+		block_timer -= delta
+		if block_timer < 0:
+			block_timer = 5
+			var current_rpc = Ethers.network_info["Ethereum Sepolia"]["rpc_cycle"]
+			var rpc = Ethers.network_info["Ethereum Sepolia"]["rpcs"][current_rpc]
+			Ethers.perform_request(
+					"eth_getFilterChanges", 
+					[rpc_filter_ids[rpc]["filter_id"]], 
+					"Ethereum Sepolia", 
+					self, 
+					"get_new_block_hashes"
+					)
+			
 
 
 func _ready():
-
+	
 	if !Ethers.account_exists("test_keystore5"):
 		Ethers.create_account("test_keystore5", "test_password")
 	
 	Ethers.login("test_keystore5", "test_password")
 	
 	print(Ethers.get_address("test_keystore5"))
+	
+	for rpc in Ethers.network_info["Ethereum Sepolia"]["rpcs"]:
+		rpc_filter_ids[rpc] = {
+			"filter_id": "pending",
+			"timer": 0.1
+			}
 
+
+func prune_blocks(delta):
+	if !received_hashes.keys().is_empty():
+		var prunable_hashes = []
+		for hash in received_hashes.keys():
+			received_hashes[hash] -= delta
+			if received_hashes[hash] < 0:
+				prunable_hashes.push_back(hash)
+		for hash in prunable_hashes:
+			received_hashes.erase(hash)
+	
+	
+	#Ethers.perform_request(
+					#"eth_newBlockFilter", 
+					#[], 
+					#"Ethereum Sepolia", 
+					#self, 
+					#"get_filter_id"
+					#)
+	
+	#Ethers.perform_request(
+					#"eth_getFilterChanges", 
+					#["0x7202de8626bbcd453f83e321811f4791"], 
+					#"Ethereum Sepolia", 
+					#self, 
+					#"get_new_block_hashes"
+					#)
+	
+
+	#Ethers.perform_request(
+					#"eth_getBlockTransactionCountByHash", 
+					#["0x700d12c196ecbe80ada836f4e0ae6430f045d9c2e5c2194c63074603356939fa"], 
+					#"Ethereum Sepolia", 
+					#self, 
+					#"get_filter_id"
+					#)
+	
 	
 	#Ethers.get_gas_balance("Base Sepolia", "test_keystore5", self, "update_gas_balance")
 	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore5"), sepolia_link_contract, self, "get_erc20_info")
 	
 	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore5"), base_bnm_contract, self, "get_erc20_info")
 
-	var new_ccip = ccip_module.instantiate()
-	add_child(new_ccip)
+	#var new_ccip = ccip_module.instantiate()
+	#add_child(new_ccip)
 
 	return
 	var amount = Ethers.convert_to_bignum("0.001", 18)
@@ -290,6 +379,33 @@ func _ready():
 	#
 	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	
+func get_filter_id(callback):
+	if callback["success"]:
+		print(callback["result"])
+		var filter_id = callback["result"]
+		var rpc = callback["callback_args"]["_SUCCESSFUL_RPC"]
+		rpc_filter_ids[rpc]["filter_id"] = filter_id
+
+var received_hashes = {}
+func get_new_block_hashes(callback):
+	if callback["success"]:
+		var block_hashes = callback["result"]
+		for hash in block_hashes:
+			if !hash in received_hashes.keys():
+				print(hash)
+				received_hashes[hash] = 45
+				Ethers.perform_request(
+						"eth_getBlockTransactionCountByHash", 
+						[hash], 
+						"Ethereum Sepolia", 
+						self, 
+						"get_block_transaction_count"
+						)
+
+func get_block_transaction_count(callback):
+	
+	if callback["success"]:
+		print(callback["result"].hex_to_int())
 
 func get_decoded_result(callback):
 	if callback["success"]:
