@@ -112,7 +112,7 @@ You then must use `login()` with the name and password.  Once the account is log
 
 ___
 
-### `perform_request(method, params, network, callback_node, callback_function, callback_args={}, retries=3, specified_rpc=false)`
+### `perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3)`
 
 `method` is the ethereum method you want to call.
 
@@ -120,9 +120,11 @@ ___
 
 `network` and the `callback` parameters are the same as they are for `read_from_contract()` and `send_transaction()`.  Note that `perform_request()` is a lower level function call, and therefore will *not* automatically decode the RPC result.  You will need to process the result in your callback function.
 
-`retries` is the number of times the application will try to call an RPC node until it receives a successful response code.  The default number of attempts is 3. Note that in addition to retries, GodotEthers is programmed to reduce RPC load and dependency by automatically cycling through all the RPC nodes listed for a given network.
-
 `specified_rpc` overrides the rpc cycling mechanism, using the chosen RPC node for the request.  Useful when using something like `eth_newBlockFilter`, which will produce a filter id that needs to be mapped to a specific RPC.
+
+`retries` is the number of times the application will try to perform the request until it receives a successful response code.  The default number of attempts is 3. Note that in addition to retries, GodotEthers is programmed to reduce RPC load and dependency by automatically cycling through all the RPC nodes listed for a given network.
+
+
 
 ___
 
