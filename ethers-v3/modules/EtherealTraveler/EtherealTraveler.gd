@@ -1,25 +1,14 @@
 extends Node3D
 
-
 # An Ethereum Sepolia visualizer that receives block hashes and 
 # their transaction counts.
 
 var rpc_filter_ids = []
 var received_hashes = {}
 var block_timer = 0.1
-
-# DEBUG
-var ccip_module = preload("res://modules/CCIP/CCIP.tscn")
+var blocks = []
 
 func _ready():
-	# DEBUG
-	# Quick read/write checker
-	
-	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore5"), "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", self, "get_erc20_info")
-	#Ethers.login("test_keystore5", "test_password")
-	#var ccip = ccip_module.instantiate()
-	#add_child(ccip)
-	
 	
 	# We still want to cycle RPCs, but we also want to map the RPC
 	# nodes to specific block filter ids.  We can do this by
@@ -55,7 +44,13 @@ func get_filter_id(callback):
 
 func _process(delta):
 	
-	prune_blocks(delta)
+	if $Fadein.modulate.a > 0:
+		$Fadein.modulate.a -= delta
+		if $Fadein.modulate.a < 0:
+			$Fadein.modulate.a = 0
+	
+	prune_block_hashes(delta)
+	move_blocks(delta)
 	
 	block_timer -= delta
 	if block_timer < 0:
@@ -124,7 +119,7 @@ func get_block_transaction_count(callback):
 
 # Blocks are eventually pruned from the "received_hashes" 
 # dictionary to free up memory.
-func prune_blocks(delta):
+func prune_block_hashes(delta):
 	if !received_hashes.keys().is_empty():
 		var prunable_hashes = []
 		for hash in received_hashes.keys():
@@ -142,26 +137,41 @@ func prune_blocks(delta):
 
 
 # Visualizer that spawns meshes to represent 
-# transactions, and colors them randomly 
-# using the block hash as a seed.
+# transactions.
 func generate_block(hash, tx_count):
-	pass
+	$Blockhash.text = hash
+	$Blockhash.modulate.a = 0
+	var new_block = Node3D.new()
+	$Blockspace.add_child(new_block)
+	blocks.push_back(new_block)
+	for tx in range(tx_count):
+		var new_tx = MeshInstance3D.new()
+		new_tx.set_mesh(BoxMesh.new())
+		new_tx.mesh.size = Vector3(1,1,1)
+		new_block.add_child(new_tx)
+		new_tx.transform.origin = Vector3(
+			randi_range(0,7),
+			randi_range(0,7),
+			randi_range(0,7)
+		)
 
 
-
-
-
-
-
-
-# DEBUG
-func get_erc20_info(callback):
-	var callback_args = callback["callback_args"]
-	var network = callback_args["network"]
-	var address = callback_args["address"]
-	if callback["success"]:
-		var erc20_name = callback_args["name"]
-		var decimals = callback_args["decimals"]
-		var balance = callback_args["balance"]
-		print(address + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
-#
+# Blocks are eventually pruned once they move out
+# of the camera's line of sight.
+func move_blocks(delta):
+	
+	if $Blockhash.modulate.a < 1:
+		$Blockhash.modulate.a += delta
+		if $Blockhash.modulate.a > 1:
+			$Blockhash.modulate.a = 1
+	
+	var deletion_queue = []
+	for block in blocks:
+		block.global_transform.origin.y += 2*delta
+		
+		if block.global_transform.origin.y > 200:
+			deletion_queue.push_back(block)
+	
+	for block in deletion_queue:
+		blocks.erase(block)
+		block.queue_free()

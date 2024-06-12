@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://c8snfdsueffog"]
+[gd_scene load_steps=10 format=3 uid="uid://c8snfdsueffog"]
 
 [ext_resource type="Script" path="res://modules/EtherealTraveler/EtherealTraveler.gd" id="1_u5csm"]
 
@@ -29,7 +29,7 @@ volumetric_fog_density = 0.01
 code = "// NOTE: Shader automatically converted from Godot Engine 4.3.beta1's StandardMaterial3D.
 
 shader_type spatial;
-render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
+render_mode blend_mix, cull_back, diffuse_burley, specular_schlick_ggx;
 
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
@@ -99,6 +99,7 @@ void fragment() {
 	// Normal Map: Enabled
 	NORMAL_MAP = triplanar_texture(texture_normal, uv1_power_normal, uv1_triplanar_pos - TIME/25.0).rgb;
 	NORMAL_MAP_DEPTH = normal_scale;
+
 }
 "
 
@@ -134,8 +135,6 @@ subdivide_width = 200
 subdivide_depth = 200
 orientation = 1
 
-[sub_resource type="BoxMesh" id="BoxMesh_vfrhb"]
-
 [node name="EtherealTraveler" type="Node3D"]
 script = ExtResource("1_u5csm")
 
@@ -149,7 +148,25 @@ mesh = SubResource("QuadMesh_prep1")
 transform = Transform3D(0.97742, 0, 0.211308, 0, 1, 0, -0.211308, 0, 0.97742, 7.51094, 8.12208, 5.15329)
 
 [node name="Blockspace" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.60066, 3.03401, -15.8989)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.60066, -9.61611, -15.8989)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Blockspace"]
-mesh = SubResource("BoxMesh_vfrhb")
+[node name="Blockhash" type="Label" parent="."]
+modulate = Color(0.960784, 0.768627, 0.458824, 1)
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 9.0
+offset_top = -53.0
+offset_right = 95.0
+offset_bottom = -30.0
+grow_vertical = 0
+scale = Vector2(1.9, 1.9)
+text = "Seeking . . ."
+
+[node name="Fadein" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
