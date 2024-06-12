@@ -8,7 +8,10 @@ var received_hashes = {}
 var block_timer = 0.1
 var blocks = []
 
+
 func _ready():
+	
+	$Back.connect("pressed", back)
 	
 	# We still want to cycle RPCs, but we also want to map the RPC
 	# nodes to specific block filter ids.  We can do this by
@@ -175,3 +178,6 @@ func move_blocks(delta):
 	for block in deletion_queue:
 		blocks.erase(block)
 		block.queue_free()
+
+func back():
+	queue_free()

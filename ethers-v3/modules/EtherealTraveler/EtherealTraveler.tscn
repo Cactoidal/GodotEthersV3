@@ -155,13 +155,21 @@ modulate = Color(0.960784, 0.768627, 0.458824, 1)
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 9.0
-offset_top = -53.0
-offset_right = 95.0
-offset_bottom = -30.0
+offset_left = 8.0
+offset_top = -47.0
+offset_right = 220.0
+offset_bottom = 8.0
 grow_vertical = 0
-scale = Vector2(1.9, 1.9)
+theme_type_variation = &"HeaderMedium"
+theme_override_font_sizes/font_size = 30
 text = "Seeking . . ."
+
+[node name="Back" type="Button" parent="."]
+offset_right = 8.0
+offset_bottom = 8.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+text = "< Back"
 
 [node name="Fadein" type="ColorRect" parent="."]
 anchors_preset = 15
@@ -169,4 +177,5 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0, 0, 0, 1)

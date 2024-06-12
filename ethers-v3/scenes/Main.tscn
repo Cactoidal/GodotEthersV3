@@ -1,6 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://cgbafq7vxe7cf"]
+[gd_scene load_steps=4 format=3 uid="uid://cgbafq7vxe7cf"]
 
-[ext_resource type="Script" path="res://scripts/Main.gd" id="1_lumiv"]
+[ext_resource type="Script" path="res://scripts/NewMain.gd" id="1_4onuo"]
+
+[sub_resource type="Gradient" id="Gradient_hlfqa"]
+colors = PackedColorArray(0, 0, 0, 1, 0.0901961, 0.65098, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_0558d"]
+gradient = SubResource("Gradient_hlfqa")
+fill_to = Vector2(0, 1)
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -9,4 +16,105 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_lumiv")
+script = ExtResource("1_4onuo")
+
+[node name="Interface" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Background" type="TextureRect" parent="Interface"]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 657.0
+texture = SubResource("GradientTexture2D_0558d")
+
+[node name="Log" type="TextEdit" parent="Interface"]
+layout_mode = 1
+offset_left = 518.0
+offset_top = -3.0
+offset_right = 1154.0
+offset_bottom = 666.0
+editable = false
+
+[node name="Panel" type="Panel" parent="Interface"]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 98.0
+offset_right = 319.0
+offset_bottom = 383.0
+
+[node name="Header" type="Label" parent="Interface/Panel"]
+layout_mode = 0
+offset_left = 22.0
+offset_top = 8.0
+offset_right = 138.0
+offset_bottom = 47.0
+theme_type_variation = &"HeaderLarge"
+text = "Modules"
+
+[node name="EtherealTraveler" type="Button" parent="Interface/Panel/Header"]
+layout_mode = 0
+offset_left = -6.0
+offset_top = 65.0
+offset_right = 135.0
+offset_bottom = 96.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 20
+text = "Ethereal Traveler"
+
+[node name="CCIP" type="Button" parent="Interface/Panel/Header"]
+layout_mode = 0
+offset_left = -6.0
+offset_top = 107.0
+offset_right = 168.0
+offset_bottom = 143.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 20
+text = "Cross-Chain ERC20"
+
+[node name="Confirm" type="Panel" parent="Interface"]
+visible = false
+layout_mode = 0
+offset_left = 119.0
+offset_top = 403.0
+offset_right = 368.0
+offset_bottom = 602.0
+
+[node name="Prompt" type="Label" parent="Interface/Confirm"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 268.0
+offset_bottom = 131.0
+theme_override_font_sizes/font_size = 20
+text = "Load module
+\"\" ?"
+
+[node name="Yes" type="Button" parent="Interface/Confirm"]
+layout_mode = 0
+offset_left = 19.0
+offset_top = 145.0
+offset_right = 82.0
+offset_bottom = 181.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 20
+text = "Yes
+"
+
+[node name="No" type="Button" parent="Interface/Confirm"]
+layout_mode = 0
+offset_left = 167.0
+offset_top = 145.0
+offset_right = 230.0
+offset_bottom = 181.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 20
+text = "No"
+
+[node name="Tree" type="TextEdit" parent="Interface"]
+layout_mode = 0
+offset_left = 382.0
+offset_right = 519.0
+offset_bottom = 676.0
+editable = false

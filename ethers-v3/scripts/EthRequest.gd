@@ -35,7 +35,8 @@ func resolve_ethereum_request(result, response_code, headers, body):
 
 
 func perform_callback():
-	callback["callback_node"].call(callback["callback_function"], callback)
+	if is_instance_valid(callback["callback_node"]):
+		callback["callback_node"].call(callback["callback_function"], callback)
 	queue_free()
 
 
