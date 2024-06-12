@@ -31,7 +31,7 @@ extends Node
 # buttons.
 
 func _ready():
-	var address = Ethers.get_address("test_keystore2")
+	var address = Ethers.get_address("test_keystore5")
 	
 	# Calls drip faucet for BnM tokens
 	# Needs to be on a button
@@ -42,7 +42,7 @@ func _ready():
 	# Automatically approves the router's spend allowance,
 	# gets the native gas fee, and sends the CCIP message.
 	# Needs to be on a button
-	bridge("test_keystore2", "Base Sepolia", "Arbitrum Sepolia", "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", amount)
+	bridge("test_keystore5", "Base Sepolia", "Arbitrum Sepolia", "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", amount)
 
 
 func bridge(account, from_network, to_network, token, amount):
@@ -148,7 +148,7 @@ func get_test_tokens(address, network):
 		"calldata": Calldata.get_function_selector(function_selector) + Calldata.abi_encode( [{"type": "address"}], [address] )
 		}
 		
-	Ethers.send_transaction("test_keystore2", network, contract, calldata, self, "get_receipt")
+	Ethers.send_transaction("test_keystore5", network, contract, calldata, self, "get_receipt")
 
 
 

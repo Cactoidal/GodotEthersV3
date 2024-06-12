@@ -46,23 +46,29 @@ var ethereal_traveler_module = preload("res://modules/EtherealTraveler/EtherealT
 
 
 func _ready():
-	if !Ethers.account_exists("test_keystore2"):
-		Ethers.create_account("test_keystore2", "test_password")
-	
-	Ethers.login("test_keystore2", "test_password")
-	
-	print(Ethers.get_address("test_keystore2"))
-	
-	#Ethers.get_gas_balance("Base Sepolia", "test_keystore2", self, "update_gas_balance")
-	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore2"), sepolia_link_contract, self, "get_erc20_info")
-	
-	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore2"), base_bnm_contract, self, "get_erc20_info")
 
+	if !Ethers.account_exists("test_keystore5"):
+		Ethers.create_account("test_keystore5", "test_password")
+	
+	Ethers.login("test_keystore5", "test_password")
+	
+	print(Ethers.get_address("test_keystore5"))
+
+	
+	#Ethers.get_gas_balance("Base Sepolia", "test_keystore5", self, "update_gas_balance")
+	#Ethers.get_erc20_info("Ethereum Sepolia", Ethers.get_address("test_keystore5"), sepolia_link_contract, self, "get_erc20_info")
+	
+	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore5"), base_bnm_contract, self, "get_erc20_info")
+
+	var new_ccip = ccip_module.instantiate()
+	add_child(new_ccip)
+
+	return
 	var amount = Ethers.convert_to_bignum("0.001", 18)
-	#Ethers.transfer("test_keystore2", "Base Sepolia", recipient, amount, self, "get_receipt")
-	#Ethers.approve_erc20_allowance("test_keystore2", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
-	#Ethers.transfer_erc20("test_keystore2", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
-	#Ethers.transfer_erc20("test_keystore2", "Base Sepolia", base_bnm_contract, random_base_contract, amount, self, "get_receipt")
+	#Ethers.transfer("test_keystore5", "Base Sepolia", recipient, amount, self, "get_receipt")
+	#Ethers.approve_erc20_allowance("test_keystore5", "Base Sepolia", base_bnm_contract, random_base_contract, self, "get_receipt")
+	#Ethers.transfer_erc20("test_keystore5", "Base Sepolia", base_bnm_contract, recipient, amount, self, "get_receipt")
+	#Ethers.transfer_erc20("test_keystore5", "Base Sepolia", base_bnm_contract, random_base_contract, amount, self, "get_receipt")
 	
 	
 
@@ -133,7 +139,7 @@ func _ready():
 		#print(calldata.substr(index, 64))
 		
 		
-	#Ethers.send_transaction("test_keystore2", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
+	#Ethers.send_transaction("test_keystore5", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
 	#manyDynamicNested - works!
 	#var calldata = Ethers.get_calldata("WRITE", Contract.CalldataTester, "manyDynamicNested", [                      
 		#[
@@ -283,8 +289,7 @@ func _ready():
 	#
 	#
 	#Ethers.send_transaction("test_keystore", "Base Sepolia", calldata_tester_contract, calldata, self, "get_receipt")
-	var new_ccip = ccip_module.instantiate()
-	add_child(new_ccip)
+	
 
 func get_decoded_result(callback):
 	if callback["success"]:

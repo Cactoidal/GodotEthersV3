@@ -2,7 +2,6 @@ extends Node
 
 var network_info
 
-var eth_http_request = preload("res://scenes/EthRequest.tscn")
 var header = "Content-Type: application/json"
 
 var error
@@ -11,6 +10,7 @@ var logins = {}
 
 var env_enc_key
 var env_enc_iv
+
 
 func _ready():
 	
@@ -51,67 +51,133 @@ func account_exists(account):
 		return false
 
 
-func create_account(account, _password):
+func create_account(account, _password, use_enclave=true):
 	var path = "user://" + account
-	var key = Crypto.new().generate_random_bytes(32)
+	var private_key
+	
+	# Generate a new private key
+	if use_enclave:
+		var enclave = EnclaveContext.new()
+		add_child(enclave)
+		private_key = PackedByteArray(enclave.generate_key())
+		enclave.queue_free()
+	else:
+		private_key = Crypto.new().generate_random_bytes(32)
+	
 	var salt = Crypto.new().generate_random_bytes(32)
+	var iv = Crypto.new().generate_random_bytes(16)
+	var address = calculate_address(private_key)
 	
-	# Uses PBKDF2 algorithm to derive key
-	var password = GodotSigner.derive_key(_password, salt.hex_encode())
+	# PBKDF2 Key Derivation
+	var encryption_key = GodotSigner.derive_key(_password, salt.hex_encode())
 	
-	FileAccess.open_encrypted(path, FileAccess.WRITE, password).store_buffer(key)
+	# Encrypt the private key with the password-derived encryption key
+	var encrypted_keystore = encrypt(encryption_key, iv, private_key)
+	
+	private_key = clear_memory()
+	private_key.clear()
+	_password = clear_memory()
+	_password.clear()
+	encryption_key = clear_memory()
+	encryption_key.clear()
+	
+	FileAccess.open(path, FileAccess.WRITE).store_buffer(encrypted_keystore)
 	FileAccess.open(path + "_SALT", FileAccess.WRITE).store_buffer(salt)
-	key = clear_memory()
-	key.clear()
-	password = clear_memory()
-	password.clear()
+	FileAccess.open(path + "_IV", FileAccess.WRITE).store_buffer(iv)
+	FileAccess.open(path + "_ADDRESS", FileAccess.WRITE).store_string(address)
 
 
 func login(account, _password):
 	var path = "user://" + account
+	var _private_key = FileAccess.open(path, FileAccess.READ).get_buffer(32)
 	var salt = FileAccess.open(path + "_SALT", FileAccess.READ).get_buffer(32)
-	var password = GodotSigner.derive_key(_password, salt.hex_encode())
-	var file = FileAccess.open_encrypted(path, FileAccess.READ, password)
-	if file:
-		var aes = AESContext.new()
-		aes.start(
-			AESContext.MODE_CBC_ENCRYPT, 
-			env_enc_key, 
-			env_enc_iv
-			)
-		logins[account] = aes.update(password)
-		password = clear_memory()
-		password.clear()
-		aes.finish()
+	var iv = FileAccess.open(path + "_IV", FileAccess.READ).get_buffer(16)
+	var address = FileAccess.open(path + "_ADDRESS", FileAccess.READ).get_as_text()
+	
+	# Check if the password is correct
+	var encryption_key = GodotSigner.derive_key(_password, salt.hex_encode())
+	var private_key = decrypt(encryption_key, iv, _private_key)
+	var _address = calculate_address(private_key)
+	
+	if address == _address:
+		private_key = clear_memory()
+		private_key.clear()
 		
+		# Encrypt the password-derived decryption key using the session env-enc keys
+		logins[account] = encrypt(env_enc_key, env_enc_iv, encryption_key)
+		
+		_password = clear_memory()
+		_password.clear()
+
 	else:
 		emit_error("Incorrect password for " + account)
+	
+	encryption_key = clear_memory()
+	encryption_key.clear()
 
 
 func get_key(account):
 	if account in logins.keys():
 		var path = "user://" + account
-		var aes = AESContext.new()
-		aes.start(
-			AESContext.MODE_CBC_DECRYPT, 
-			env_enc_key, 
-			env_enc_iv
-			)
 		
-		return FileAccess.open_encrypted(
-			path, 
-			FileAccess.READ, 
-			aes.update(logins[account])
-			).get_buffer(32)
+		var _private_key = FileAccess.open(path, FileAccess.READ).get_buffer(32)
+		var salt = FileAccess.open(path + "_SALT", FileAccess.READ).get_buffer(32)
+		var iv = FileAccess.open(path + "_IV", FileAccess.READ).get_buffer(16)
+	
+		# Decrypt the decryption key, using the session env-enc keys
+		var decryption_key = decrypt(env_enc_key, env_enc_iv, logins[account])
+		
+		# Decrypt the private key
+		var private_key = decrypt(decryption_key, iv, _private_key)
+		
+		decryption_key = clear_memory()
+		decryption_key.clear()
+		
+		return private_key
 
 	else:
 		emit_error(account + " does not exist")
 
 
-func get_address(account):
-	if account in logins:
-		return GodotSigner.get_address(get_key(account))
+func calculate_address(key):
+	var address = GodotSigner.get_address(key)
+	key = clear_memory()
+	key.clear()
+	return address
 
+
+func get_address(account):
+	var path = "user://" + account
+	var address = FileAccess.open(path + "_ADDRESS", FileAccess.READ).get_as_text()
+	return address
+
+
+func encrypt(_key, _iv, _data):
+	var aes = AESContext.new()
+	aes.start(
+		AESContext.MODE_CBC_ENCRYPT, 
+		_key, 
+		_iv
+		)
+	var encrypted = aes.update(_data)
+	_data = clear_memory()
+	_data.clear()
+	_key = clear_memory()
+	_key.clear()
+	return encrypted
+
+
+func decrypt(_key, _iv, _data):
+	var aes = AESContext.new()
+	aes.start(
+		AESContext.MODE_CBC_DECRYPT, 
+		_key, 
+		_iv
+		)
+	var decrypted = aes.update(_data)
+	_key = clear_memory()
+	_key.clear()
+	return decrypted
 
 
 
@@ -321,7 +387,7 @@ func perform_request(method, params, network, callback_node, callback_function, 
 		emit_error("Network " + network + " not listed in network info")
 		return
 	
-	var http_request = eth_http_request.instantiate()
+	var http_request = EthRequest.new()
 	
 	http_request.callback = callback
 	http_request.request_completed.connect(http_request.resolve_ethereum_request)

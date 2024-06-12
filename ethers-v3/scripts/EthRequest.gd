@@ -1,4 +1,5 @@
 extends HTTPRequest
+class_name EthRequest
 
 # EthRequest can have the following outcomes:
 
