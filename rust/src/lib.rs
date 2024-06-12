@@ -9,6 +9,8 @@ use hex::*;
 use num_bigint::{BigUint, BigInt};
 use pbkdf2::{pbkdf2_hmac, pbkdf2_hmac_array};
 use sha2::Sha256;
+use security_framework::{random::*};
+use zeroize::*;
 
 struct GodotEthers;
 
@@ -57,8 +59,8 @@ pub struct GodotSigner {
 impl GodotSigner {
 
 
-    
-//////      PBKDF2 KEY DERIVATION       //////
+//////      ACCOUNT MANAGEMENT       //////
+
 
 #[func]
 fn derive_key(_password: GString, _salt: GString) -> Array<u8> {
@@ -69,11 +71,53 @@ fn derive_key(_password: GString, _salt: GString) -> Array<u8> {
 
     let n = 600_000;
 
-    let key = pbkdf2_hmac_array::<Sha256, 32>(password_bytes, salt_bytes, n);
+    let mut key = pbkdf2_hmac_array::<Sha256, 32>(password_bytes, salt_bytes, n);
 
     let key_array: Array<u8> = key.iter().map(|e| *e as u8).collect();
+
+    key.zeroize();
     
     key_array
+}
+
+
+#[func]
+fn get_address(_key: PackedByteArray) -> GString {
+
+    let mut _key = _key.to_vec();
+
+    let wallet : LocalWallet = LocalWallet::from_bytes(&_key[..]).unwrap();
+
+    _key.zeroize();
+
+    let address = wallet.address();
+
+    let address_string = address.encode_hex();
+
+    let key_slice = match address_string.char_indices().nth(*&0 as usize) {
+        Some((_pos, _)) => (&address_string[26..]).to_string(),
+        None => "".to_string(),
+        };
+
+    let return_string: GString = format!("0x{}", key_slice).into();
+
+    return_string
+}
+
+
+#[func]
+fn apple_enclave_generate_key(_length: u64) -> Array<u8> {
+    let mut _buffer: Vec<u8> = (0.._length).map(|n| n as u8).collect();
+    let buffer = &mut _buffer[..];
+
+    let random_bytes = SecRandom::default();
+    random_bytes.copy_bytes(buffer).unwrap();
+
+    let key: Array<u8> = buffer.iter().map(|e| *e as u8).collect();
+    
+    buffer.zeroize();
+
+    key
 }
 
 
@@ -83,7 +127,11 @@ fn derive_key(_password: GString, _salt: GString) -> Array<u8> {
 #[func]
 fn transfer(_key: PackedByteArray, _chain_id: GString, _placeholder: GString, _rpc: GString, _gas_fee: u64, _count: u64, _recipient: GString, _amount: GString) -> GString {
 
+    let mut _key = &mut _key.to_vec();
+
     let (wallet, chain_id, user_address, client) = get_signer(_key, _chain_id, _rpc);
+
+    _key.zeroize();
 
     let recipient = string_to_address(_recipient);
 
@@ -109,8 +157,12 @@ fn transfer(_key: PackedByteArray, _chain_id: GString, _placeholder: GString, _r
 #[func]
 fn sign_raw_calldata(_key: PackedByteArray, _chain_id: GString, _contract_address: GString, _rpc: GString, _gas_limit: GString, _gas_fee: u64, _count: u64, _value: GString, _calldata: GString) -> GString {
              
+    let mut _key = &mut _key.to_vec();
+
     let (wallet, chain_id, user_address, client) = get_signer(_key, _chain_id, _rpc);
-        
+
+    _key.zeroize();
+    
     let contract_address: Address = _contract_address.to_string().parse().unwrap();
 
     let gas_limit = string_to_uint256(_gas_limit);
@@ -139,7 +191,8 @@ fn sign_raw_calldata(_key: PackedByteArray, _chain_id: GString, _contract_addres
 
 
 
-//////      HELPER METHODS       //////
+//////     ABI ENCODING AND DECODING       //////
+
 
 #[func]
 fn get_function_selector(function_bytes: PackedByteArray) -> GString {
@@ -149,25 +202,6 @@ fn get_function_selector(function_bytes: PackedByteArray) -> GString {
     
     selector.to_string().into()
 
-}
-
-#[func]
-fn get_address(_key: PackedByteArray) -> GString {
-
-    let wallet : LocalWallet = LocalWallet::from_bytes(&_key.to_vec()[..]).unwrap();
-
-    let address = wallet.address();
-
-    let address_string = address.encode_hex();
-
-    let key_slice = match address_string.char_indices().nth(*&0 as usize) {
-        Some((_pos, _)) => (&address_string[26..]).to_string(),
-        None => "".to_string(),
-        };
-
-    let return_string: GString = format!("0x{}", key_slice).into();
-
-    return_string
 }
 
 
@@ -436,7 +470,48 @@ fn decode_int256 (_message: GString) -> GString {
 }
 
 
+
+//////      APPLE SECURE ENCLAVE OPERATIONS       //////
+
+
+// There are some problems:
+// While the EVM will soon be able to verify secp256r1-derived messages,
+// the enclave signing algorithm still needs to use the Ethereum Keccak hash 
+// function instead of SHA256.  The private key would also need to be saved
+// into the Keychain and later accessed at its location, with a password 
+// provided by the user. This would also require that the Rust library be 
+// codesigned.
+
+
+// Hypothetical function:
+/* 
+#[func]
+fn apple_ecdsa_sign(rlp_encoded_data: PackedByteArray, _label: GString) -> Array<u8> {
+    let options = GenerateKeyOptions {
+        key_type: Some(KeyType::ec()),
+        size_in_bits: None,
+        label: Some(_label.to_string()),
+        token: Some(Token::SecureEnclave),
+        location: Some(Location::DefaultFileKeychain),
+        access_control: None,
+    };
+    let key = SecKey::generate(options.to_dictionary()).unwrap();
+    let signature = key
+        .create_signature(
+            Algorithm::ECDSASignatureMessageX962KECCAK,   // Hypothetical Keccak hash function
+            &rlp_encoded_data.to_vec()[..],
+        )
+        .unwrap();
+    
+    let signature_array: Array<u8> = signature.iter().map(|e| *e as u8).collect();
+
+    signature_array
+
 }
+*/
+
+}
+
 
 
 //      UTILITY FUNCTIONS       //
@@ -444,11 +519,15 @@ fn decode_int256 (_message: GString) -> GString {
 // Common type conversions and operations
 
 
-fn get_signer(_key: PackedByteArray, _chain_id: GString, _rpc: GString) -> (LocalWallet, u64, Address, SignerMiddleware<Provider<Http>, LocalWallet>) {
+fn get_signer(_key: &mut [u8], _chain_id: GString, _rpc: GString) -> (LocalWallet, u64, Address, SignerMiddleware<Provider<Http>, LocalWallet>) {
+    
+   //let mut _key = &mut _key.to_vec()[..];
     
     let chain_id: u64 = _chain_id.to_string().parse::<u64>().unwrap();
 
-    let wallet : LocalWallet = LocalWallet::from_bytes(&_key.to_vec()[..]).unwrap().with_chain_id(chain_id);
+    let wallet : LocalWallet = LocalWallet::from_bytes(_key).unwrap().with_chain_id(chain_id);
+
+    _key.zeroize();
 
     let user_address = wallet.address();
             
