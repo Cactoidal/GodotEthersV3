@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://cgbafq7vxe7cf"]
 
-[ext_resource type="Script" path="res://scripts/NewMain.gd" id="1_4onuo"]
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_4onuo"]
 
 [sub_resource type="Gradient" id="Gradient_hlfqa"]
 colors = PackedColorArray(0, 0, 0, 1, 0.0901961, 0.65098, 1, 1)
@@ -76,10 +76,10 @@ text = "Cross-Chain ERC20"
 [node name="Confirm" type="Panel" parent="Interface"]
 visible = false
 layout_mode = 0
-offset_left = 119.0
-offset_top = 403.0
-offset_right = 368.0
-offset_bottom = 602.0
+offset_left = 37.0
+offset_top = 433.0
+offset_right = 286.0
+offset_bottom = 632.0
 
 [node name="Prompt" type="Label" parent="Interface/Confirm"]
 layout_mode = 0
@@ -114,7 +114,7 @@ text = "No"
 
 [node name="Tree" type="TextEdit" parent="Interface"]
 layout_mode = 0
-offset_left = 382.0
+offset_left = 318.0
 offset_right = 519.0
-offset_bottom = 676.0
+offset_bottom = 666.0
 editable = false

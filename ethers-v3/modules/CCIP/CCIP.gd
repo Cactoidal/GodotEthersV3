@@ -1,40 +1,29 @@
-extends Node
+extends Node3D
 
 
 # A CCIP interface.
 
-# Add Chronomancer bridge
+# The CCIP Network information, containing things like the OnRamp and
+# Router contracts, can be found at the bottom of this script.
+
 
 # Router and BnM token contracts need to be added
 
 
-# Choose Sender Network.
-
-# Loads gas and BnM token balance, BnM token drip button.
-# Unhides all destination buttons, then hides the sender
-# network's button on the destination side, deselects 
-# any currently-selected Destination Network, and hides
-# the send transaction button.
+# A distant, icy fog; a shadow turning atop a mountain...
 
 
-# Choose Destination Network.
-
-# Loads send transaction button.
-
-
-# Send Transaction.
-
-# Deselects and hides everything.
-# When it receives the callback, 
-# updates rudimentary "transaction log"
-# and unhides the sender and destination
-# buttons.
 
 func _ready():
+	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore5"), "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", self, "get_erc20_info")
+	#Ethers.login("test_keystore5", "test_password")
+	$Back.connect("pressed", back)
+	
 	var address = Ethers.get_address("test_keystore5")
 	
 	# Calls drip faucet for BnM tokens
 	# Needs to be on a button
+	
 	#get_test_tokens(address, "Base Sepolia")
 	
 	var amount = Ethers.convert_to_bignum("0.01")
@@ -42,7 +31,42 @@ func _ready():
 	# Automatically approves the router's spend allowance,
 	# gets the native gas fee, and sends the CCIP message.
 	# Needs to be on a button
-	bridge("test_keystore5", "Base Sepolia", "Arbitrum Sepolia", "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", amount)
+	
+	#bridge("test_keystore5", "Base Sepolia", "Arbitrum Sepolia", "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", amount)
+
+
+func _process(delta):
+	
+	if $Fadein.modulate.a > 0:
+		$Fadein.modulate.a -= delta
+		if $Fadein.modulate.a < 0:
+			$Fadein.modulate.a = 0
+			
+	$FogVolume.rotate_y(delta)
+	
+	
+
+func create_account():
+	pass
+
+
+func select_account():
+	pass
+
+
+func login():
+	pass
+
+
+func get_erc20_info(callback):
+	var callback_args = callback["callback_args"]
+	var network = callback_args["network"]
+	var address = callback_args["address"]
+	if callback["success"]:
+		var erc20_name = callback_args["name"]
+		var decimals = callback_args["decimals"]
+		var balance = callback_args["balance"]
+		print(address + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
 
 
 func bridge(account, from_network, to_network, token, amount):
@@ -151,7 +175,8 @@ func get_test_tokens(address, network):
 	Ethers.send_transaction("test_keystore5", network, contract, calldata, self, "get_receipt")
 
 
-
+func back():
+	queue_free()
 
 
 var ccip_network_info = {

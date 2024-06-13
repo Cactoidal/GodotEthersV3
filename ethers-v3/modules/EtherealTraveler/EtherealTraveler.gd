@@ -9,6 +9,8 @@ var block_timer = 0.1
 var blocks = []
 
 
+# _ready() is called when the node enters the scene tree 
+# (i.e., when the module is loaded)
 func _ready():
 	
 	$Back.connect("pressed", back)
@@ -45,6 +47,8 @@ func get_filter_id(callback):
 		)
 
 
+# _process() runs every frame, producing the float 
+# value "delta" as an increment of time.
 func _process(delta):
 	
 	if $Fadein.modulate.a > 0:
