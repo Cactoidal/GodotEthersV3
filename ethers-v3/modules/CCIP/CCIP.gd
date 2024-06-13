@@ -1,38 +1,22 @@
 extends Node3D
 
-
-# A CCIP interface.
+# An interface for the Cross-Chain Interoperability Protocol.
 
 # The CCIP Network information, containing things like the OnRamp and
 # Router contracts, can be found at the bottom of this script.
 
-
 # Router and BnM token contracts need to be added
+# Demonstrate "transaction objects" that get updated by receipts
 
-
-# A distant, icy fog; a shadow turning atop a mountain...
-
+var networks
+var active_account
+var selected_sender_network
+var selected_destination_network
 
 
 func _ready():
-	#Ethers.get_erc20_info("Base Sepolia", Ethers.get_address("test_keystore5"), "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", self, "get_erc20_info")
-	#Ethers.login("test_keystore5", "test_password")
 	$Back.connect("pressed", back)
-	
-	var address = Ethers.get_address("test_keystore5")
-	
-	# Calls drip faucet for BnM tokens
-	# Needs to be on a button
-	
-	#get_test_tokens(address, "Base Sepolia")
-	
-	var amount = Ethers.convert_to_bignum("0.01")
-	
-	# Automatically approves the router's spend allowance,
-	# gets the native gas fee, and sends the CCIP message.
-	# Needs to be on a button
-	
-	#bridge("test_keystore5", "Base Sepolia", "Arbitrum Sepolia", "0x88A2d74F47a237a62e7A51cdDa67270CE381555e", amount)
+	networks = ccip_network_info.keys()
 
 
 func _process(delta):
@@ -43,19 +27,69 @@ func _process(delta):
 			$Fadein.modulate.a = 0
 			
 	$FogVolume.rotate_y(delta)
+	$Transporter/Pivot.rotate_y(delta/3)
+	$Transporter/ReversePivot.rotate_y(-delta/3)
 	
 	
-
 func create_account():
-	pass
+	var name = "TEST_KEYSTORE"
+	var password = $Login/Password.text
+	# Check if an account name exists before creating it.
+	# Otherwise, the original will be overwritten.
+	if !Ethers.account_exists(name):
+		Ethers.create_account(name, password)
+		login(name, password)
+		
+		# Remove passwords from memory by overwriting them
+		# with random bytes, and clearing the bytes.
+		$Login/Password.text = ""
+		password = Ethers.clear_memory()
+		password.clear()
 
 
-func select_account():
-	pass
+# An account must be logged in to send transactions.
+func login(account, password):
+	if !Ethers.login(account, password):
+		return
+	password = Ethers.clear_memory()
+	password.clear()
+	$Login.visible = false
+	
+	active_account = account
+	
+	for network in networks:
+		
+		# A built-in for retrieving and decoding the account gas balance
+		# for a given network.
+		Ethers.get_gas_balance(
+			network, 
+			account, 
+			self, 
+			"get_gas_balance"
+			)
+		
+		var token_contract = ccip_network_info[network]["token_contract"]
+		var user_address = Ethers.get_address(account)
+		
+		# A built-in that obtains the name and decimals of a given
+		# ERC20 token, along with the balance for a provided address.
+		Ethers.get_erc20_info(
+			"Ethereum Sepolia", 
+			user_address, 
+			token_contract, 
+			self, 
+			"get_erc20_info",
+			)
 
 
-func login():
-	pass
+# Process the callback result in your callback function.
+func update_gas_balance(callback):
+	var network = callback["callback_args"]["network"]
+	var account = callback["callback_args"]["account"]
+	if callback["success"]:
+		# The gas balance returns as a single, decoded String.
+		var balance = callback["result"]
+		print(account + " has gas balance of " + balance + " on " + network)
 
 
 func get_erc20_info(callback):
@@ -63,40 +97,45 @@ func get_erc20_info(callback):
 	var network = callback_args["network"]
 	var address = callback_args["address"]
 	if callback["success"]:
-		var erc20_name = callback_args["name"]
-		var decimals = callback_args["decimals"]
-		var balance = callback_args["balance"]
+		# The ERC20 info returns as an array of values.
+		var erc20_name = callback["result"][0]
+		var decimals = callback["result"][1]
+		var balance = callback["result"][2]
 		print(address + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
 
+
+# Automatically approves the router's spend allowance,
+# gets the CCIP fee, and sends the CCIP message.
+func initiate_bridge(amount):
+	var token_contract = ccip_network_info[selected_sender_network]["token_contract"]
+	
+	bridge(
+		active_account,
+		selected_sender_network,
+		selected_sender_network,
+		token_contract,
+		amount)
+	
 
 func bridge(account, from_network, to_network, token, amount):
 	
 	var address = Ethers.get_address(account)
 	
+	# Structs are declared as arrays containing
+	# their expected types.
 	var EVMTokenAmount = [
 		token,
 		amount
 	]
 	
-	# ExtraArgsV2 appears to be broken, at least on the Base Sepolia -> Arbitrum Sepolia lane.
-	# Or I'm missing something.
-	
-	#var EVMExtraArgsV2 = [
-		#"90000", # Destination gas limit
-		#false # Allow out of order execution
-	#]
-	#
-	#var extra_args = "181dcf10" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}, {"type": "bool"}]}], [EVMExtraArgsV2] )
-	
-	
-	# ExtraArgsV1 works, however.
-	
 	var EVMExtraArgsV1 = [
 		"90000" # Destination gas limit
 	]
 	
+	# You can ABI encode and decode values directly by using
+	# the Calldata singleton.  You must provide the input
+	# or output types along with the values to decode.
 	var extra_args = "97a657c9" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}]}], [EVMExtraArgsV1] )
-	
 	
 	var EVM2AnyMessage = [
 		Calldata.abi_encode( [{"type": "address"}], [address] ), # ABI-encoded recipient address
@@ -110,16 +149,20 @@ func bridge(account, from_network, to_network, token, amount):
 	
 	var callback_args = {
 		"EVM2AnyMessage": EVM2AnyMessage,
-		"chain_selector": chain_selector}
+		"chain_selector": chain_selector
+		}
+		
 	callback_args["account"] = account
 	callback_args["network"] = from_network
 	
 	var router = ccip_network_info[from_network]["router"]
 	callback_args["contract"] = router
 	
+	# A built-in for granting spend allowances to a contract.
 	Ethers.approve_erc20_allowance(account, from_network, token, router, self, "get_native_fee", callback_args)
 
 
+# Estimates the CCIP fee before sending the message.
 func get_native_fee(callback):
 	if callback["success"]:
 		var callback_args = callback["callback_args"]
@@ -127,6 +170,13 @@ func get_native_fee(callback):
 		var chain_selector = callback_args["chain_selector"]
 		var network = callback_args["network"]
 		var contract = callback_args["contract"]
+		
+		# A built-in for constructing calldata using the ABI,
+		# (here called CCIP_ROUTER), the contract function name,
+		# and the input values expected by the function.
+		
+		# Since we're specifying "READ", this request will 
+		# automatically decode the response from the RPC node.
 		var calldata = Ethers.get_calldata("READ", CCIP_ROUTER, "getFee", [chain_selector, EVM2AnyMessage])
 		
 		Ethers.read_from_contract(network, contract, calldata, self, "ccip_bridge", callback_args)
@@ -141,21 +191,46 @@ func ccip_bridge(callback):
 		var account = callback_args["account"]
 		var network = callback_args["network"]
 		var contract = callback_args["contract"]
+		
+		# Because a contract read can return multple values,
+		# successful returns from "read_from_contract()" will 
+		# always arrive as an array of decoded outputs.
 		var fee = callback["result"][0]
 		
+		# Get calldata again, this time specifying "WRITE"
+		# since we intend to send a transaction.
 		var calldata = Ethers.get_calldata("WRITE", CCIP_ROUTER, "ccipSend", [chain_selector, EVM2AnyMessage])
 		
-		Ethers.send_transaction(account, network, contract, calldata, self, "get_receipt", {}, "900000", fee)
+		# The fee value acquired above is passed as the "value" parameter.
+		Ethers.send_transaction(
+			account, 
+			network, 
+			contract, 
+			calldata, 
+			self, 
+			"get_receipt", 
+			{}, 
+			"900000", 
+			fee
+			)
 
 
+# The transaction receipt returns as a single value, a dictionary.
 func get_receipt(callback):
 	print(callback)
 
 
-func get_bnm_address(network):
-	return ccip_network_info[network]["bnm_address"]
-	
 
+
+func select_account():
+	pass
+
+func choose_sender_network():
+	pass
+
+func choose_destination_network():
+	pass
+	
 func get_test_tokens(address, network):
 	var contract
 	match network:
@@ -176,140 +251,11 @@ func get_test_tokens(address, network):
 
 
 func back():
+	# Log out by clearing your encrypted password from memory.
+	# This will typically happen automatically on-quit.
+	Ethers.logins = Ethers.clear_memory()
+	Ethers.logins.clear()
 	queue_free()
-
-
-var ccip_network_info = {
-	
-	"Ethereum Sepolia": 
-		{
-		"chain_id": "11155111",
-		"rpc": "https://ethereum-sepolia-rpc.publicnode.com",
-		"gas_balance": "0", 
-		"onramp_contracts": ["0xe4Dd3B16E09c016402585a8aDFdB4A18f772a07e", "0x69CaB5A0a08a12BaFD8f5B195989D709E396Ed4d", "0x2B70a05320cB069e0fB55084D402343F832556E7"],
-		"onramp_contracts_by_network": 
-			[
-				{
-					"network": "Arbitrum Sepolia",
-					"contract": "0xe4Dd3B16E09c016402585a8aDFdB4A18f772a07e"
-				},
-				{
-					"network": "Optimism Sepolia",
-					"contract": "0x69CaB5A0a08a12BaFD8f5B195989D709E396Ed4d"
-				},
-				{
-					"network": "Base Sepolia",
-					"contract": "0x2B70a05320cB069e0fB55084D402343F832556E7"
-				}
-			
-		],
-		"endpoint_contract": "0xFFA6c081b6A7F5F3816D9052C875E4C6B662137a",
-		"monitored_tokens": [], 
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"latest_block": "latest",
-		"order_processor": null,
-		"scan_url": "https://sepolia.etherscan.io/",
-		"logo": "res://assets/Ethereum.png"
-		},
-		
-	"Arbitrum Sepolia": 
-		{
-		"chain_id": "421614",
-		"chain_selector": "3478487238524512106",
-		"rpc": "https://sepolia-rollup.arbitrum.io/rpc",
-		"gas_balance": "0", 
-		"onramp_contracts": ["0x4205E1Ca0202A248A5D42F5975A8FE56F3E302e9", "0x701Fe16916dd21EFE2f535CA59611D818B017877", "0x7854E73C73e7F9bb5b0D5B4861E997f4C6E8dcC6"],
-		"onramp_contracts_by_network": 
-			[
-				{
-					"network": "Ethereum Sepolia",
-					"contract": "0x4205E1Ca0202A248A5D42F5975A8FE56F3E302e9"
-				},
-				{
-					"network": "Optimism Sepolia",
-					"contract": "0x701Fe16916dd21EFE2f535CA59611D818B017877"
-				},
-				{
-					"network": "Base Sepolia",
-					"contract": "0x7854E73C73e7F9bb5b0D5B4861E997f4C6E8dcC6"
-				}
-			
-		],
-		"endpoint_contract": "0xcA57f7b1FDfD3cbD513954938498Fe6a9bc8FF63",
-		"monitored_tokens": [],
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"latest_block": "latest",
-		"order_processor": null,
-		"scan_url": "https://sepolia.arbiscan.io/",
-		"logo": "res://assets/Arbitrum.png"
-		},
-		
-	"Optimism Sepolia": {
-		"chain_id": "11155420",
-		"rpc": "https://sepolia.optimism.io",
-		"gas_balance": "0", 
-		"onramp_contracts": ["0xC8b93b46BF682c39B3F65Aa1c135bC8A95A5E43a", "0x1a86b29364D1B3fA3386329A361aA98A104b2742", "0xe284D2315a28c4d62C419e8474dC457b219DB969"],
-		"onramp_contracts_by_network": 
-			[
-				{
-					"network": "Ethereum Sepolia",
-					"contract": "0xC8b93b46BF682c39B3F65Aa1c135bC8A95A5E43a"
-				},
-				{
-					"network": "Arbitrum Sepolia",
-					"contract": "0x1a86b29364D1B3fA3386329A361aA98A104b2742"
-				},
-				{
-					"network": "Base Sepolia",
-					"contract": "0xe284D2315a28c4d62C419e8474dC457b219DB969"
-				}
-			
-		],
-		"endpoint_contract": "0x04Ba932c452ffc62CFDAf9f723e6cEeb1C22474b",
-		"monitored_tokens": [],
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"latest_block": "latest",
-		"order_processor": null,
-		"scan_url": "https://sepolia-optimism.etherscan.io/",
-		"logo": "res://assets/Optimism.png"
-	},
-	
-	"Base Sepolia": {
-		"chain_id": "84532",
-		"rpc": "https://sepolia.base.org",
-		"gas_balance": "0",
-		"router": "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93",
-		"onramp_contracts": ["0x6486906bB2d85A6c0cCEf2A2831C11A2059ebfea", "0x58622a80c6DdDc072F2b527a99BE1D0934eb2b50", "0x3b39Cd9599137f892Ad57A4f54158198D445D147"],
-		"onramp_contracts_by_network": 
-			[
-				{
-					"network": "Ethereum Sepolia",
-					"contract": "0x6486906bB2d85A6c0cCEf2A2831C11A2059ebfea"
-				},
-				{
-					"network": "Arbitrum Sepolia",
-					"contract": "0x58622a80c6DdDc072F2b527a99BE1D0934eb2b50"
-				},
-				{
-					"network": "Optimism Sepolia",
-					"contract": "0x3b39Cd9599137f892Ad57A4f54158198D445D147"
-				}
-			
-		],
-		"endpoint_contract": "0xD7e4A13c7896edA172e568eB6E35Da68d3572127",
-		"monitored_tokens": [],
-		"minimum_gas_threshold": 0.0002,
-		"maximum_gas_fee": "",
-		"latest_block": "latest",
-		"order_processor": null,
-		"scan_url": "https://sepolia.basescan.org/",
-		"logo": "res://assets/Base.png"
-	}
-}
-
 
 
 var CCIP_ROUTER = [
@@ -499,3 +445,154 @@ var CCIP_ROUTER = [
 	"type": "function"
   }
 ]
+
+
+
+
+var ccip_network_info = {
+	
+	"Ethereum Sepolia": 
+		{
+		"chain_id": "11155111",
+		"rpc": "https://ethereum-sepolia-rpc.publicnode.com",
+		"gas_balance": "0", 
+		"onramp_contracts": ["0xe4Dd3B16E09c016402585a8aDFdB4A18f772a07e", "0x69CaB5A0a08a12BaFD8f5B195989D709E396Ed4d", "0x2B70a05320cB069e0fB55084D402343F832556E7"],
+		"onramp_contracts_by_network": 
+			[
+				{
+					"network": "Arbitrum Sepolia",
+					"contract": "0xe4Dd3B16E09c016402585a8aDFdB4A18f772a07e"
+				},
+				{
+					"network": "Optimism Sepolia",
+					"contract": "0x69CaB5A0a08a12BaFD8f5B195989D709E396Ed4d"
+				},
+				{
+					"network": "Base Sepolia",
+					"contract": "0x2B70a05320cB069e0fB55084D402343F832556E7"
+				}
+			
+		],
+		"endpoint_contract": "0xFFA6c081b6A7F5F3816D9052C875E4C6B662137a",
+		"monitored_tokens": [], 
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"latest_block": "latest",
+		"order_processor": null,
+		"scan_url": "https://sepolia.etherscan.io/",
+		"logo": "res://assets/Ethereum.png"
+		},
+		
+	"Arbitrum Sepolia": 
+		{
+		"chain_id": "421614",
+		"chain_selector": "3478487238524512106",
+		"rpc": "https://sepolia-rollup.arbitrum.io/rpc",
+		"gas_balance": "0", 
+		"onramp_contracts": ["0x4205E1Ca0202A248A5D42F5975A8FE56F3E302e9", "0x701Fe16916dd21EFE2f535CA59611D818B017877", "0x7854E73C73e7F9bb5b0D5B4861E997f4C6E8dcC6"],
+		"onramp_contracts_by_network": 
+			[
+				{
+					"network": "Ethereum Sepolia",
+					"contract": "0x4205E1Ca0202A248A5D42F5975A8FE56F3E302e9"
+				},
+				{
+					"network": "Optimism Sepolia",
+					"contract": "0x701Fe16916dd21EFE2f535CA59611D818B017877"
+				},
+				{
+					"network": "Base Sepolia",
+					"contract": "0x7854E73C73e7F9bb5b0D5B4861E997f4C6E8dcC6"
+				}
+			
+		],
+		"endpoint_contract": "0xcA57f7b1FDfD3cbD513954938498Fe6a9bc8FF63",
+		"monitored_tokens": [],
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"latest_block": "latest",
+		"order_processor": null,
+		"scan_url": "https://sepolia.arbiscan.io/",
+		"logo": "res://assets/Arbitrum.png"
+		},
+		
+	"Optimism Sepolia": {
+		"chain_id": "11155420",
+		"rpc": "https://sepolia.optimism.io",
+		"gas_balance": "0", 
+		"onramp_contracts": ["0xC8b93b46BF682c39B3F65Aa1c135bC8A95A5E43a", "0x1a86b29364D1B3fA3386329A361aA98A104b2742", "0xe284D2315a28c4d62C419e8474dC457b219DB969"],
+		"onramp_contracts_by_network": 
+			[
+				{
+					"network": "Ethereum Sepolia",
+					"contract": "0xC8b93b46BF682c39B3F65Aa1c135bC8A95A5E43a"
+				},
+				{
+					"network": "Arbitrum Sepolia",
+					"contract": "0x1a86b29364D1B3fA3386329A361aA98A104b2742"
+				},
+				{
+					"network": "Base Sepolia",
+					"contract": "0xe284D2315a28c4d62C419e8474dC457b219DB969"
+				}
+			
+		],
+		"endpoint_contract": "0x04Ba932c452ffc62CFDAf9f723e6cEeb1C22474b",
+		"monitored_tokens": [],
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"latest_block": "latest",
+		"order_processor": null,
+		"scan_url": "https://sepolia-optimism.etherscan.io/",
+		"logo": "res://assets/Optimism.png"
+	},
+	
+	"Base Sepolia": {
+		"chain_id": "84532",
+		"rpc": "https://sepolia.base.org",
+		"gas_balance": "0",
+		"router": "0xD3b06cEbF099CE7DA4AcCf578aaebFDBd6e88a93",
+		"onramp_contracts": ["0x6486906bB2d85A6c0cCEf2A2831C11A2059ebfea", "0x58622a80c6DdDc072F2b527a99BE1D0934eb2b50", "0x3b39Cd9599137f892Ad57A4f54158198D445D147"],
+		"onramp_contracts_by_network": 
+			[
+				{
+					"network": "Ethereum Sepolia",
+					"contract": "0x6486906bB2d85A6c0cCEf2A2831C11A2059ebfea"
+				},
+				{
+					"network": "Arbitrum Sepolia",
+					"contract": "0x58622a80c6DdDc072F2b527a99BE1D0934eb2b50"
+				},
+				{
+					"network": "Optimism Sepolia",
+					"contract": "0x3b39Cd9599137f892Ad57A4f54158198D445D147"
+				}
+			
+		],
+		"endpoint_contract": "0xD7e4A13c7896edA172e568eB6E35Da68d3572127",
+		"monitored_tokens": [],
+		"minimum_gas_threshold": 0.0002,
+		"maximum_gas_fee": "",
+		"latest_block": "latest",
+		"order_processor": null,
+		"scan_url": "https://sepolia.basescan.org/",
+		"logo": "res://assets/Base.png"
+	}
+}
+
+
+
+
+
+# # ExtraArgsV2 appears to be broken, at least on the Base Sepolia -> Arbitrum Sepolia lane.
+	# Or I'm missing something.
+	
+	#var EVMExtraArgsV2 = [
+		#"90000", # Destination gas limit
+		#false # Allow out of order execution
+	#]
+	#
+	#var extra_args = "181dcf10" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}, {"type": "bool"}]}], [EVMExtraArgsV2] )
+	
+	
+	# ExtraArgsV1 works, however.

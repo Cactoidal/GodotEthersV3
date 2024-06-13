@@ -9,6 +9,7 @@ var pending_module
 var loaded_module = ""
 @onready var confirm_panel = $Interface/Confirm
 
+
 func _ready():
 	$Interface/Panel/Header/EtherealTraveler.connect("pressed", load_script.bind("Ethereal Traveler", ethereal_traveler_module))
 	$Interface/Panel/Header/CCIP.connect("pressed", load_script.bind("Cross-Chain ERC20", ccip_module))

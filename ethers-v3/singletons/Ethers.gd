@@ -108,12 +108,17 @@ func login(account, _password):
 		
 		_password = clear_memory()
 		_password.clear()
+		encryption_key = clear_memory()
+		encryption_key.clear()
+		return true
 
 	else:
 		emit_error("Incorrect password for " + account)
+		return false
 	
 	encryption_key = clear_memory()
 	encryption_key.clear()
+	return false
 
 
 func get_key(account):
@@ -464,6 +469,7 @@ func return_erc20_balance(callback):
 	var callback_args = callback["callback_args"]
 	var callback_node = callback_args["callback_node"]
 	var callback_function = callback_args["callback_function"]
+	var name = callback_args["name"]
 	var decimals = callback_args["decimals"]
 	
 	var next_callback = {
@@ -475,7 +481,7 @@ func return_erc20_balance(callback):
 	if callback["success"]:
 		next_callback["success"] = true
 		var balance = convert_to_smallnum(callback["result"][0], decimals)
-		next_callback["result"] = balance
+		next_callback["result"] = [name, str(decimals), balance]
 		next_callback["callback_args"]["balance"] = balance
 	
 	callback_node.call(callback_function, next_callback)
