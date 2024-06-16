@@ -21,6 +21,76 @@ Every function mentioned on this page is defined in the `Ethers.gd` singleton, a
 
 ---
 
+## Usage Example
+
+```
+
+# Read from contracts
+
+func get_hello(network, contract, ABI):
+	
+	var calldata = Ethers.get_calldata("READ", ABI, "helloWorld", [])
+		
+	Ethers.read_from_contract(
+		network, 
+		contract, 
+		calldata, 
+		self, 
+		"hello_world",
+		{})
+
+
+
+# Receive the callback from the contract read
+
+func hello_world(callback):
+	if callback["success"]:
+		print(callback["result"][0])
+
+
+
+# Create an encrypted keystore with an account name and password
+
+func create_account(account, password):
+	Ethers.create_account(account, password)
+
+
+
+# An account must be logged in to send transactions
+
+func login(account, password):
+	Ethers.login(account, password)
+
+
+
+# Send a transaction
+
+func say_hello(account, network, contract, ABI):
+	
+	var calldata = Ethers.get_calldata("WRITE", ABI, "sayHello", ["hello"])
+
+	Ethers.send_transaction(
+			account, 
+			network, 
+			contract, 
+			calldata, 
+			self, 
+			"get_receipt", 
+			{}
+			)
+
+
+
+# Receive the callback from a successful transaction
+
+func get_receipt(callback):
+	if callback["success"]:
+		print(callback["result"])
+
+```
+
+___
+
 ### `get_calldata(read_or_write, ABI, function_name, args=[])`
 
 `read_or_write` is a String: "READ" or "WRITE".  Use "READ" if you intend to call a view/pure function with `read_from_contract()`.
