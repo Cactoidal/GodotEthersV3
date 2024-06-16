@@ -25,7 +25,7 @@ Every function mentioned on this page is defined in the `Ethers.gd` singleton, a
 
 ```
 
-# Read from contracts
+# Read from a contract
 
 func get_hello(network, contract, ABI):
 	
