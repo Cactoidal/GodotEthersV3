@@ -9,7 +9,6 @@ use hex::*;
 use num_bigint::{BigUint, BigInt};
 use pbkdf2::{pbkdf2_hmac, pbkdf2_hmac_array};
 use sha2::Sha256;
-use security_framework::{random::*};
 use zeroize::*;
 
 struct GodotEthers;
@@ -103,23 +102,6 @@ fn get_address(_key: PackedByteArray) -> GString {
 
     return_string
 }
-
-
-#[func]
-fn apple_enclave_generate_key(_length: u64) -> Array<u8> {
-    let mut _buffer: Vec<u8> = (0.._length).map(|n| n as u8).collect();
-    let buffer = &mut _buffer[..];
-
-    let random_bytes = SecRandom::default();
-    random_bytes.copy_bytes(buffer).unwrap();
-
-    let key: Array<u8> = buffer.iter().map(|e| *e as u8).collect();
-    
-    buffer.zeroize();
-
-    key
-}
-
 
 
 //////      TRANSACTION CALLDATA SIGNING       //////
@@ -361,8 +343,9 @@ fn decode_address (_message: GString) -> GString {
 fn decode_bytes (_message: GString) -> GString {
     let raw_hex: String = _message.to_string();
     let decoded: Bytes = ethers::abi::AbiDecode::decode_hex(raw_hex).unwrap();
-    let return_string: GString = format!("{:?}", decoded).into();
-    return_string
+    let decoded_array: Vec<u8> = decoded.iter().map(|e| *e as u8).collect();
+    let decoded_hex = hex::encode(decoded_array);
+    decoded_hex.into()
 }
 
 #[func]
@@ -470,46 +453,6 @@ fn decode_int256 (_message: GString) -> GString {
 }
 
 
-
-//////      APPLE SECURE ENCLAVE OPERATIONS       //////
-
-
-// There are some problems:
-// While the EVM will soon be able to verify secp256r1-derived messages,
-// the enclave signing algorithm still needs to use the Ethereum Keccak hash 
-// function instead of SHA256.  The private key would also need to be saved
-// into the Keychain and later accessed at its location, with a password 
-// provided by the user. This would also require that the Rust library be 
-// codesigned.
-
-
-// Hypothetical function:
-/* 
-#[func]
-fn apple_ecdsa_sign(rlp_encoded_data: PackedByteArray, _label: GString) -> Array<u8> {
-    let options = GenerateKeyOptions {
-        key_type: Some(KeyType::ec()),
-        size_in_bits: None,
-        label: Some(_label.to_string()),
-        token: Some(Token::SecureEnclave),
-        location: Some(Location::DefaultFileKeychain),
-        access_control: None,
-    };
-    let key = SecKey::generate(options.to_dictionary()).unwrap();
-    let signature = key
-        .create_signature(
-            Algorithm::ECDSASignatureMessageX962KECCAK,   // Hypothetical Keccak hash function
-            &rlp_encoded_data.to_vec()[..],
-        )
-        .unwrap();
-    
-    let signature_array: Array<u8> = signature.iter().map(|e| *e as u8).collect();
-
-    signature_array
-
-}
-*/
-
 }
 
 
@@ -570,14 +513,6 @@ fn string_to_address(_string: GString) -> Address {
     address
 }
 
-fn string_array_to_addresses(_godot_string_array: Array<GString>) -> Vec<Address> {
-
-    let string_vec: Vec<String> = _godot_string_array.iter_shared().map(|e| e.to_string() as String).collect();
-
-    let address_vec: Vec<Address> = string_vec.iter().map(|e|e.parse::<Address>().unwrap() as Address).collect();
-
-    address_vec
-}
 
 fn string_to_uint256(_string: GString) -> U256 {
 
@@ -587,15 +522,4 @@ fn string_to_uint256(_string: GString) -> U256 {
 
     u256
 
-}
-
-fn string_array_to_uint256s(_godot_string_array: Array<GString>) -> Vec<U256> {
-
-    let string_vec: Vec<String> = _godot_string_array.iter_shared().map(|e| e.to_string() as String).collect();
-
-    let big_uint_vec: Vec<BigUint> = string_vec.iter().map(|e|e.parse::<BigUint>().unwrap() as BigUint).collect();
-
-    let u256_vec: Vec<U256> = big_uint_vec.iter().map(|e|U256::from_big_endian(e.to_bytes_be().as_slice()) as U256).collect();
-
-    u256_vec
 }
