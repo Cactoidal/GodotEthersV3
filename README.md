@@ -37,7 +37,8 @@ func get_hello(network, contract, ABI):
 		calldata, 
 		self, 
 		"hello_world",
-		{})
+		{}
+		)
 
 
 
