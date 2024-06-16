@@ -1322,7 +1322,10 @@ dependencies = [
  "godot",
  "hex",
  "num-bigint",
+ "pbkdf2 0.12.2",
  "serde",
+ "sha2",
+ "zeroize",
 ]
 
 [[package]]
