@@ -351,8 +351,33 @@ func print_ccip_message(callback):
 
 # Automatically approves the router's spend allowance,
 # gets the CCIP fee, and sends the CCIP message.
-func initiate_bridge(amount):
+func initiate_bridge():
+	var selected_sender_network = $Bridge/Sender.text
+	var selected_destination_network = $Bridge/Destination.text
+	
+	if !selected_sender_network in ccip_network_info.keys():
+		print_bridge_error("Invalid Sender")
+		return
+	if !selected_destination_network in ccip_network_info.keys():
+		print_bridge_error("Invalid Destination")
+		return
+	if selected_sender_network == selected_destination_network:
+		print_bridge_error("Same Network")
+		return
+	
+	var sender = $Balances/Networks.get_node(selected_sender_network)
+	var gas_balance = float(sender.get_node("Gas").text.right(5))
+	var token_balance = float(sender.get_node("Token").text.right(5))
+	
+	if gas_balance < 0.001:
+		print_bridge_error("Insufficient Gas")
+		return
+	if token_balance < 0.01:
+		print_bridge_error("Insufficient Tokens")
+		return
+	
 	var token_contract = ccip_network_info[selected_sender_network]["token_contract"]
+	var amount = Ethers.convert_to_bignum("0.01")
 	
 	bridge(
 		active_account,
@@ -545,9 +570,9 @@ func copy_address():
 	var user_address = Ethers.get_address(active_account)
 	DisplayServer.clipboard_set(user_address)
 	$Address/Prompt.modulate.a = 1
-	var fadein = create_tween()
-	fadein.tween_property($Address/Prompt,"modulate:a", 0, 2.8).set_trans(Tween.TRANS_LINEAR)
-	fadein.play()
+	var fadeout = create_tween()
+	fadeout.tween_property($Address/Prompt,"modulate:a", 0, 2.8).set_trans(Tween.TRANS_LINEAR)
+	fadeout.play()
 
 
 func back():
@@ -563,10 +588,21 @@ func beam_message():
 	var bottom_tween = create_tween()
 	top_tween.tween_property($Beam.mesh, "top_radius", 0.4, 0.1)
 	bottom_tween.tween_property($Beam.mesh, "bottom_radius", 0.4, 0.1)
+	bottom_tween.tween_callback(reduce_beam)
 	top_tween.play()
 	bottom_tween.play()
 
+func reduce_beam():
+	var top_tween = create_tween()
+	var bottom_tween = create_tween()
+	top_tween.tween_property($Beam.mesh, "top_radius", 0.001, 10)
+	bottom_tween.tween_property($Beam.mesh, "bottom_radius", 0.001, 10)
+	bottom_tween.tween_callback(invisible_beam)
+	top_tween.play()
+	bottom_tween.play()
 
+func invisible_beam():
+	$Beam.visible = false
 
 # It's much easier to simply build external scenes as needed and instantiate
 # them on demand.  Here however we construct the transaction object in code,
@@ -612,6 +648,7 @@ func fade_in(node):
 
 func slide_log():
 	$Log.text = "CCIP Message Log"
+	new_messages = 0
 	if $Log.position.y == log_down_y:
 		var log_tween = create_tween()
 		log_tween.tween_property($Log,"position:y", log_up_y, 0.3).set_trans(Tween.TRANS_QUAD)
@@ -631,6 +668,12 @@ func slide_bridge():
 		log_tween.tween_property($Bridge,"position:y", bridge_down_y, 0.3).set_trans(Tween.TRANS_QUAD)
 		log_tween.play()
 
+func print_bridge_error(error):
+	$Bridge/Error.text = "Error: " + error
+	$Bridge/Error.modulate.a = 1
+	var fadeout = create_tween()
+	fadeout.tween_property($Bridge/Error,"modulate:a", 0, 2.8).set_trans(Tween.TRANS_LINEAR)
+	fadeout.play()
 
 
 #####   ABI   #####
