@@ -7,6 +7,7 @@ var header = "Content-Type: application/json"
 var error
 
 var logins = {}
+var recent_transactions = {}
 
 var env_enc_key
 var env_enc_iv
@@ -185,6 +186,11 @@ func decrypt(_key, _iv, _data):
 	return decrypted
 
 
+func logout():
+	logins = clear_memory()
+	logins.clear()
+	logins = {}
+	recent_transactions = {}
 
 #########  NETWORK MANAGEMENT  #########
 
@@ -245,15 +251,13 @@ func get_rpc(network):
 
 func get_gas_balance(network, account, callback_node, callback_function, callback_args={}):
 	var user_address = get_address(account)
-	callback_args["network"] = network
-	callback_args["account"] = account
 	perform_request(
 					"eth_getBalance", 
 					[user_address, "latest"], 
 					network, 
 					self, 
 					"return_gas_balance", 
-					{"network": network,
+					{
 					"account": account,
 					"callback_node": callback_node,
 					"callback_function": callback_function,
@@ -262,10 +266,14 @@ func get_gas_balance(network, account, callback_node, callback_function, callbac
 
 
 func return_gas_balance(_callback):
+	var network = _callback["network"]
+	var account = _callback["callback_args"]["account"]
 	var callback_node = _callback["callback_args"]["callback_node"]
 	var callback_function = _callback["callback_args"]["callback_function"]
 	
 	var next_callback = {
+		"network": network,
+		"account": account,
 		"callback_args": _callback["callback_args"]["callback_args"],
 		"success": false,
 		"result": ""
@@ -323,6 +331,7 @@ func read_from_contract(network, contract, _calldata, callback_node, callback_fu
 
 
 func decode_rpc_response(_callback):
+	var network = _callback["network"]
 	var _callback_args = _callback["callback_args"]
 	var callback_node = _callback_args["_callback_node"]
 	var callback_function = _callback_args["_callback_function"]
@@ -331,7 +340,8 @@ func decode_rpc_response(_callback):
 	
 	var callback = {
 		"success": _callback["success"],
-		"callback_args": callback_args
+		"callback_args": callback_args,
+		"network": network
 		}
 	
 	if _callback["success"]:
@@ -396,7 +406,7 @@ func perform_request(method, params, network, callback_node, callback_function, 
 		return
 	
 	var http_request = EthRequest.new()
-	
+		
 	http_request.callback = callback
 	http_request.request_completed.connect(http_request.resolve_ethereum_request)
 	add_child(http_request)
@@ -417,14 +427,13 @@ func perform_request(method, params, network, callback_node, callback_function, 
 
 # "get_erc20_info" bounces through three calls: name(), decimals(), and balanceOf() for a supplied 
 # address, and returns all 3 values as part of the callback_args sent to the callback_node
-func get_erc20_info(network, address, contract, callback_node, callback_function):
-	var callback_args = {
-		"network": network, 
-		"address": address, 
-		"contract": contract,
-		"callback_node": callback_node,
-		"callback_function": callback_function,
-		}
+func get_erc20_info(network, address, contract, callback_node, callback_function, callback_args={}):
+	callback_args["network"] = network
+	callback_args["address"] = address
+	callback_args["contract"] = contract
+	callback_args["callback_node"] = callback_node
+	callback_args["callback_function"] = callback_function
+
 	get_erc20_name(network, contract, self, "return_erc20_name", callback_args)
 
 
@@ -469,13 +478,15 @@ func return_erc20_balance(callback):
 	var callback_args = callback["callback_args"]
 	var callback_node = callback_args["callback_node"]
 	var callback_function = callback_args["callback_function"]
+	var network = callback_args["network"]
 	var name = callback_args["name"]
 	var decimals = callback_args["decimals"]
 	
 	var next_callback = {
 		"callback_args": callback_args,
 		"success": false,
-		"result": ""
+		"result": "",
+		"network": network
 	}
 	
 	if callback["success"]:
@@ -581,8 +592,7 @@ var default_network_info = {
 		"rpc_cycle": 0,
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia.etherscan.io/",
-		"logo": "res://assets/Ethereum.png"
+		"scan_url": "https://sepolia.etherscan.io/"
 		},
 		
 	"Arbitrum Sepolia": 
@@ -592,8 +602,7 @@ var default_network_info = {
 		"rpc_cycle": 0,
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia.arbiscan.io/",
-		"logo": "res://assets/Arbitrum.png"
+		"scan_url": "https://sepolia.arbiscan.io/"
 		},
 		
 	"Optimism Sepolia": {
@@ -602,18 +611,16 @@ var default_network_info = {
 		"rpc_cycle": 0,
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia-optimism.etherscan.io/",
-		"logo": "res://assets/Optimism.png"
+		"scan_url": "https://sepolia-optimism.etherscan.io/"
 	},
 	
 	"Base Sepolia": {
 		"chain_id": "84532",
-		"rpcs": ["https://sepolia.base.org"],
+		"rpcs": ["https://sepolia.base.org", "https://base-sepolia-rpc.publicnode.com"],
 		"rpc_cycle": 0,
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
-		"scan_url": "https://sepolia.basescan.org/",
-		"logo": "res://assets/Base.png"
+		"scan_url": "https://sepolia.basescan.org/"
 	},
 	
 	"Avalanche Fuji": {
@@ -622,7 +629,6 @@ var default_network_info = {
 		"rpc_cycle": 0,
 		"minimum_gas_threshold": 0.0002,
 		"maximum_gas_fee": "",
-		"scan_url": "https://testnet.snowtrace.io/",
-		"logo": "res://assets/Avalanche.png"
+		"scan_url": "https://testnet.snowtrace.io/"
 	}
 }

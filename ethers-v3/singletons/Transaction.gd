@@ -37,7 +37,7 @@ func send_transaction(
 			"initialized": false,
 			"tx_count": 0,
 			"gas_price": 0,
-			"tx_hash": "",
+			"transaction_hash": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
 			"eth_transfer": false
@@ -183,10 +183,17 @@ func get_transaction_hash(callback):
 	var scan_url = Ethers.network_info[network]["scan_url"]
 	
 	if callback["success"]:
-			transaction["tx_hash"] = callback["result"]
+			transaction["transaction_hash"] = callback["result"]
+			
+			# Ethers tracks the most recent transaction for each network,
+			# along with each transaction's callback_args.
+			Ethers.recent_transactions[network] = {
+				"transaction_hash": transaction["transaction_hash"],
+				"callback_args": transaction["callback_args"]
+				}
 			
 			# DEBUG
-			print(scan_url + "tx/" + transaction["tx_hash"])
+			print(scan_url + "tx/" + transaction["transaction_hash"])
 			
 			transaction["check_for_receipt"] = true
 	else:
@@ -199,7 +206,7 @@ func check_for_tx_receipt(transaction, delta):
 		transaction["tx_receipt_poll_timer"] = 4
 		Ethers.perform_request(
 			"eth_getTransactionReceipt", 
-			[transaction["tx_hash"]], 
+			[transaction["transaction_hash"]], 
 			transaction["network"], 
 			self, 
 			"check_transaction_receipt",
@@ -210,6 +217,7 @@ func check_for_tx_receipt(transaction, delta):
 func check_transaction_receipt(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
+	var account = transaction["account"]
 		
 	if callback["success"]:
 		if callback["result"] != null:
@@ -219,9 +227,11 @@ func check_transaction_receipt(callback):
 			var tx_callback_args = transaction["callback_args"]
 	
 			var tx_callback = {
-				"success" = false,
-				"receipt" = "",
-				"callback_args" = tx_callback_args
+				"success": false,
+				"receipt": "",
+				"callback_args": tx_callback_args,
+				"network": network,
+				"account": account
 			}
 
 			#var block_number = callback["result"]["blockNumber"]
@@ -274,7 +284,7 @@ func start_eth_transfer(
 			"initialized": false,
 			"tx_count": 0,
 			"gas_price": 0,
-			"tx_hash": "",
+			"transaction_hash": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
 			"eth_transfer": true

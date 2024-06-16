@@ -12,7 +12,9 @@ var blocks = []
 # _ready() is called when the node enters the scene tree 
 # (i.e., when the module is loaded)
 func _ready():
-	
+	var fadein = create_tween()
+	fadein.tween_property($Fadein,"modulate:a", 0, 1).set_trans(Tween.TRANS_LINEAR)
+	fadein.play()
 	$Back.connect("pressed", back)
 	
 	# We still want to cycle RPCs, but we also want to map the RPC
@@ -50,11 +52,6 @@ func get_filter_id(callback):
 # _process() runs every frame, producing the float 
 # value "delta" as an increment of time.
 func _process(delta):
-	
-	if $Fadein.modulate.a > 0:
-		$Fadein.modulate.a -= delta
-		if $Fadein.modulate.a < 0:
-			$Fadein.modulate.a = 0
 	
 	prune_block_hashes(delta)
 	move_blocks(delta)
@@ -146,8 +143,12 @@ func prune_block_hashes(delta):
 # Visualizer that spawns meshes to represent 
 # transactions.
 func generate_block(hash, tx_count):
+	var fadein = create_tween()
 	$Blockhash.text = hash
 	$Blockhash.modulate.a = 0
+	fadein.tween_property($Blockhash,"modulate:a", 1, 1).set_trans(Tween.TRANS_LINEAR)
+	fadein.play()
+	
 	var new_block = Node3D.new()
 	$Blockspace.add_child(new_block)
 	blocks.push_back(new_block)
@@ -167,11 +168,6 @@ func generate_block(hash, tx_count):
 # of the camera's line of sight.
 func move_blocks(delta):
 	
-	if $Blockhash.modulate.a < 1:
-		$Blockhash.modulate.a += delta
-		if $Blockhash.modulate.a > 1:
-			$Blockhash.modulate.a = 1
-	
 	var deletion_queue = []
 	for block in blocks:
 		block.global_transform.origin.y += 2*delta
@@ -182,6 +178,7 @@ func move_blocks(delta):
 	for block in deletion_queue:
 		blocks.erase(block)
 		block.queue_free()
+
 
 func back():
 	queue_free()

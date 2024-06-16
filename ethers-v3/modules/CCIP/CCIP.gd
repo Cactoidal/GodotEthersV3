@@ -18,6 +18,8 @@ var balance_update_timer = 10
 # DEBUG
 var beam_timer = 2
 
+var logged_messages = []
+
 func _ready():
 	
 	#DEBUG 
@@ -54,16 +56,14 @@ func _process(delta):
 	poll_speed -= delta
 	if poll_speed < 0:
 		poll_speed = 1
-		
-		# DEBUG
 		observe_onramps()
 	
 	# DEBUG
-	if active_account:
-		balance_update_timer -= delta
-		if balance_update_timer < 0:
-			balance_update_timer = 10
-			update_balances()
+	#if active_account:
+		#balance_update_timer -= delta
+		#if balance_update_timer < 0:
+			#balance_update_timer = 10
+			#update_balances()
 	
 	$FogVolume.rotate_y(delta)
 	$Transporter/Pivot.rotate_y(delta/3)
@@ -108,15 +108,14 @@ func login(account, password):
 	active_account = account
 	$Key/Address.text = Ethers.get_address(active_account)
 	
-	# DEBUG
-	#update_balances()
+	update_balances()
 	
 	
 	
-	#selected_sender_network = "Base Sepolia"
-	#selected_destination_network = "Arbitrum Sepolia"
-	#var amount = Ethers.convert_to_bignum("0.01")
-	#initiate_bridge(amount)
+	selected_sender_network = "Base Sepolia"
+	selected_destination_network = "Arbitrum Sepolia"
+	var amount = Ethers.convert_to_bignum("0.01")
+	initiate_bridge(amount)
 	#var token_contract = ccip_network_info["Base Sepolia"]["token_contract"]
 	
 	# DEBUG
@@ -145,7 +144,7 @@ func update_balances():
 			user_address, 
 			token_contract, 
 			self, 
-			"get_erc20_info",
+			"get_erc20_info"
 			)
 
 
@@ -171,49 +170,6 @@ func get_erc20_info(callback):
 		print(address + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
 
 
-func another_test_transaction():
-	
-	var why = [
-		"849289742389",
-		"0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba",
-		"0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba",
-		"34665",
-		"34783264742",
-		false,
-		"46724",
-		"2Bd1324482B9036708a7659A3FCe20DfaDD455ba",
-		"23477823647862347",
-		"e0e0e0e0e0",
-		[ 
-			["0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba", "3247678246"]
-		],
-			[],
-			"e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0"
-	]
-	
-	var calldata = Ethers.get_calldata("WRITE", TEST_ABI, "ok", [why])
-	
-	Ethers.send_transaction(
-		active_account, 
-		"Base Sepolia", 
-		"0xd2e6c713dB06B38734a3d3358EF20d45E2e97071",
-		calldata,
-		self,
-		"get_receipt",
-		{"transaction_type": "TEST"})
-	#print(calldata)
-
-
-func decode2():
-	var calldata = "0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000c5bd9d08350000000000000000000000002bd1324482b9036708a7659a3fce20dfadd455ba0000000000000000000000002bd1324482b9036708a7659a3fce20dfadd455ba000000000000000000000000000000000000000000000000000000000000876900000000000000000000000000000000000000000000000000000008193e7fe60000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b6840000000000000000000000002bd1324482b9036708a7659a3fce20dfadd455ba000000000000000000000000000000000000000000000000005368f4caa14e4b00000000000000000000000000000000000000000000000000000000000001a000000000000000000000000000000000000000000000000000000000000001e00000000000000000000000000000000000000000000000000000000000000240e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e00000000000000000000000000000000000000000000000000000000000000005e0e0e0e0e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000002bd1324482b9036708a7659a3fce20dfadd455ba00000000000000000000000000000000000000000000000000000000c193a3260000000000000000000000000000000000000000000000000000000000000000"
-	var function = Calldata.get_function(TEST_ABI, "ok")
-	var inputs = Calldata.get_function_inputs(function)
-	var decoded = Calldata.abi_decode(inputs, calldata)
-	print(decoded)
-	
-	
-
-
 func observe_onramps():
 	# First, get the current block number for each chain.
 	# It will be used to set the block range, since a variable
@@ -228,7 +184,6 @@ func observe_onramps():
 		)
 	
 	
-
 func get_ccip_messages(callback):
 	if callback["success"]:
 		
@@ -272,23 +227,23 @@ func decode_EVM2EVM_message(callback):
 			# First, check the destination chain by determining which
 			# OnRamp sent the message.
 			var onramp_contract = event["address"]
-			var to_network
-			var onramp_list = ccip_network_info[network]["onramp_contracts_by_network"]
-			for sender in onramp_list:
+			var to_network = ""
+			
+			# The list of onramp contracts is duplicated to avoid changes from
+			# propagating to the ccip_network_info dictionary.
+			var onramp_list = ccip_network_info[network]["onramp_contracts_by_network"].duplicate()
+			
+			for destination in onramp_list:
 				# Some RPC nodes return contract addresses with lowercase letters,
 				# while some do not.
-				if sender["contract"] != onramp_contract:
-					onramp_contract = onramp_contract.to_lower()
-				if sender["contract"] == onramp_contract:
-					to_network = sender["network"]
+				if destination["contract"] != onramp_contract:
+					destination["contract"] = destination["contract"].to_lower()
+				if destination["contract"] == onramp_contract:
+					to_network = destination["network"]
 				
 			# The message data will be an EVM2EVM message in the form of
 			# ABI encoded bytes.
-			#var message = event["data"]
-			var _message = event["data"]#.trim_prefix("0x0000000000000000000000000000000000000000000000000000000000000020")
-			
-			#var message = Calldata.abi_decode([{"type": "bytes"}], _message)
-			
+			var message = event["data"]
 			
 			var EVM2EVMMessage = {
 				"type": "tuple",
@@ -315,78 +270,76 @@ func decode_EVM2EVM_message(callback):
 				
 				}
 			
-			var decoded_message = Calldata.abi_decode([EVM2EVMMessage], _message)
-			print(decoded_message)
-			$Log.text += network + str(decoded_message)
+			# The ABI Decoder will return an array containing the tuple, which
+			# can be accessed at index 0.  Once accessed, the 13 elements of the 
+			# EVM2EVM message can be accessed by their index.
+			var decoded_message = Calldata.abi_decode([EVM2EVMMessage], message)[0]
 			
-			#$Log.text += network + str(message)
-
-
-
-
-
-func decode():
-	var calldata = "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000008f90b8876dee65380000000000000000000000000c09808315aaae86cfebb54d124ae065439d16040000000000000000000000000c09808315aaae86cfebb54d124ae065439d16040000000000000000000000000000000000000000000000000000000000000dab0000000000000000000000000000000000000000000000000000000000015f9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000420000000000000000000000000000000000000600000000000000000000000000000000000000000000000000007e3125b4e77000000000000000000000000000000000000000000000000000000000000001a0000000000000000000000000000000000000000000000000000000000000022000000000000000000000000000000000000000000000000000000000000002806a62d41616855c8d434ff5c97686e1368128993431099e0308c39f9bde74ddaf0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000056565656565000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000088a2d74f47a237a62e7a51cdda67270ce381555e000000000000000000000000000000000000000000000000002386f26fc10000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"
-	
-	#calldata = calldata.trim_prefix("0x0000000000000000000000000000000000000000000000000000000000000020")
-	
-	var EVM2EVMMessage = {
-				"type": "tuple",
+			# Check that this message hasn't already been recorded.
+			var messageId = decoded_message[12]
+			
+			if messageId in logged_messages:
+				return
+			else:
+				logged_messages.push_back(messageId)
+			
+			# Prepare the log dictionary.
+			var sender = decoded_message[1]
+			var receiver = decoded_message[2]
+			
+			var _callback_args = {
+				"from_network": network,
+				"to_network": to_network,
+				"sender": sender,
+				"receiver": receiver,
+				"messageId": messageId,
+				"contains_tokens": false
+			}
+			
+			# Some CCIP messages do not transmit tokens.
+			var tokenAmounts = decoded_message[10]
+			if !tokenAmounts.is_empty():
+				_callback_args["contains_tokens"] = true
+				# Right now, only checks for a single token.
+				var token_contract = tokenAmounts[0][0]
+				_callback_args["amount"] = tokenAmounts[0][1]
 				
-				"components": [
-					{"type": "uint64"}, # sourceChainSelector
-					{"type": "address"}, # sender
-					{"type": "address"}, # receiver
-					{"type": "uint64"}, # sequenceNumber
-					{"type": "uint256"}, # gasLimit
-					{"type": "bool"}, # strict
-					{"type": "uint64"}, # nonce
-					{"type": "address"}, # feeToken
-					{"type": "uint256"}, # feeTokenAmount
-					{"type": "bytes"}, # data
-					{"type": "tuple[]", # tokenAmounts
-					"components": [
-						{"type": "address"}, # token
-						{"type": "uint256"} # amount
-						]},
-					{"type": "bytes[]"}, # sourceTokenData
-					{"type": "bytes32"} # messageId
-				]
-				
-				}
-	print("ganbatte")
-	var decoded_message = Calldata.abi_decode([EVM2EVMMessage], calldata)
+				Ethers.get_erc20_info(
+					network, 
+					sender, 
+					token_contract, 
+					self, 
+					"print_ccip_message",
+					_callback_args
+					)
+			else:
+				print_ccip_message(
+					{"callback_args": _callback_args}
+					)
 
 
-
-func encode():
+func print_ccip_message(callback):
+	var callback_args = callback["callback_args"]
+	var from_network = callback_args["from_network"]
+	var to_network = callback_args["to_network"]
+	var sender = callback_args["sender"]
+	var receiver = callback_args["receiver"]
+	var messageId = callback_args["messageId"]
+	var token_name = ""
+	var amount = ""
 	
-	var EVMTokenAmount = [
-		"0x2Bd1324482B9036708a7659A3FCe20DfaDD455ba",
-		"3476332"
-	]
+	if callback_args["contains_tokens"]:
+		token_name = callback_args["name"]
+		var decimals = callback_args["decimals"]
+		amount = Ethers.convert_to_smallnum(callback_args["amount"], decimals)
 	
-
-	var EVM2EVMMessage = [
-		"34762", 
-		"0x0c09808315aaae86cfebb54d124ae065439d1604",
-		"0x0c09808315aaae86cfebb54d124ae065439d1604", 
-		"237", 
-		"32476723",
-		true,
-		"4633",
-		"0x114A20A10b43D4115e5aeef7345a1A71d2a60C57",
-		"463636534",
-		"e0e0e0e0",
-		[EVMTokenAmount],
-		[""],
-		"6a62d41616855c8d434ff5c97686e1368128993431099e0308c39f9bde74ddaf"
-	]
-	
-	var calldata = Ethers.get_calldata("WRITE", CALLDATA_TESTER, "ok", [EVM2EVMMessage])
-	print(calldata)
-
-
+	var message_string = (
+		from_network + " to " + to_network + 
+		":\n" + sender + "\nsent " + amount +
+		" " + token_name + "\nto " + receiver + "\nMessage ID: " + messageId + "\n\n"
+		)
+ 	
+	$Log.text += message_string
 
 
 # Automatically approves the router's spend allowance,
@@ -482,7 +435,7 @@ func ccip_bridge(callback):
 		# always arrive as an array of decoded outputs.
 		var fee = callback["result"][0]
 		fee = float(Ethers.convert_to_smallnum(fee))
-		fee *= 1.1
+		fee *= 1.25
 		fee = Ethers.convert_to_bignum(str(fee))
 		
 		# Get calldata again, this time specifying "WRITE"
@@ -1006,1417 +959,3 @@ var ccip_network_info = {
 	
 	
 	# ExtraArgsV1 works, however.
-
-
-
-
-var CALLDATA_TESTER = [
-	{
-		"inputs": [],
-		"name": "_13",
-		"outputs": [
-			{
-				"internalType": "bytes13",
-				"name": "",
-				"type": "bytes13"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_27",
-		"outputs": [
-			{
-				"internalType": "bytes27",
-				"name": "",
-				"type": "bytes27"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_32",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_8",
-		"outputs": [
-			{
-				"internalType": "bytes8",
-				"name": "",
-				"type": "bytes8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "challengeCleared",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "cooled",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "didThing",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "fixedNestedStructArrayReturn",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "num1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "coolBool",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint16",
-						"name": "amazingNum",
-						"type": "uint16"
-					}
-				],
-				"internalType": "struct CallDataTester.staticTuple[2][2]",
-				"name": "",
-				"type": "tuple[2][2]"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "fixedStructArrayReturn",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "num1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "coolBool",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint16",
-						"name": "amazingNum",
-						"type": "uint16"
-					}
-				],
-				"internalType": "struct CallDataTester.staticTuple[2]",
-				"name": "",
-				"type": "tuple[2]"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[][3][]",
-				"name": "",
-				"type": "string[][3][]"
-			}
-		],
-		"name": "funnyArray",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "gauntletCleared",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[][][]",
-				"name": "_many",
-				"type": "string[][][]"
-			}
-		],
-		"name": "manyDynamicNested",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "messageId",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "muhData",
-		"outputs": [
-			{
-				"internalType": "bytes",
-				"name": "",
-				"type": "bytes"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "myDifficultTuple",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "indeed",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "myDynamicTuple",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "niceString",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "awooga",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "impressiveString",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "myStaticTuple",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "num1",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "coolBool",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint16",
-				"name": "amazingNum",
-				"type": "uint16"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "nestedFriend",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint64",
-						"name": "sourceChain",
-						"type": "uint64"
-					},
-					{
-						"internalType": "address",
-						"name": "sender",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "receiver",
-						"type": "address"
-					},
-					{
-						"internalType": "uint64",
-						"name": "number",
-						"type": "uint64"
-					},
-					{
-						"internalType": "uint256",
-						"name": "gas",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "strict",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint64",
-						"name": "count",
-						"type": "uint64"
-					},
-					{
-						"internalType": "address",
-						"name": "token",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bytes",
-						"name": "data",
-						"type": "bytes"
-					},
-					{
-						"components": [
-							{
-								"internalType": "address",
-								"name": "token",
-								"type": "address"
-							},
-							{
-								"internalType": "uint256",
-								"name": "amount",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.tokenAmounts[]",
-						"name": "tokens",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes[]",
-						"name": "sourceData",
-						"type": "bytes[]"
-					},
-					{
-						"internalType": "bytes32",
-						"name": "why",
-						"type": "bytes32"
-					}
-				],
-				"internalType": "struct CallDataTester.thinger",
-				"name": "_thinger",
-				"type": "tuple"
-			}
-		],
-		"name": "ok",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[2][]",
-				"name": "_okay",
-				"type": "string[2][]"
-			}
-		],
-		"name": "okay",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[][2]",
-				"name": "_oof",
-				"type": "string[][2]"
-			}
-		],
-		"name": "oof",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "structReturn",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "num1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "coolBool",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint16",
-						"name": "amazingNum",
-						"type": "uint16"
-					}
-				],
-				"internalType": "struct CallDataTester.staticTuple",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "bytes[]",
-						"name": "why_not",
-						"type": "bytes[]"
-					},
-					{
-						"components": [
-							{
-								"internalType": "string",
-								"name": "niceString",
-								"type": "string"
-							},
-							{
-								"internalType": "uint256",
-								"name": "awooga",
-								"type": "uint256"
-							},
-							{
-								"internalType": "string",
-								"name": "impressiveString",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.dynamicTuple",
-						"name": "_dynamic",
-						"type": "tuple"
-					},
-					{
-						"components": [
-							{
-								"internalType": "uint256",
-								"name": "num1",
-								"type": "uint256"
-							},
-							{
-								"internalType": "bool",
-								"name": "coolBool",
-								"type": "bool"
-							},
-							{
-								"internalType": "uint16",
-								"name": "amazingNum",
-								"type": "uint16"
-							}
-						],
-						"internalType": "struct CallDataTester.staticTuple",
-						"name": "_static",
-						"type": "tuple"
-					},
-					{
-						"components": [
-							{
-								"internalType": "string[]",
-								"name": "why",
-								"type": "string[]"
-							},
-							{
-								"internalType": "uint256[]",
-								"name": "yes",
-								"type": "uint256[]"
-							},
-							{
-								"internalType": "string",
-								"name": "indeed",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.difficultTuple",
-						"name": "_difficult",
-						"type": "tuple"
-					}
-				],
-				"internalType": "struct CallDataTester.ultraTuple[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"name": "theChallenge",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[2][2]",
-				"name": "_what",
-				"type": "string[2][2]"
-			}
-		],
-		"name": "what",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "why",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]
-
-
-
-var TEST_ABI = [
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint64",
-						"name": "sourceChain",
-						"type": "uint64"
-					},
-					{
-						"internalType": "address",
-						"name": "sender",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "receiver",
-						"type": "address"
-					},
-					{
-						"internalType": "uint64",
-						"name": "number",
-						"type": "uint64"
-					},
-					{
-						"internalType": "uint256",
-						"name": "gas",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "strict",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint64",
-						"name": "count",
-						"type": "uint64"
-					},
-					{
-						"internalType": "address",
-						"name": "token",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bytes",
-						"name": "data",
-						"type": "bytes"
-					},
-					{
-						"components": [
-							{
-								"internalType": "address",
-								"name": "token",
-								"type": "address"
-							},
-							{
-								"internalType": "uint256",
-								"name": "amount",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.tokenAmounts[]",
-						"name": "tokens",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes[]",
-						"name": "sourceData",
-						"type": "bytes[]"
-					},
-					{
-						"internalType": "bytes32",
-						"name": "why",
-						"type": "bytes32"
-					}
-				],
-				"indexed": false,
-				"internalType": "struct CallDataTester.thinger",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"name": "myCoolEvent",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[][3][]",
-				"name": "",
-				"type": "string[][3][]"
-			}
-		],
-		"name": "funnyArray",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "why",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "WHY",
-						"type": "address"
-					},
-					{
-						"internalType": "bytes",
-						"name": "indeed",
-						"type": "bytes"
-					},
-					{
-						"components": [
-							{
-								"internalType": "address",
-								"name": "_static",
-								"type": "address"
-							},
-							{
-								"internalType": "uint256",
-								"name": "STATIC",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.staticStruct[]",
-						"name": "WHY_",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes[]",
-						"name": "whynot",
-						"type": "bytes[]"
-					},
-					{
-						"internalType": "bytes32",
-						"name": "_okay",
-						"type": "bytes32"
-					}
-				],
-				"internalType": "struct CallDataTester.oooo",
-				"name": "_struct",
-				"type": "tuple"
-			}
-		],
-		"name": "makeooo",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "why",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "WHY",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "okay",
-						"type": "address"
-					},
-					{
-						"internalType": "uint64",
-						"name": "_why",
-						"type": "uint64"
-					},
-					{
-						"internalType": "bytes",
-						"name": "indeed",
-						"type": "bytes"
-					},
-					{
-						"components": [
-							{
-								"internalType": "address",
-								"name": "_static",
-								"type": "address"
-							},
-							{
-								"internalType": "uint256",
-								"name": "STATIC",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.staticStruct[]",
-						"name": "WHY_",
-						"type": "tuple[]"
-					},
-					{
-						"components": [
-							{
-								"internalType": "bytes",
-								"name": "_dynamic",
-								"type": "bytes"
-							},
-							{
-								"internalType": "uint256",
-								"name": "dynamic",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.dynamicStruct[]",
-						"name": "AAAA",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes[]",
-						"name": "whynot",
-						"type": "bytes[]"
-					},
-					{
-						"internalType": "bytes32",
-						"name": "_okay",
-						"type": "bytes32"
-					}
-				],
-				"internalType": "struct CallDataTester.myOtherStruct",
-				"name": "_struct",
-				"type": "tuple"
-			}
-		],
-		"name": "makeOtherStruct",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "why",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "WHY",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "okay",
-						"type": "address"
-					},
-					{
-						"internalType": "uint64",
-						"name": "_why",
-						"type": "uint64"
-					},
-					{
-						"components": [
-							{
-								"internalType": "address",
-								"name": "_static",
-								"type": "address"
-							},
-							{
-								"internalType": "uint256",
-								"name": "STATIC",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.staticStruct[]",
-						"name": "WHY_",
-						"type": "tuple[]"
-					},
-					{
-						"components": [
-							{
-								"internalType": "bytes",
-								"name": "_dynamic",
-								"type": "bytes"
-							},
-							{
-								"internalType": "uint256",
-								"name": "dynamic",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.dynamicStruct[]",
-						"name": "AAAA",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes[]",
-						"name": "whynot",
-						"type": "bytes[]"
-					}
-				],
-				"internalType": "struct CallDataTester.myGreatStruct",
-				"name": "_struct",
-				"type": "tuple"
-			}
-		],
-		"name": "makeStruct",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[][][]",
-				"name": "_many",
-				"type": "string[][][]"
-			}
-		],
-		"name": "manyDynamicNested",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint64",
-						"name": "sourceChain",
-						"type": "uint64"
-					},
-					{
-						"internalType": "address",
-						"name": "sender",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "receiver",
-						"type": "address"
-					},
-					{
-						"internalType": "uint64",
-						"name": "number",
-						"type": "uint64"
-					},
-					{
-						"internalType": "uint256",
-						"name": "gas",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "strict",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint64",
-						"name": "count",
-						"type": "uint64"
-					},
-					{
-						"internalType": "address",
-						"name": "token",
-						"type": "address"
-					},
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bytes",
-						"name": "data",
-						"type": "bytes"
-					},
-					{
-						"components": [
-							{
-								"internalType": "address",
-								"name": "token",
-								"type": "address"
-							},
-							{
-								"internalType": "uint256",
-								"name": "amount",
-								"type": "uint256"
-							}
-						],
-						"internalType": "struct CallDataTester.tokenAmounts[]",
-						"name": "tokens",
-						"type": "tuple[]"
-					},
-					{
-						"internalType": "bytes[]",
-						"name": "sourceData",
-						"type": "bytes[]"
-					},
-					{
-						"internalType": "bytes32",
-						"name": "why",
-						"type": "bytes32"
-					}
-				],
-				"internalType": "struct CallDataTester.thinger",
-				"name": "_thinger",
-				"type": "tuple"
-			}
-		],
-		"name": "ok",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[2][]",
-				"name": "_okay",
-				"type": "string[2][]"
-			}
-		],
-		"name": "okay",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[][2]",
-				"name": "_oof",
-				"type": "string[][2]"
-			}
-		],
-		"name": "oof",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"components": [
-					{
-						"internalType": "bytes[]",
-						"name": "why_not",
-						"type": "bytes[]"
-					},
-					{
-						"components": [
-							{
-								"internalType": "string",
-								"name": "niceString",
-								"type": "string"
-							},
-							{
-								"internalType": "uint256",
-								"name": "awooga",
-								"type": "uint256"
-							},
-							{
-								"internalType": "string",
-								"name": "impressiveString",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.dynamicTuple",
-						"name": "_dynamic",
-						"type": "tuple"
-					},
-					{
-						"components": [
-							{
-								"internalType": "uint256",
-								"name": "num1",
-								"type": "uint256"
-							},
-							{
-								"internalType": "bool",
-								"name": "coolBool",
-								"type": "bool"
-							},
-							{
-								"internalType": "uint16",
-								"name": "amazingNum",
-								"type": "uint16"
-							}
-						],
-						"internalType": "struct CallDataTester.staticTuple",
-						"name": "_static",
-						"type": "tuple"
-					},
-					{
-						"components": [
-							{
-								"internalType": "string[]",
-								"name": "why",
-								"type": "string[]"
-							},
-							{
-								"internalType": "uint256[]",
-								"name": "yes",
-								"type": "uint256[]"
-							},
-							{
-								"internalType": "string",
-								"name": "indeed",
-								"type": "string"
-							}
-						],
-						"internalType": "struct CallDataTester.difficultTuple",
-						"name": "_difficult",
-						"type": "tuple"
-					}
-				],
-				"internalType": "struct CallDataTester.ultraTuple[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"name": "theChallenge",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string[2][2]",
-				"name": "_what",
-				"type": "string[2][2]"
-			}
-		],
-		"name": "what",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_13",
-		"outputs": [
-			{
-				"internalType": "bytes13",
-				"name": "",
-				"type": "bytes13"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_27",
-		"outputs": [
-			{
-				"internalType": "bytes27",
-				"name": "",
-				"type": "bytes27"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_32",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "_8",
-		"outputs": [
-			{
-				"internalType": "bytes8",
-				"name": "",
-				"type": "bytes8"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "challengeCleared",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "cooled",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "didThing",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "fixedNestedStructArrayReturn",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "num1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "coolBool",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint16",
-						"name": "amazingNum",
-						"type": "uint16"
-					}
-				],
-				"internalType": "struct CallDataTester.staticTuple[2][2]",
-				"name": "",
-				"type": "tuple[2][2]"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "fixedStructArrayReturn",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "num1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "coolBool",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint16",
-						"name": "amazingNum",
-						"type": "uint16"
-					}
-				],
-				"internalType": "struct CallDataTester.staticTuple[2]",
-				"name": "",
-				"type": "tuple[2]"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "gauntletCleared",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "messageId",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "muhData",
-		"outputs": [
-			{
-				"internalType": "bytes",
-				"name": "",
-				"type": "bytes"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "myDifficultTuple",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "indeed",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "myDynamicTuple",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "niceString",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "awooga",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "impressiveString",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "myStaticTuple",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "num1",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "coolBool",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint16",
-				"name": "amazingNum",
-				"type": "uint16"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "nestedFriend",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "structReturn",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "uint256",
-						"name": "num1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bool",
-						"name": "coolBool",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint16",
-						"name": "amazingNum",
-						"type": "uint16"
-					}
-				],
-				"internalType": "struct CallDataTester.staticTuple",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"stateMutability": "pure",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "why",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]

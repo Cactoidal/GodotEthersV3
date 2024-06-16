@@ -2,7 +2,7 @@ extends Node
 
 
 # Should be able to encode/decode pretty much anything.
-# (Needs more testing, of course)
+# (Needs more testing, of course - )
 
 # Can encode and decode:   
   
@@ -515,7 +515,6 @@ func get_static_size(output):
 
 func decode_arg(arg, calldata):
 	var arg_type = arg["type"]
-
 	var decoded_value
 	
 	# Array
