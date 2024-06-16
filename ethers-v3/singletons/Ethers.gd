@@ -52,7 +52,7 @@ func account_exists(account):
 		return false
 
 
-func create_account(account, _password, use_enclave=true):
+func create_account(account, _password):
 	var path = "user://" + account
 	
 	# Generate a new private key

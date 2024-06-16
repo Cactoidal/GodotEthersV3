@@ -2,7 +2,7 @@ extends Node3D
 
 # An interface for the Cross-Chain Interoperability Protocol.
 
-# ccip_network_info, containing things like the OnRamp and
+# The ccip_network_info, containing things like the OnRamp and
 # Router contracts, can be found at the bottom of this script.
 # It is meant to be used in conjunction with Ethers.network_info.
 
@@ -20,12 +20,8 @@ var beam_timer = 2
 
 var logged_messages = []
 
+
 func _ready():
-	
-	#DEBUG 
-	# How to convert bytes back to a string
-	#var from_hex = "6565656565".hex_decode()
-	#print(from_hex.get_string_from_utf8())
 	
 	var fadein = create_tween()
 	fadein.tween_property($Fadein,"modulate:a", 0, 1).set_trans(Tween.TRANS_LINEAR)
@@ -111,7 +107,7 @@ func login(account, password):
 	update_balances()
 	
 	
-	
+	# DEBUG
 	selected_sender_network = "Base Sepolia"
 	selected_destination_network = "Arbitrum Sepolia"
 	var amount = Ethers.convert_to_bignum("0.01")
@@ -377,7 +373,7 @@ func bridge(account, from_network, to_network, token, amount):
 	
 	var EVM2AnyMessage = [
 		Calldata.abi_encode( [{"type": "address"}], [address] ), # ABI-encoded recipient address
-		Calldata.abi_encode( [{"type": "string"}], ["eeeeeOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"] ), # Data payload, as bytes
+		Calldata.abi_encode( [{"type": "string"}], ["eeee"] ), # Data payload, as bytes
 		[EVMTokenAmount], # EVMTokenAmounts
 		"0x0000000000000000000000000000000000000000", # Fee address (address(0) = native token)
 		extra_args # Extra args
@@ -434,6 +430,9 @@ func ccip_bridge(callback):
 		# successful returns from "read_from_contract()" will 
 		# always arrive as an array of decoded outputs.
 		var fee = callback["result"][0]
+		
+		# Bump up the fee to decrease chances of a revert.
+		# Excess value sent will be refunded by the router
 		fee = float(Ethers.convert_to_smallnum(fee))
 		fee *= 1.25
 		fee = Ethers.convert_to_bignum(str(fee))
@@ -471,9 +470,10 @@ func add_new_transaction(network, transaction):
 	var transaction_type = transaction["callback_args"]["transaction_type"]
 	var transaction_hash = transaction["transaction_hash"]
 
+	# Build a transaction node for the UI
 	var transaction_object = instantiate_transaction(network, transaction_type, transaction_hash)
 	
-	# The transaction object is mapped to the transaction hash, so
+	# The new transaction node is mapped to the transaction hash, so
 	# its status can later be updated by the transaction receipt.
 	transaction_history[transaction_hash] = transaction_object
 	
@@ -521,8 +521,10 @@ func choose_destination_network():
 func get_test_tokens(network):
 	var token_contract = ccip_network_info[network]["token_contract"]
 	var address = Ethers.get_address(active_account)
-	# An example of how to manually construct calldata, even without an ABI.
 	
+	# An example of how to manually construct calldata, even without an ABI.
+	# Get the function selector using the function name and inputs,
+	# and concatenate the selector with the ABI encoded function arguments.
 	var function_selector = {
 		"name": "drip",
 		"inputs": [{"type": "address"}]
@@ -563,7 +565,7 @@ func beam_message():
 
 
 # It's much easier to simply build external scenes as needed and instantiate
-# them on demand.  Here however I construct the transaction object in code,
+# them on demand.  Here however we construct the transaction object in code,
 # to comply with the hypothetical "1 scene, 1 script" rule for modules.
 
 # In practice, it may be easier to audit multiple simple scenes (within reason)

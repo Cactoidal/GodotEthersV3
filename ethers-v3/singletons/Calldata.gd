@@ -357,13 +357,7 @@ func encode_tuple(arg):
 			new_arg["components"] = component["components"]
 		args.push_back(new_arg)
 		selector += 1
-	
-	# DEBUG
-	# If the tuple contains a dynamic tuple, it needs to append an "extra length"
-	# offset at the beginning of its dynamic tail.  This is the length
-	# in bytes between the start of the tail and the beginning of the tuple.
-	# Each contained dynamic tuple needs a similar offset.
-	
+
 	var calldata = construct_calldata(args)
 	
 	return calldata
@@ -523,7 +517,7 @@ func decode_arg(arg, calldata):
 	
 	# Tuple
 	elif arg_type.begins_with("tuple"):
-		# This may not work when the tuple is dynamic
+		# This may not work when the tuple is dynamic - test it
 		decoded_value = abi_decode(arg["components"], calldata)
 	
 	# String, Bytes
