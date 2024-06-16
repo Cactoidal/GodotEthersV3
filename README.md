@@ -53,7 +53,8 @@ func hello_world(callback):
 # Create an encrypted keystore with an account name and password
 
 func create_account(account, password):
-	Ethers.create_account(account, password)
+	if !Ethers.account_exists(account):
+		Ethers.create_account(account, password)
 
 
 
