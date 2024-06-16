@@ -53,6 +53,10 @@ func account_exists(account):
 
 
 func create_account(account, _password):
+	
+	if account_exists(account):
+		return
+	
 	var path = "user://" + account
 	
 	# Generate a new private key

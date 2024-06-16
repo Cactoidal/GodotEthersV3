@@ -1,30 +1,6 @@
 extends Node
 
 
-# Should be able to encode/decode pretty much anything.
-# (Needs more testing, of course - )
-
-# Can encode and decode:   
-  
-# Uints of typical varieties  (8,16,32,64,128,256)
-# Ints of typical varieties   (8,16,32,64,128,256)
-# Strings
-# Addresses
-# Unfixed Dynamic Arrays
-# Fixed Dynamic Arrays
-# Unfixed Static Arrays
-# Fixed Static Arrays
-# Bools
-# Enums
-# Bytes
-# Fixed Bytes
-# Dynamic Tuples
-# Static Tuples 
-# Arrays of Tuples
-# Nested Arrays
-# Nested Arrays of Tuples
-
-
 ##########   ENCODING   #########
 
 
@@ -517,7 +493,6 @@ func decode_arg(arg, calldata):
 	
 	# Tuple
 	elif arg_type.begins_with("tuple"):
-		# This may not work when the tuple is dynamic - test it
 		decoded_value = abi_decode(arg["components"], calldata)
 	
 	# String, Bytes

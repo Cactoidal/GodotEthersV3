@@ -6,6 +6,13 @@ extends Node3D
 # Router contracts, can be found at the bottom of this script.
 # It is meant to be used in conjunction with Ethers.network_info.
 
+
+# Finish this interface 
+# (the CCIP log, the user gas/token balances, the token faucet, the bridge, the beam)
+# (Add CCIP log pruning)
+# Compile Rust libraries for X11 and Windows
+# Make addon version for asset library
+
 var networks
 var active_account
 var selected_sender_network
@@ -13,12 +20,16 @@ var selected_destination_network
 var transaction_history = {}
 var recent_transactions = {}
 var previous_blocks = {}
-var downshift = 0
-var balance_update_timer = 10
-# DEBUG
-var beam_timer = 2
-
 var logged_messages = []
+var new_messages = 0
+var downshift = 0
+var poll_speed = 0.1
+
+# Slider position constants
+const log_down_y = 470
+const log_up_y = 0
+const bridge_up_y = 498
+const bridge_down_y = 614
 
 
 func _ready():
@@ -29,7 +40,10 @@ func _ready():
 	
 	$Back.connect("pressed", back)
 	$Login/Login.connect("pressed", create_account)
-	$Key/Copy.connect("pressed", copy_address)
+	$Address/Copy.connect("pressed", copy_address)
+	$Log.connect("pressed", slide_log)
+	$Bridge.connect("pressed", slide_bridge)
+	$Bridge/Initiate.connect("pressed", initiate_bridge)
 	networks = Ethers.network_info.keys()
 	for network in networks:
 		
@@ -39,27 +53,16 @@ func _ready():
 		
 		previous_blocks[network] = "latest"
 
+	for network in $Balances/Networks.get_children():
+		network.get_node("Button").connect("pressed", mint_test_tokens.bind(network.name))
 
-var poll_speed = 0.1
+
 func _process(delta):
-	
-	# DEBUG
-	#beam_timer -= delta
-	#if beam_timer < 0:
-		#beam_timer = 0
-		#beam_message()
-	
+
 	poll_speed -= delta
 	if poll_speed < 0:
 		poll_speed = 1
 		observe_onramps()
-	
-	# DEBUG
-	#if active_account:
-		#balance_update_timer -= delta
-		#if balance_update_timer < 0:
-			#balance_update_timer = 10
-			#update_balances()
 	
 	$FogVolume.rotate_y(delta)
 	$Transporter/Pivot.rotate_y(delta/3)
@@ -97,21 +100,21 @@ func login(account, password):
 	password = Ethers.clear_memory()
 	password.clear()
 	$Login.visible = false
-	var fadein = create_tween()
-	fadein.tween_property($Key,"modulate:a", 1, 1).set_trans(Tween.TRANS_LINEAR)
-	fadein.play()
+	fade_in($Address)
+	fade_in($Balances)
+	fade_in($Bridge)
 	
 	active_account = account
-	$Key/Address.text = Ethers.get_address(active_account)
+	$Address/Address.text = Ethers.get_address(active_account)
 	
 	update_balances()
 	
 	
 	# DEBUG
-	selected_sender_network = "Base Sepolia"
-	selected_destination_network = "Arbitrum Sepolia"
-	var amount = Ethers.convert_to_bignum("0.01")
-	initiate_bridge(amount)
+	#selected_sender_network = "Base Sepolia"
+	#selected_destination_network = "Arbitrum Sepolia"
+	#var amount = Ethers.convert_to_bignum("0.01")
+	#initiate_bridge(amount)
 	#var token_contract = ccip_network_info["Base Sepolia"]["token_contract"]
 	
 	# DEBUG
@@ -146,16 +149,19 @@ func update_balances():
 
 # Process the callback result in your callback function.
 func get_gas_balance(callback):
-	var network = callback["network"]
+	var _network = callback["network"]
 	var account = callback["account"]
 	if callback["success"]:
 		# The gas balance returns as a single, decoded String.
 		var balance = callback["result"]
-		print(account + " has gas balance of " + balance + " on " + network)
+		for network in $Balances/Networks.get_children():
+			if network.name == _network:
+				# Remove excess trailing decimals with .left()
+				network.get_node("Gas").text = "Gas: " + balance.left(6)
 
 
 func get_erc20_info(callback):
-	var network = callback["network"]
+	var _network = callback["network"]
 	var callback_args = callback["callback_args"]
 	var address = callback_args["address"]
 	if callback["success"]:
@@ -163,7 +169,9 @@ func get_erc20_info(callback):
 		var erc20_name = callback["result"][0]
 		var decimals = callback["result"][1]
 		var balance = callback["result"][2]
-		print(address + " has " + balance + " " + erc20_name + " tokens with " + decimals + " decimals on " + network)
+		for network in $Balances/Networks.get_children():
+			if network.name == _network:
+				network.get_node("Token").text = "BnM: " + balance.left(6)
 
 
 func observe_onramps():
@@ -229,13 +237,14 @@ func decode_EVM2EVM_message(callback):
 			# propagating to the ccip_network_info dictionary.
 			var onramp_list = ccip_network_info[network]["onramp_contracts_by_network"].duplicate()
 			
-			for destination in onramp_list:
+			for _onramp in onramp_list:
+				var onramp = _onramp.duplicate()
 				# Some RPC nodes return contract addresses with lowercase letters,
 				# while some do not.
-				if destination["contract"] != onramp_contract:
-					destination["contract"] = destination["contract"].to_lower()
-				if destination["contract"] == onramp_contract:
-					to_network = destination["network"]
+				if onramp["contract"] != onramp_contract:
+					onramp["contract"] = onramp["contract"].to_lower()
+				if onramp["contract"] == onramp_contract:
+					to_network = onramp["network"]
 				
 			# The message data will be an EVM2EVM message in the form of
 			# ABI encoded bytes.
@@ -335,7 +344,9 @@ func print_ccip_message(callback):
 		" " + token_name + "\nto " + receiver + "\nMessage ID: " + messageId + "\n\n"
 		)
  	
-	$Log.text += message_string
+	new_messages += 1
+	$Log.text = "CCIP Message Log (" + str(new_messages) + ")"
+	$Log/Log.text += message_string
 
 
 # Automatically approves the router's spend allowance,
@@ -491,6 +502,8 @@ func add_new_transaction(network, transaction):
 func get_receipt(callback):	
 	if callback["success"]:
 		
+		update_balances()
+		
 		var transaction_hash = callback["result"]["transactionHash"]
 		var status = callback["result"]["status"]
 		var tx_object = transaction_history[transaction_hash]
@@ -509,16 +522,7 @@ func get_receipt(callback):
 func open_link(url):
 	OS.shell_open(url)
 
-
-func choose_sender_network():
-	pass
-
-
-func choose_destination_network():
-	pass
-	
-	
-func get_test_tokens(network):
+func mint_test_tokens(network):
 	var token_contract = ccip_network_info[network]["token_contract"]
 	var address = Ethers.get_address(active_account)
 	
@@ -540,9 +544,9 @@ func get_test_tokens(network):
 func copy_address():
 	var user_address = Ethers.get_address(active_account)
 	DisplayServer.clipboard_set(user_address)
-	$Key/Prompt.modulate.a = 1
+	$Address/Prompt.modulate.a = 1
 	var fadein = create_tween()
-	fadein.tween_property($Key/Prompt,"modulate:a", 0, 2.8).set_trans(Tween.TRANS_LINEAR)
+	fadein.tween_property($Address/Prompt,"modulate:a", 0, 2.8).set_trans(Tween.TRANS_LINEAR)
 	fadein.play()
 
 
@@ -599,6 +603,34 @@ func instantiate_transaction(network, transaction_type, transaction_hash):
 	if transaction_type != "CCIP":
 		ccip_link.visible = false
 	return new_transaction
+
+
+func fade_in(node):
+	var fadein = create_tween()
+	fadein.tween_property(node,"modulate:a", 1, 1).set_trans(Tween.TRANS_LINEAR)
+	fadein.play()
+
+func slide_log():
+	$Log.text = "CCIP Message Log"
+	if $Log.position.y == log_down_y:
+		var log_tween = create_tween()
+		log_tween.tween_property($Log,"position:y", log_up_y, 0.3).set_trans(Tween.TRANS_QUAD)
+		log_tween.play()
+	elif $Log.position.y == log_up_y:
+		var log_tween = create_tween()
+		log_tween.tween_property($Log,"position:y", log_down_y, 0.3).set_trans(Tween.TRANS_QUAD)
+		log_tween.play()
+
+func slide_bridge():
+	if $Bridge.position.y == bridge_down_y:
+		var log_tween = create_tween()
+		log_tween.tween_property($Bridge,"position:y", bridge_up_y, 0.3).set_trans(Tween.TRANS_QUAD)
+		log_tween.play()
+	elif $Bridge.position.y == bridge_up_y:
+		var log_tween = create_tween()
+		log_tween.tween_property($Bridge,"position:y", bridge_down_y, 0.3).set_trans(Tween.TRANS_QUAD)
+		log_tween.play()
+
 
 
 #####   ABI   #####
