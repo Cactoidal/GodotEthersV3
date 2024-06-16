@@ -55,6 +55,8 @@ func hello_world(callback):
 func create_account(account, password):
 	if !Ethers.account_exists(account):
 		Ethers.create_account(account, password)
+		password = Ethers.clear_memory()
+		password.clear()
 
 
 
@@ -62,6 +64,8 @@ func create_account(account, password):
 
 func login(account, password):
 	Ethers.login(account, password)
+	password = Ethers.clear_memory()
+	password.clear()
 
 
 
