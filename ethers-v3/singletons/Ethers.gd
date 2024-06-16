@@ -54,16 +54,9 @@ func account_exists(account):
 
 func create_account(account, _password, use_enclave=true):
 	var path = "user://" + account
-	var private_key
 	
 	# Generate a new private key
-	if use_enclave:
-		var enclave = EnclaveContext.new()
-		add_child(enclave)
-		private_key = PackedByteArray(enclave.generate_key())
-		enclave.queue_free()
-	else:
-		private_key = Crypto.new().generate_random_bytes(32)
+	var private_key = Crypto.new().generate_random_bytes(32)
 	
 	var salt = Crypto.new().generate_random_bytes(32)
 	var iv = Crypto.new().generate_random_bytes(16)
