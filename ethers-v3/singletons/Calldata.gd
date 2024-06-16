@@ -358,6 +358,12 @@ func encode_tuple(arg):
 		args.push_back(new_arg)
 		selector += 1
 	
+	# DEBUG
+	# If the tuple contains a dynamic tuple, it needs to append an "extra length"
+	# offset at the beginning of its dynamic tail.  This is the length
+	# in bytes between the start of the tail and the beginning of the tuple.
+	# Each contained dynamic tuple needs a similar offset.
+	
 	var calldata = construct_calldata(args)
 	
 	return calldata
@@ -393,7 +399,7 @@ func abi_decode(_outputs, calldata):
 		if output["type"].contains("tuple"):
 			new_output["components"] = output["components"]
 		outputs.push_back(new_output)
-	
+
 	var decoded = deconstruct_calldata(outputs, calldata)
 
 	return decoded
@@ -403,7 +409,7 @@ func deconstruct_calldata(outputs, calldata):
 	
 	var decoded_values = []
 	var dynamic_outputs = []
-	
+		
 	# Determine which types are dynamic.
 	for output in outputs:
 		var output_type = output["type"]
@@ -428,7 +434,7 @@ func deconstruct_calldata(outputs, calldata):
 		if output["dynamic"]:
 			# Decode the offset value and obtain the 
 			# placeholder's index.
-			var _offset = calldata.substr(position, position + 64)
+			var _offset = calldata.substr(position, 64)
 			position += 64
 			var offset = GodotSigner.decode_uint256(_offset)
 			output["offset"] = offset
@@ -444,7 +450,8 @@ func deconstruct_calldata(outputs, calldata):
 			# Decode the static arg using a substring sliced using
 			# the arg length.  Track the current position in the 
 			# calldata by adding the length.
-			var _calldata = calldata.substr(position, position + arg_length)
+			var _calldata = calldata.substr(position, arg_length)
+			
 			position += arg_length
 			
 			var decode_result = decode_arg(output, _calldata)
@@ -452,21 +459,19 @@ func deconstruct_calldata(outputs, calldata):
 		
 		head_index += 1
 	
-	# Determine the length of each dynamic value.
 	var dynamic_selector = 0
 	for output in dynamic_outputs:
-		if dynamic_selector > 0:
-			var previous_output = dynamic_outputs[dynamic_selector - 1]
-			previous_output["length"] = output["offset"] - previous_output["offset"]
-		if dynamic_selector == (dynamic_outputs.size() - 1):
-			output["length"] = calldata.length() - int(output["offset"])
-		dynamic_selector += 1
-	
-	# Decode dynamic values using a substring of the calldata.  Track
-	# the position by adding the length of the substring.
-	for output in dynamic_outputs:
-		var _calldata = calldata.substr(position, position + output["length"])
-		position += output["length"]
+		var start_position = int(output["offset"]) * 2
+		var end_position
+		if dynamic_selector == dynamic_outputs.size() - 1:
+			end_position = calldata.length()
+		else:
+			dynamic_selector += 1
+			var next_offset = dynamic_outputs[dynamic_selector]
+			end_position = int(next_offset["offset"]) * 2
+		
+		var length = end_position - start_position
+		var _calldata = calldata.substr(start_position, length)
 		var decode_result = decode_arg(output, _calldata)
 		var _head_index = output["head_index"]
 		decoded_values[_head_index] = decode_result
@@ -519,6 +524,7 @@ func decode_arg(arg, calldata):
 	
 	# Tuple
 	elif arg_type.begins_with("tuple"):
+		# This may not work when the tuple is dynamic
 		decoded_value = abi_decode(arg["components"], calldata)
 	
 	# String, Bytes
@@ -554,11 +560,11 @@ func decode_fixed_bytes(calldata):
 	if bytes.length()%2 != 0:
 		bytes += "0"
 	
-	return bytes
+	return bytes.reverse()
 
 
 func decode_array(arg, calldata):
-
+	
 	var decoded_value = []
 	var _arg_type = arg["type"]
 	var position = 0
@@ -573,7 +579,7 @@ func decode_array(arg, calldata):
 	# get the number of elements it contains
 	if array_checker.contains("[]"):
 		arg["fixed_size"] = false
-		var length_component = calldata.substr(position, position + 64)
+		var length_component = calldata.substr(position, 64)
 		element_count = GodotSigner.decode_uint256(length_component)
 		position += 64
 	else:
@@ -590,40 +596,11 @@ func decode_array(arg, calldata):
 	if arg_type.begins_with("tuple"):
 		output["components"] = arg["components"]
 	
-	# Decode static values, or get the offset for dynamic values.
-	var offsets = []
+	# ABI decode the array's elements
+	var outputs = []
 	for element in range(int(element_count)):
+		outputs.push_back(output.duplicate())
 	
-		if array_is_dynamic:
-			var value = calldata.substr(position, position + 64)
-			position += 64
-			var offset = GodotSigner.decode_uint256(value)
-			offsets.push_back(offset)
-		else:
-			# First, get the static value's size.
-			var size = get_static_size(output) * 2
-			var value = calldata.substr(position, position + size)
-			position += size
-			decoded_value.push_back(decode_arg(output, value))
-	
-	# Determine the length of each dynamic value.
-	var lengths = []
-	if !offsets.is_empty():
-		var dynamic_selector = 0
-		for offset in offsets:
-			if dynamic_selector > 0:
-				var previous_offset = offsets[dynamic_selector - 1]
-				var previous_length = offset - previous_offset
-				lengths.push_back(previous_length)
-			if dynamic_selector == (offsets.size() - 1):
-				lengths.push_back(calldata.length() - offset)
-			dynamic_selector += 1
-		
-	# Decode dynamic values.
-	if !lengths.is_empty():
-		for length in lengths:
-			var value = calldata.substr(position, position + (length * 2))
-			position += (length * 2)
-			decoded_value.push_back(decode_arg(output, value))
+	decoded_value = abi_decode(outputs, calldata.substr(position))
 	
 	return decoded_value
