@@ -1,4 +1,4 @@
-![GodotEthers](https://raw.githubusercontent.com/Cactoidal/GodotEthersV3/main/GodotEthers.png?token=GHSAT0AAAAAACTWYMS6GFAUD3KLL3UA4GPKZTPZTYQ)
+![GodotEthers](https://github.com/Cactoidal/GodotEthersV3/blob/main/GodotEthers.png?raw=true)
 # GodotEthers
 Ethers for Godot 4.3, built with Godot Rust and Ethers-rs.  Featuring [implementation](https://github.com/Cactoidal/GodotEthersV3/blob/main/ethers-v3/singletons/Calldata.gd) of the Ethereum ABI encoding/decoding [specification](https://docs.soliditylang.org/en/latest/abi-spec.html).
 
