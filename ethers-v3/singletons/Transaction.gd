@@ -227,21 +227,17 @@ func check_transaction_receipt(callback):
 			var tx_callback_args = transaction["callback_args"]
 	
 			var tx_callback = {
-				"success": false,
-				"receipt": "",
+				"success": true,
+				"result": callback["result"],
+				"status": callback["result"]["status"],
 				"callback_args": tx_callback_args,
 				"network": network,
 				"account": account
 			}
-
-			#var block_number = callback["result"]["blockNumber"]
-			tx_callback["result"] = callback["result"]
-			var success = callback["result"]["status"]
-			if success == "0x1":
-				tx_callback["success"] = true
-		
+			
 			finish_transaction(network)
-			tx_callback_node.call(tx_callback_function, tx_callback)
+			if is_instance_valid(tx_callback_node):
+				tx_callback_node.call(tx_callback_function, tx_callback)
 			
 	else:
 		emit_error("RPC error: Failed to get TX receipt", network)

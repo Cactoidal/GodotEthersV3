@@ -189,6 +189,7 @@ func logout():
 	logins = {}
 	recent_transactions = {}
 
+
 #########  NETWORK MANAGEMENT  #########
 
 func check_for_network_info():
@@ -281,7 +282,8 @@ func return_gas_balance(_callback):
 		var balance = str(_callback["result"].hex_to_int())
 		next_callback["result"] = convert_to_smallnum(balance, 18)
 	
-	callback_node.call(callback_function, next_callback)
+	if is_instance_valid(callback_node):
+		callback_node.call(callback_function, next_callback)
 
 
 
@@ -345,8 +347,9 @@ func decode_rpc_response(_callback):
 		# The decoded_result will be an array containing the decoded values.
 		var decoded_result = Calldata.abi_decode(outputs, _callback["result"])
 		callback["result"] = decoded_result
-		
-	callback_node.call(callback_function, callback)
+	
+	if is_instance_valid(callback_node):
+		callback_node.call(callback_function, callback)
 
 
 func pending_transaction(network):
@@ -492,7 +495,8 @@ func return_erc20_balance(callback):
 		next_callback["result"] = [name, str(decimals), balance]
 		next_callback["callback_args"]["balance"] = balance
 	
-	callback_node.call(callback_function, next_callback)
+	if is_instance_valid(callback_node):
+		callback_node.call(callback_function, next_callback)
 
 
 func transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}):
@@ -500,8 +504,10 @@ func transfer_erc20(account, network, token_address, recipient, amount, callback
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
 
 # Right now configured to approve the maximum uint256 value
-func approve_erc20_allowance(account, network, token_address, spender_address, callback_node, callback_function, callback_args={}):
-	var calldata = get_calldata("WRITE", Contract.ERC20, "approve", [spender_address, "115792089237316195423570985008687907853269984665640564039457584007913129639935"])
+func approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={}):
+	if amount in ["MAX", "MAXIMUM"]:
+		amount = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	var calldata = get_calldata("WRITE", Contract.ERC20, "approve", [spender_address, amount])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
 
 
