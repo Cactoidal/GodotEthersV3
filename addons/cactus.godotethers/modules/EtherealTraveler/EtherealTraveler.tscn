@@ -1,0 +1,181 @@
+[gd_scene load_steps=10 format=3 uid="uid://rdqryr6b4wir"]
+
+[ext_resource type="Script" path="res://addons/cactus.godotethers/modules/EtherealTraveler/EtherealTraveler.gd" id="1_udidb"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0rutk"]
+sky_top_color = Color(0.670654, 0.459829, 0.255133, 1)
+sky_horizon_color = Color(0.705882, 0.596078, 0.560784, 1)
+ground_bottom_color = Color(0.119393, 0.0980432, 0.0732424, 1)
+ground_horizon_color = Color(0.705882, 0.596078, 0.560784, 1)
+
+[sub_resource type="Sky" id="Sky_vchm6"]
+sky_material = SubResource("ProceduralSkyMaterial_0rutk")
+
+[sub_resource type="Environment" id="Environment_0x0k8"]
+background_mode = 2
+sky = SubResource("Sky_vchm6")
+tonemap_mode = 2
+tonemap_exposure = 0.8
+tonemap_white = 10.0
+ssr_fade_in = 1.94941
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
+sdfgi_min_cell_size = 3.90625
+sdfgi_energy = 4.0
+fog_density = 0.001
+volumetric_fog_density = 0.01
+
+[sub_resource type="Shader" id="Shader_gwqih"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.3.beta1's StandardMaterial3D.
+
+shader_type spatial;
+render_mode blend_mix, cull_back, diffuse_burley, specular_schlick_ggx;
+
+uniform vec4 albedo : source_color;
+uniform sampler2D texture_albedo : source_color, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform float point_size : hint_range(0.1, 128.0, 0.1);
+
+uniform float roughness : hint_range(0.0, 1.0);
+uniform sampler2D texture_metallic : hint_default_white, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform vec4 metallic_texture_channel;
+uniform sampler2D texture_roughness : hint_roughness_r, filter_nearest_mipmap_anisotropic, repeat_enable;
+
+uniform float specular : hint_range(0.0, 1.0, 0.01);
+uniform float metallic : hint_range(0.0, 1.0, 0.01);
+
+uniform sampler2D texture_normal : hint_roughness_normal, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform float normal_scale : hint_range(-16.0, 16.0);
+varying vec3 uv1_triplanar_pos;
+
+uniform float uv1_blend_sharpness : hint_range(0.0, 150.0, 0.001);
+varying vec3 uv1_power_normal;
+
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+uniform vec3 uv2_scale;
+uniform vec3 uv2_offset;
+
+void vertex() {
+	vec3 normal = NORMAL;
+
+	TANGENT = vec3(0.0, 0.0, -1.0) * abs(normal.x);
+	TANGENT += vec3(1.0, 0.0, 0.0) * abs(normal.y);
+	TANGENT += vec3(1.0, 0.0, 0.0) * abs(normal.z);
+	TANGENT = normalize(TANGENT);
+
+	BINORMAL = vec3(0.0, 1.0, 0.0) * abs(normal.x);
+	BINORMAL += vec3(0.0, 0.0, -1.0) * abs(normal.y);
+	BINORMAL += vec3(0.0, 1.0, 0.0) * abs(normal.z);
+	BINORMAL = normalize(BINORMAL);
+
+	// UV1 Triplanar: Enabled
+	uv1_power_normal = pow(abs(NORMAL), vec3(uv1_blend_sharpness));
+	uv1_triplanar_pos = VERTEX * uv1_scale + uv1_offset;
+	uv1_power_normal /= dot(uv1_power_normal, vec3(1.0));
+	uv1_triplanar_pos *= (vec3(1.0, -1.0, 1.0));
+}
+
+
+vec4 triplanar_texture(sampler2D p_sampler, vec3 p_weights, vec3 p_triplanar_pos) {
+	vec4 samp = vec4(0.0);
+	samp += texture(p_sampler, p_triplanar_pos.xy) * p_weights.z;
+	samp += texture(p_sampler, p_triplanar_pos.xz) * p_weights.y;
+	samp += texture(p_sampler, p_triplanar_pos.zy * vec2(-1.0, 1.0)) * p_weights.x;
+	return samp;
+}
+
+void fragment() {
+	vec4 albedo_tex = triplanar_texture(texture_albedo, uv1_power_normal, uv1_triplanar_pos);
+	ALBEDO = albedo.rgb * albedo_tex.rgb;
+
+	float metallic_tex = dot(triplanar_texture(texture_metallic, uv1_power_normal, uv1_triplanar_pos), metallic_texture_channel);
+	METALLIC = metallic_tex * metallic;
+	SPECULAR = specular;
+
+	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
+	float roughness_tex = dot(triplanar_texture(texture_roughness, uv1_power_normal, uv1_triplanar_pos), roughness_texture_channel);
+	ROUGHNESS = roughness_tex * roughness;
+
+	// Normal Map: Enabled
+	NORMAL_MAP = triplanar_texture(texture_normal, uv1_power_normal, uv1_triplanar_pos - TIME/25.0).rgb;
+	NORMAL_MAP_DEPTH = normal_scale;
+
+}
+"
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_7k5d8"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_o02tu"]
+seamless = true
+as_normal_map = true
+bump_strength = 14.0
+noise = SubResource("FastNoiseLite_7k5d8")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_717sl"]
+render_priority = 0
+shader = SubResource("Shader_gwqih")
+shader_parameter/albedo = Color(0.0196078, 0.0196078, 0.101961, 1)
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 0.2
+shader_parameter/metallic_texture_channel = null
+shader_parameter/specular = 0.4
+shader_parameter/metallic = 0.0
+shader_parameter/normal_scale = 1.0
+shader_parameter/uv1_blend_sharpness = 1.0
+shader_parameter/uv1_scale = Vector3(0.1, 0.1, 0.1)
+shader_parameter/uv1_offset = Vector3(2.08165e-12, 2.08165e-12, 2.08165e-12)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+shader_parameter/texture_normal = SubResource("NoiseTexture2D_o02tu")
+
+[sub_resource type="QuadMesh" id="QuadMesh_prep1"]
+material = SubResource("ShaderMaterial_717sl")
+size = Vector2(4000, 4000)
+subdivide_width = 200
+subdivide_depth = 200
+orientation = 1
+
+[node name="EtherealTraveler" type="Node3D"]
+script = ExtResource("1_udidb")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_0x0k8")
+
+[node name="Sea" type="MeshInstance3D" parent="."]
+mesh = SubResource("QuadMesh_prep1")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.97742, 0, 0.211308, 0, 1, 0, -0.211308, 0, 0.97742, 7.51094, 8.12208, 5.15329)
+
+[node name="Blockspace" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.60066, -9.61611, -15.8989)
+
+[node name="Blockhash" type="Label" parent="."]
+modulate = Color(0.960784, 0.768627, 0.458824, 1)
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -47.0
+offset_right = 220.0
+offset_bottom = 8.0
+grow_vertical = 0
+theme_type_variation = &"HeaderMedium"
+theme_override_font_sizes/font_size = 30
+text = "Seeking . . ."
+
+[node name="Back" type="Button" parent="."]
+offset_right = 8.0
+offset_bottom = 8.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+text = "< Back"
+
+[node name="Fadein" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
