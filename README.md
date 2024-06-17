@@ -47,7 +47,7 @@ func get_hello(network, contract, ABI):
 
 func hello_world(callback):
 	if callback["success"]:
-		print(callback["result"][0])
+		print(callback["result"])
 
 
 
