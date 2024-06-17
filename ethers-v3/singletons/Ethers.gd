@@ -73,55 +73,54 @@ func create_account(account, _password):
 	
 	# PBKDF2 Key Derivation
 	var encryption_key = GodotSigner.derive_key(_password, salt.hex_encode())
+	_password = clear_memory()
+	_password.clear()
 	
 	# Encrypt the private key with the password-derived encryption key
 	var encrypted_keystore = encrypt(encryption_key, iv, private_key)
-	
 	private_key = clear_memory()
 	private_key.clear()
-	_password = clear_memory()
-	_password.clear()
+	
+	# Encrypt the salt, to allow the password to be checked on login
+	# without exposing the private key.
+	var encrypted_salt = encrypt(encryption_key, iv, salt)
 	encryption_key = clear_memory()
 	encryption_key.clear()
 	
 	FileAccess.open(path, FileAccess.WRITE).store_buffer(encrypted_keystore)
 	FileAccess.open(path + "_SALT", FileAccess.WRITE).store_buffer(salt)
 	FileAccess.open(path + "_IV", FileAccess.WRITE).store_buffer(iv)
+	FileAccess.open(path + "_LOGIN", FileAccess.WRITE).store_buffer(encrypted_salt)
 	FileAccess.open(path + "_ADDRESS", FileAccess.WRITE).store_string(address)
+	
 
 
 func login(account, _password):
 	var path = "user://" + account
-	var _private_key = FileAccess.open(path, FileAccess.READ).get_buffer(32)
 	var salt = FileAccess.open(path + "_SALT", FileAccess.READ).get_buffer(32)
 	var iv = FileAccess.open(path + "_IV", FileAccess.READ).get_buffer(16)
-	var address = FileAccess.open(path + "_ADDRESS", FileAccess.READ).get_as_text()
+	var log_in = FileAccess.open(path + "_LOGIN", FileAccess.READ).get_buffer(32)
+	var _address = FileAccess.open(path + "_ADDRESS", FileAccess.READ).get_as_text()
 	
-	# Check if the password is correct
-	var encryption_key = GodotSigner.derive_key(_password, salt.hex_encode())
-	var private_key = decrypt(encryption_key, iv, _private_key)
-	var _address = calculate_address(private_key)
+	# Check if the password is correct by attempting to decrypt
+	# the salt
+	var decryption_key = GodotSigner.derive_key(_password, salt.hex_encode())
+	var _salt = decrypt(decryption_key, iv, log_in)
 	
-	if address == _address:
-		private_key = clear_memory()
-		private_key.clear()
+	if salt == _salt:
 		
 		# Encrypt the password-derived decryption key using the session env-enc keys
-		logins[account] = encrypt(env_enc_key, env_enc_iv, encryption_key)
+		logins[account] = encrypt(env_enc_key, env_enc_iv, decryption_key)
 		
 		_password = clear_memory()
 		_password.clear()
-		encryption_key = clear_memory()
-		encryption_key.clear()
+		decryption_key = clear_memory()
+		decryption_key.clear()
 		return true
 
 	else:
 		emit_error("Incorrect password for " + account)
 		return false
-	
-	encryption_key = clear_memory()
-	encryption_key.clear()
-	return false
 
 
 func get_key(account):
