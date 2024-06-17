@@ -187,11 +187,13 @@ func encode_arg(arg):
 
 func get_function_selector(function):
 	var selector_string = function["name"] + "("
+	var last_input = function["inputs"].size() - 1
 	for input in function["inputs"]:
 		
 		if input["type"].contains("tuple"):
 			selector_string += get_tuple_components(input)
-			selector_string = selector_string.trim_suffix(",")
+			if input == function["inputs"][last_input]:
+				selector_string = selector_string.trim_suffix(",")
 			if input["type"].length() > 5:
 				selector_string = selector_string.trim_suffix(",")
 				selector_string += input["type"].right(-5)
@@ -200,7 +202,6 @@ func get_function_selector(function):
 			selector_string += input["type"] + ","
 			
 	selector_string = selector_string.trim_suffix(",") + ")"
-
 	var selector_bytes = selector_string.to_utf8_buffer()
 	var function_selector = GodotSigner.get_function_selector(selector_bytes).left(8)
 	
