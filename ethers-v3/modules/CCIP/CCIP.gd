@@ -37,7 +37,7 @@ func _process(delta):
 	# Checks Ethers.recent_transactions for new transaction hashes
 	look_for_hashes()
 	
-	# Spins shiny things around
+	# Spins shiny things 
 	$FogVolume.rotate_y(delta)
 	$Transporter/Pivot.rotate_y(delta/3)
 	$Transporter/ReversePivot.rotate_y(-delta/3)
@@ -250,7 +250,7 @@ func decode_EVM2EVM_message(callback):
 			
 			# The ABI Decoder will return an array containing the tuple, which
 			# can be accessed at index 0.  Once accessed, the 13 elements of the 
-			# EVM2EVM message can be accessed by their index.
+			# EVM2EVM message can be accessed at their index.
 			var decoded_message = Calldata.abi_decode([EVM2EVMMessage], message)[0]
 			
 			# Check that this message hasn't already been recorded.
@@ -422,7 +422,7 @@ func bridge(account, from_network, to_network, token, amount):
 	Ethers.approve_erc20_allowance(account, from_network, token, router, "MAX", self, "get_receipt", callback_args)
 
 
-# Successful callback to get_receipt() will bounce the transaction
+# Successful callbacks to get_receipt() will bounce the transaction
 # to the next step: get_native_fee(), which estimates how much
 # ether to send along with the transaction.
 
@@ -489,7 +489,7 @@ func send_bridge_transaction(callback):
 #####      TRANSACTION MANAGEMENT      #####
 
 # Monitors Ethers.recent_transactions, a dictionary that maps the
-# most recently sent transactions to the network on which they were sent.
+# most recently sent transactions to the networks on which they were sent.
 func look_for_hashes():
 	for network in networks:
 		# Ethers tracks the most recent transaction for each network,
@@ -514,10 +514,17 @@ func add_new_transaction(network, transaction):
 	# its status can later be updated by the transaction receipt.
 	transaction_history[transaction_hash] = transaction_object
 	
+	# Position the new transaction node beneath the previous one
 	$Transactions/Transactions.add_child(transaction_object)
 	transaction_object.position.y += downshift
+	
+	# The Control node inside the Transactions ScrollContainer must be
+	# continuously expanded
 	$Transactions/Transactions.custom_minimum_size.y += 128
+	
+	# Increment the downshift for the next transaction object
 	downshift += 108
+	
 	transaction_object.modulate.a = 0
 	var fadein = create_tween()
 	fadein.tween_property(transaction_object,"modulate:a", 1, 2).set_trans(Tween.TRANS_LINEAR)
@@ -553,7 +560,7 @@ func get_receipt(callback):
 #####      INTERFACE      #####
 
 
-# Connects buttons and populates arrays/dictionaries
+# On startup, connects buttons and populates arrays/dictionaries
 func _ready():
 	$Back.connect("pressed", back)
 	$Login/Login.connect("pressed", create_account)
@@ -951,7 +958,6 @@ var ccip_network_info = {
 				}
 			
 		],
-		"endpoint_contract": "0xFFA6c081b6A7F5F3816D9052C875E4C6B662137a",
 		"monitored_tokens": []
 		},
 		
@@ -981,7 +987,6 @@ var ccip_network_info = {
 				}
 			
 		],
-		"endpoint_contract": "0xcA57f7b1FDfD3cbD513954938498Fe6a9bc8FF63",
 		"monitored_tokens": []
 		},
 		
@@ -1010,7 +1015,6 @@ var ccip_network_info = {
 				}
 			
 		],
-		"endpoint_contract": "0x04Ba932c452ffc62CFDAf9f723e6cEeb1C22474b",
 		"monitored_tokens": []
 	},
 	
@@ -1039,7 +1043,6 @@ var ccip_network_info = {
 				}
 			
 		],
-		"endpoint_contract": "0xD7e4A13c7896edA172e568eB6E35Da68d3572127",
 		"monitored_tokens": []
 	},
 	
@@ -1068,24 +1071,6 @@ var ccip_network_info = {
 				}
 			
 		],
-		"endpoint_contract": "N/A",
 		"monitored_tokens": []
 	}
 }
-
-
-
-
-
-# # ExtraArgsV2 appears to be broken, at least on the Base Sepolia -> Arbitrum Sepolia lane.
-	# Or I'm missing something.
-	
-	#var EVMExtraArgsV2 = [
-		#"90000", # Destination gas limit
-		#false # Allow out of order execution
-	#]
-	#
-	#var extra_args = "181dcf10" + Calldata.abi_encode( [{"type": "tuple", "components":[{"type": "uint256"}, {"type": "bool"}]}], [EVMExtraArgsV2] )
-	
-	
-	# ExtraArgsV1 works, however.

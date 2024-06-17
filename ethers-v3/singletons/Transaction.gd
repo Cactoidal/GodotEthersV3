@@ -191,10 +191,7 @@ func get_transaction_hash(callback):
 				"transaction_hash": transaction["transaction_hash"],
 				"callback_args": transaction["callback_args"]
 				}
-			
-			# DEBUG
-			print(scan_url + "tx/" + transaction["transaction_hash"])
-			
+
 			transaction["check_for_receipt"] = true
 	else:
 		emit_error("RPC error: Failed to get TX hash", network)
