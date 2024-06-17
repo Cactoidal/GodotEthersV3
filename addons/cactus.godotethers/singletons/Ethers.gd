@@ -64,17 +64,20 @@ func create_account(account, _password):
 	
 	var path = "user://" + account
 	
-	# Generate a new private key
-	var private_key = Crypto.new().generate_random_bytes(32)
-	
+	# Generate a salt to be used with the password to derive a key
 	var salt = Crypto.new().generate_random_bytes(32)
-	var iv = Crypto.new().generate_random_bytes(16)
-	var address = calculate_address(private_key)
 	
 	# PBKDF2 Key Derivation
 	var encryption_key = GodotSigner.derive_key(_password, salt.hex_encode())
 	_password = clear_memory()
 	_password.clear()
+	
+	# Generate the iv that will be used to encrypt the private key
+	var iv = Crypto.new().generate_random_bytes(16)
+	
+	# Generate a new private key
+	var private_key = Crypto.new().generate_random_bytes(32)
+	var address = calculate_address(private_key)
 	
 	# Encrypt the private key with the password-derived encryption key
 	var encrypted_keystore = encrypt(encryption_key, iv, private_key)
