@@ -4,7 +4,11 @@ compatibility_minimum = 4.1
 reloadable = true
 
 [libraries]
+linux.debug.x86_64 =     "res://gdextension/libgodot_ethers.so"
 linux.release.x86_64 =   "res://gdextension/libgodot_ethers.so"
+windows.debug.x86_64 =   "res://gdextension/libgodot_ethers.dll"
 windows.release.x86_64 = "res://gdextension/libgodot_ethers.dll"
+macos.debug =            "res://gdextension/libgodot_ethers.dylib"
 macos.release =          "res://gdextension/libgodot_ethers.dylib"
+macos.debug.arm64 =      "res://gdextension/libgodot_ethers.dylib"
 macos.release.arm64 =    "res://gdextension/libgodot_ethers.dylib"
