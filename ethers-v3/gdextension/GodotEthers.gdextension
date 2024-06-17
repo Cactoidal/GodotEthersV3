@@ -5,7 +5,7 @@ reloadable = true
 
 [libraries]
 linux.debug.x86_64 =     "res://gdextension/libgodot_ethers.so"
-linux.release.x86_64 =   "res://gdextensione/libgodot_ethers.so"
+linux.release.x86_64 =   "res://gdextension/libgodot_ethers.so"
 windows.debug.x86_64 =   "res://gdextension/libgodot_ethers.dll"
 windows.release.x86_64 = "res://gdextension/libgodot_ethers.dll"
 macos.debug =            "res://gdextension/libgodot_ethers.dylib"
