@@ -1,5 +1,11 @@
 extends Node
 
+
+# Default network info can be found at the bottom of this script.
+# The default testnets are:
+# Ethereum Sepolia, Arbitrum Sepolia, Optimism Sepolia, 
+# Base Sepolia, and Avalanche Fuji
+
 var network_info
 
 var header = "Content-Type: application/json"
