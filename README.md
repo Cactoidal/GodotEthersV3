@@ -114,7 +114,7 @@ ___
 
 * __address__ as STRING
 
-* __bytes__ as hex STRING (or, optionally, as PackedByteArray)
+* __bytes__ as hex STRING (or, optionally, as PackedByteArray).  Do not preface with "0x"
 
 * __bool__ as STRING (or, optionally, as a bool)
 
