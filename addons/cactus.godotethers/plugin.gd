@@ -10,5 +10,7 @@ func _enter_tree():
 
 
 func _exit_tree():
-	# Clean-up of the plugin goes here.
-	pass
+	remove_autoload_singleton("Ethers")
+	remove_autoload_singleton("Transaction")
+	remove_autoload_singleton("Contract")
+	remove_autoload_singleton("Calldata")
