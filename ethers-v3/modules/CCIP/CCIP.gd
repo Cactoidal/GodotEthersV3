@@ -47,7 +47,7 @@ func _process(delta):
 #####     ACCOUNT SETUP     #####
 	
 func create_account():
-	var name = "TEST_KEYSTORE7"
+	var name = "_TEST_KEYSTORE"
 	var password = $Login/Password.text
 	# Check if an account name exists before creating it.
 	if !Ethers.account_exists(name):
@@ -346,8 +346,8 @@ func initiate_bridge():
 		return
 	
 	var sender = $Balances/Networks.get_node(selected_sender_network)
-	var gas_balance = float(sender.get_node("Gas").text.right(5))
-	var token_balance = float(sender.get_node("Token").text.right(5))
+	var gas_balance = float(sender.get_node("Gas").text.trim_prefix("Gas: "))
+	var token_balance = float(sender.get_node("Token").text.trim_prefix("BnM: "))
 	
 	if gas_balance < 0.001:
 		print_bridge_error("Insufficient Gas")
