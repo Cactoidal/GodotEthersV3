@@ -25,7 +25,7 @@ use the --release tag when building.
 - [Ethers](#ethers)
 - [Transaction](#transaction)
 - [Calldata](#calldata)
-- GodotSigner
+- [GodotSigner](#godotsigner-1)
 
 _________
 
@@ -567,6 +567,7 @@ _____
 _____
 
 `inputs` is an array of dictionaries each containing a "type" field, and a "components" field if the type is a tuple, 
+
 e.g.: [{"type": "uint256"}, {"type": "string"}] and [{"type": "tuple, "components": [{"type": "uint256"}. {"type":"string"}]
 
 `args` is an array of the values to be encoded, just as is used in `Ethers.get_calldata()`.
