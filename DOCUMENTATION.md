@@ -472,7 +472,7 @@ _____
 GodotEthers is built with five singletons:
 
 - **Ethers**, the primary interface
-- **Contract**, a convenient repository for contract ABIs
+- **Contract**, a simple repository for contract ABIs.  Contains no functions, and can serve as a convenient access point for any contract ABIs you want to include in your project.
 - **Transaction**, the transaction manager
 - **Calldata**, the ABI encoder/decoder
 - **GodotSigner**, the Rust library
@@ -480,6 +480,10 @@ GodotEthers is built with five singletons:
 _____
 
 ## Ethers
+
+Of note in `Ethers.gd` is a variable called `recent_transactions`, which is a dictionary that logs the most transaction hash the application has sent on each network.  If your application needs to know a transaction's hash before the transaction completes (if, for example, you want your UI to show that a transaction is pending), you can monitor the dictionary by checking whether `recent_transactions.keys()` contains the name of a given network, and then checking `recent_transactions[<network_name>]`.
+
+Doing so will return a dictionary containing the transaction hash and the `callback_args` that were sent along with that transaction.
 
 In addition to the key management, general purpose, and built-in functions listed above, Ethers also contains functions for network management.
 The default testnets are: Ethereum Sepolia, Arbitrum Sepolia, Optimism Sepolia, Base Sepolia, and Avalanche Fuji.
@@ -497,6 +501,7 @@ _____
 _____
 
 `network` is the name of a network in `network_info`, as a String.
+
 `rpcs` is an array of RPC urls.
 
 This function will overwrite the list of RPCs of a given network in `network_info`, but it will not update the network config file.
@@ -508,9 +513,13 @@ _____
 _____
 
 `network` is the name of a network.
+
 `chain_id` is the network's chain ID, as a String.
+
 `rpcs` is an array of RPC urls.
+
 `scan_url` is the base URL for a block explorer indexing the given network.
+
 `logo` is an optional parameter: the filepath to a logo image.
 
 This function will add or overwrite a network in `network_info`, but it will not update the network config file.
@@ -522,3 +531,13 @@ _____
 _____
 
 This function overwrites the network config file with whatever `network_info` currently contains.
+
+_____
+
+## Transaction
+
+Primarily responsible for abstracting the transaction process, and preventing transactions from being submitted while one is already pending.
+
+When a transaction is initiated, the singleton will get the account's network gas balance and transaction count, then the gas price estimate, and finally submit the transaction, at which point it will update `recent_transactions` in Ethers with the transaction hash.  It will then monitor the network until it receives the transaction receipt.
+
+The Transaction singleton is multichain-capable, and will allow transactions to occur simultaneously across chains.  It will also automatically block transaction attempts for a given network if that network is still processing a transaction.
