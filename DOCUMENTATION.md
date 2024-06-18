@@ -577,7 +577,7 @@ _____
 * #### `Calldata.abi_decode(_outputs, calldata)`
 _____
 
-`inputs` is an array of dictionaries each containing a "type" field, and a "components" field if the type is a tuple.
+`_outputs` is an array of dictionaries each containing a "type" field, and a "components" field if the type is a tuple.
 
 `calldata` is the raw calldata to decode, as a String.
 
