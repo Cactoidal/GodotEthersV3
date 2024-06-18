@@ -187,12 +187,12 @@ func encode_arg(arg):
 
 func get_function_selector(function):
 	var selector_string = function["name"] + "("
-	var last_input = function["inputs"].size() - 1
+	var index = 0
 	for input in function["inputs"]:
-		
+		index += 1
 		if input["type"].contains("tuple"):
 			selector_string += get_tuple_components(input)
-			if input == function["inputs"][last_input]:
+			if index == function["inputs"].size():
 				selector_string = selector_string.trim_suffix(",")
 			if input["type"].length() > 5:
 				selector_string = selector_string.trim_suffix(",")
