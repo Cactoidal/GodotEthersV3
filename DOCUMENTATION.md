@@ -25,7 +25,7 @@ use the --release tag when building.
 - [Ethers](#ethers)
 - [Transaction](#transaction)
 - [Calldata](#calldata)
-- [GodotSigner](#godotsigner-1)
+- [GodotSigner](#godotsigner)
 
 _________
 
