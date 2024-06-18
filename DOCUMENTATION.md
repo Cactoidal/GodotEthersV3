@@ -173,7 +173,7 @@ _____
 
 ## General Purpose Functions
 
-The majority of applications will use the functions in this section to fill the needs of their dApp.
+The functions described in this section will meet the needs of most dApps.
 
 These general purpose functions can quickly and easily build calldata for transactions, read from contracts, send transactions, or call an RPC with an eth_method.
 
