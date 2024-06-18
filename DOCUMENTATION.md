@@ -49,7 +49,7 @@ To interact with a contract, you just need to put an ABI somewhere in your proje
 
 You can also use `perform_request()` to call any Ethereum method. For example, you could use this to monitor a contract's activity with `eth_getLogs`.
 
-The `Ethers.gd` singleton is the primary interface of GodotEthers.  The other singletons contain lower level functions.  To read more about them and how to use them, check out the [Singletons](#Singletons) section.
+The `Ethers.gd` singleton is the primary interface of GodotEthers.  The other singletons contain lower level functions.  To read more about them and how to use them, check out the [Singletons](#singletons-1) section.
 
 _________
 
