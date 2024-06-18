@@ -22,9 +22,9 @@ use the --release tag when building.
 ### [Built-ins](#built-ins-1)
 
 ### [Singletons](#singletons-1)
-- (Ethers)[#ethers-1]
+- [Ethers](#ethers-1)
 - [Transaction](#transaction-1)
-- Calldata[#calldata-1]
+- [Calldata](#calldata-1)
 - GodotSigner
 
 _________
