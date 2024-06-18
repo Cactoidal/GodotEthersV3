@@ -37,7 +37,7 @@ Every function mentioned on this page is defined in the `Ethers.gd` singleton, a
 
 ## Usage Example
 
-```
+```gdscript
 
 # Read from a contract
 
