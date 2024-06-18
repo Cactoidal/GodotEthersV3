@@ -624,7 +624,7 @@ In addition to Ethers-rs, the Rust library also uses the following crates:
 * **pbkdf2** and **sha2**, for deriving an encryption key from a given password and salt
 * **zeroize**, for sanitizing variables containing sensitive information like passwords
 
-If your application needs functionality not currently provided by the GodotSigner library, you can always add crates and logic of your own, and recompile the library by following the instructions in the [Godot Rust documentation](https://godot-rust.github.io/book/).  Be aware that you will need to compile the library for each target system you want it to be compatible with.
+If your application needs functionality not currently provided by the GodotSigner library, you can always add crates and logic of your own, and recompile the library by following the instructions in the [Godot Rust documentation](https://godot-rust.github.io/book/).  Be aware that you will need to compile the library for each target system you want it to be compatible with.  Also be sure to use `cargo build --release` when compiling.
 
 _____
 
