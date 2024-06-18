@@ -14,7 +14,7 @@ use the --release tag when building.
 
 ### [Quickstart](#Quickstart)
 - [Add GodotEthers to Your Project](#Add-Godot-Ethers-to-Your-Project)
-- [How to Use](#How-to_use)
+- [How to Use](#How-to-Use)
 - [Example Usage](#Example-Usage)
 - [Key Management](#Key-Management)
 - [General Purpose Functions](#General-Purpose-Functions)
