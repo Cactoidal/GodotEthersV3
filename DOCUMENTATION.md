@@ -409,7 +409,7 @@ Ethers.get_gas_balance(
               callback_args={}
               )
 ```
-Returns the decoded gas balance as a string.
+Returns the decoded gas balance as a String.
 
 _____
 
@@ -613,7 +613,18 @@ _____
 
 ## GodotSigner
 
-Rust library
+At the heart of GodotEthers is [Ethers-rs](https://github.com/gakonst/ethers-rs), a complete Ethereum library, made accessible thanks to [Godot Rust](https://godot-rust.github.io).  Ethers-rs is responsible for RLP-encoding transaction data, ECDSA signing, address calculation, Keccak hashing, and BigNumber handling.  It also encodes and decodes the elementary Solidity types after they have been sorted by the Calldata singleton.
+
+[Alloy](https://github.com/alloy-rs) is the succesor of Ethers-rs, and will replace it in a future update of GodotEthers.
+
+In addition to Ethers-rs, the Rust library also uses the following crates:
+
+* **hex**
+* **num_bigint**, for parsing BigNumbers from Strings
+* **pbkdf2** and **sha2**, for deriving an encryption key from a given password and salt
+* **zeroize**, for sanitizing variables containing sensitive information like passwords
+
+If your application needs functionality not currently provided by the GodotSigner library, you can always add crates and logic of your own, and recompile the library by following the instructions in the [Godot Rust documentation](https://godot-rust.github.io/book/).  Be aware that you will need to compile the library for each target system you want it to be compatible with.
 
 _____
 
