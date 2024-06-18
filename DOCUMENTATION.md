@@ -33,7 +33,7 @@ _________
 
 ## Add Godot Ethers to Your Project
 
-* Download the GodotEthers plugin (`cactus.godotethers`) and add it to your project's `addons` folder.
+* Download the GodotEthers plugin ([cactus.godotethers](https://github.com/Cactoidal/GodotEthersV3/tree/main/addons/cactus.godotethers)) and add it to your project's `addons` folder.
 
 * Inside `cactus.godotethers`, open the `gdextension` folder and give the dynamic library permission to open.  On MacOS, you can do this by right-clicking the `libgodot_ethers.dylib` file and opening it.  X11 uses `.so`, and Windows uses `.dll`.
 
