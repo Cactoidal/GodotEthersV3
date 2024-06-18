@@ -13,7 +13,7 @@ use the --release tag when building.
 ```
 
 ### [Quickstart](#Quickstart)
-- [Add GodotEthers to Your Project](#Add-Godot-Ethers-to-Your-Project)
+- [Add GodotEthers to Your Project](#Add-GodotEthers-to-Your-Project)
 - [How to Use](#how-to-use)
 - [Example Usage](#Example-Usage)
 - [Key Management](#Key-Management)
@@ -31,7 +31,7 @@ _________
 
 # Quickstart
 
-## Add Godot Ethers to Your Project
+## Add GodotEthers to Your Project
 
 * Download the GodotEthers plugin ([cactus.godotethers](https://github.com/Cactoidal/GodotEthersV3/tree/main/addons/cactus.godotethers)) and add it to your project's `addons` folder.
 
