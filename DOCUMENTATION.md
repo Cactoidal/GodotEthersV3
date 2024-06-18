@@ -362,6 +362,13 @@ Returns the address of an existing account, as a String.
 
 _____
 
+* #### `Ethers.logout()`
+_____
+
+Clears all active logins from memory, and wipes the `Ethers.recent_transactions` log.
+_____
+
+
 # Built-ins
 
 The Ethers singleton implements several common operations, such as transferring ETH, retrieving the user gas balance, and working with ERC20 tokens.
