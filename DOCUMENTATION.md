@@ -19,9 +19,9 @@ use the --release tag when building.
 - [Key Management](#Key-Management)
 - [General Purpose Functions](#General-Purpose-Functions)
 
-### [Built-ins](#built-ins)
+### [Built-ins](#built-ins-1)
 
-### [Singletons](#singletons)
+### [Singletons](#singletons-1)
 - Ethers
 - Transaction
 - Calldata
