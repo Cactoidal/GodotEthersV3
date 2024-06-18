@@ -175,7 +175,7 @@ _____
 
 The majority of applications will use the functions in this section to fill the needs of their dApp.
 
-These general purpose functions can quickly and easily build calldata for transactions, or call an RPC with an eth_method.
+These general purpose functions can quickly and easily build calldata for transactions, read from contracts, send transactions, or call an RPC with an eth_method.
 
 _____
 
@@ -260,6 +260,8 @@ Ethers.read_from_contract(
 
 `callback_args` is a dictionary of optional arguments that will be available for use in the callback function. The default value is an empty dictionary.
 
+This function returns an array of decoded values in the `callback["result"]`.
+
 _____
 
 ```
@@ -296,7 +298,7 @@ Ethers.send_transaction(
 `account` is the name of a user-created account, as a String.
 
 `network`, `contract`, `calldata`, and the `callback` parameters are all the same as they are for `Ethers.read_from_contract()`. 
-When receiving a successful callback, note that the "result" field will be the transaction receipt.
+When receiving a successful callback, note that the `callback["result"]` field will be the transaction receipt.
 
 `gas_limit` is the transaction gas limit, as a String, and by default is set to 900,000, which is quite high. You can adjust this default as needed.
 
@@ -330,6 +332,8 @@ Ethers.perform_request(
 
 `retries` is the number of times the application will try to perform the request until it receives a successful response code. The default number of attempts is 3. Note that in addition to retries, GodotEthers is programmed to reduce RPC load and dependency by automatically cycling through all the RPC nodes listed for a given network.
 
+This function will return the raw RPC response in the `callback["result"]`.
+
 _____
 
 * #### `Ethers.convert_to_bignum(number, token_decimals=18)`
@@ -348,6 +352,13 @@ _____
 _____
 
 Takes a BigNumber String and returns it as a decimal value String.
+
+_____
+
+* #### `Ethers.get_address(account)`
+_____
+
+Returns the address of an existing account, as a String.
 
 _____
 
@@ -465,3 +476,49 @@ GodotEthers is built with five singletons:
 - **Transaction**, the transaction manager
 - **Calldata**, the ABI encoder/decoder
 - **GodotSigner**, the Rust library
+
+_____
+
+## Ethers
+
+In addition to the key management, general purpose, and built-in functions listed above, Ethers also contains functions for network management.
+The default testnets are: Ethereum Sepolia, Arbitrum Sepolia, Optimism Sepolia, Base Sepolia, and Avalanche Fuji.
+All of the `default_network_info` can be found at the bottom of the `Ethers.gd` script.
+
+Note that, when running a project for the first time, GodotEthers will automatically save the `default_network_info` into a network config file.  
+On start-up, the contents of this config file are loaded into `network_info`, which Ethers will use as the source for network information.
+
+If you want to manually edit `default_network_info`, you will need to also edit the `check_for_network_info()` function and allow it to overwrite the network config file.
+Otherwise, you can use the functions below to create a system for updating `network_info` while the application is running.
+
+_____
+
+* #### `Ethers.update_rpcs(network, rpcs)`
+_____
+
+`network` is the name of a network in `network_info`, as a String.
+`rpcs` is an array of RPC urls.
+
+This function will overwrite the list of RPCs of a given network in `network_info`, but it will not update the network config file.
+
+
+_____
+
+* #### `Ethers.add_network(network, chain_id, rpcs, scan_url, logo="")`
+_____
+
+`network` is the name of a network.
+`chain_id` is the network's chain ID, as a String.
+`rpcs` is an array of RPC urls.
+`scan_url` is the base URL for a block explorer indexing the given network.
+`logo` is an optional parameter: the filepath to a logo image.
+
+This function will add or overwrite a network in `network_info`, but it will not update the network config file.
+
+
+_____
+
+* #### `Ethers.update_network_info()`
+_____
+
+This function overwrites the network config file with whatever `network_info` currently contains.
