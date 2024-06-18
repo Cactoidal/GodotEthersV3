@@ -490,7 +490,7 @@ _____
 
 ## Ethers
 
-Of note in `Ethers.gd` is a variable called `recent_transactions`, which is a dictionary that logs the most transaction hash the application has sent on each network.
+Of note in `Ethers.gd` is a variable called `recent_transactions`, which is a dictionary that logs the most recent transaction the application has sent on each network.
 
 If your application needs to know a transaction's hash before the transaction completes (if, for example, you want your UI to show that a transaction is pending), you can monitor the dictionary by checking whether `recent_transactions.keys()` contains the name of a given network, and then checking `recent_transactions[<network_name>]`.
 
