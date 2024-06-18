@@ -56,7 +56,7 @@ _________
 ## Example Usage
 
 
-```
+```gdscript
 # Read from a contract
 
 func get_hello(network, contract, ABI):
@@ -182,7 +182,7 @@ _____
 * #### `Ethers.get_calldata(read_or_write, ABI, function_name, args=[])`
 _____
 
-```
+```gdscript
 Ethers.get_calldata(
               read_or_write, 
               ABI, 
@@ -237,7 +237,7 @@ _____
 * #### `Ethers.read_from_contract(network, contract, calldata, callback_node, callback_function, callback_args={})`
 _____
 
-```
+```gdscript
 Ethers.read_from_contract(
               network, 
               contract, 
@@ -281,7 +281,7 @@ _____
 * #### `Ethers.send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0")`
 _____
 
-```
+```gdscript
 Ethers.send_transaction(
               account,
               network, 
@@ -309,7 +309,7 @@ _____
 * #### `Ethers.perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3)`
 _____
 
-```
+```gdscript
 Ethers.perform_request(
               method,
               params, 
@@ -377,7 +377,7 @@ _____
 * #### `Ethers.transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={})`
 _____
 
-```
+```gdscript
 Ethers.transfer(
               account, 
               network, 
@@ -400,7 +400,7 @@ _____
 * #### `Ethers.get_gas_balance(network, account, callback_node, callback_function, callback_args={})`
 _____
 
-```
+```gdscript
 Ethers.get_gas_balance(
               network, 
               account, 
@@ -416,7 +416,7 @@ _____
 * #### `Ethers.get_erc20_info(network, address, contract, callback_node, callback_function, callback_args={})`
 _____
 
-```
+```gdscript
 Ethers.get_erc20_info(
               network, 
               address,
@@ -433,7 +433,7 @@ _____
 * #### `Ethers.transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={})`
 _____
 
-```
+```gdscript
 Ethers.transfer_erc20(
               account, 
               network,
@@ -456,7 +456,7 @@ _____
 * #### `Ethers.approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={})`
 _____
 
-```
+```gdscript
 Ethers.approve_erc20_allowance(
               account, 
               network,
