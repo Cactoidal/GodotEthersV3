@@ -141,7 +141,7 @@ The password is decrypted, and subsequently used to decrypt the keystore, whenev
 The encrypted password and session keys are wiped from memory when the application is closed, or when `Ethers.logout()` is called.
 
 _____
-#### `Ethers.create_account(account, password)`
+* #### `Ethers.create_account(account, password)`
 _____
 
 `account` is the name of a new account, as a String.  This function will automatically revert if the account already exists.  You can use `Ethers.account_exists(account)` to check beforehand whether the name is already in use.
@@ -151,7 +151,7 @@ _____
 
 _____
 
-#### `Ethers.login(account, password)`
+* #### `Ethers.login(account, password)`
 _____
 
 Like above, `account` and `password` are strings.  The password will be checked for validity, encrypted with a session key, and kept encrypted in memory for use during the session.
@@ -160,7 +160,7 @@ An account must be logged in before it can send transactions.
 
 _____
 
-#### `Ethers.clear_memory()`
+* #### `Ethers.clear_memory()`
 _____
 
 To the furthest extent possible, it's important to clean up sensitive information like unencrypted passwords and private keys out of memory.  
@@ -179,7 +179,7 @@ These general purpose functions can quickly and easily build calldata for transa
 
 _____
 
-#### `Ethers.get_calldata(read_or_write, ABI, function_name, args=[])`
+* #### `Ethers.get_calldata(read_or_write, ABI, function_name, args=[])`
 _____
 
 ```
@@ -234,7 +234,7 @@ You must transport BigNumbers as Strings, otherwise they will overflow.
 ```
 _____
 
-#### `Ethers.read_from_contract(network, contract, calldata, callback_node, callback_function, callback_args={})`
+* #### `Ethers.read_from_contract(network, contract, calldata, callback_node, callback_function, callback_args={})`
 _____
 
 ```
@@ -276,7 +276,7 @@ callback, which will be a dictionary containing the following fields:
 ```
 _____
 
-#### `Ethers.send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0")`
+* #### `Ethers.send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0")`
 _____
 
 ```
@@ -304,7 +304,7 @@ When receiving a successful callback, note that the "result" field will be the t
 
 _____
 
-#### `Ethers.perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3)`
+* #### `Ethers.perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3)`
 _____
 
 ```
@@ -332,7 +332,7 @@ Ethers.perform_request(
 
 _____
 
-#### `Ethers.convert_to_bignum(number, token_decimals=18)`
+* #### `Ethers.convert_to_bignum(number, token_decimals=18)`
 _____
 
 Takes a decimal value and returns it in BigNumber String format.
@@ -344,7 +344,7 @@ Some ERC20s do not use 18 decimals, however - which is why it's important to che
 
 _____
 
-#### `Ethers.convert_to_smallnum(bignum, token_decimals=18)`
+* #### `Ethers.convert_to_smallnum(bignum, token_decimals=18)`
 _____
 
 Takes a BigNumber String and returns it as a decimal value String.
@@ -356,7 +356,7 @@ _____
 The Ethers singleton implements several common operations, such as transferring ETH, retrieving the user gas balance, and working with ERC20 tokens.
 _____
 
-#### `Ethers.transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={})`
+* #### `Ethers.transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={})`
 _____
 
 ```
@@ -377,7 +377,7 @@ Ethers.transfer(
 
 _____
 
-#### `Ethers.get_gas_balance(network, account, callback_node, callback_function, callback_args={})`
+* #### `Ethers.get_gas_balance(network, account, callback_node, callback_function, callback_args={})`
 _____
 
 ```
@@ -393,7 +393,7 @@ Returns the decoded gas balance as a string.
 
 _____
 
-#### `Ethers.get_erc20_info(network, address, contract, callback_node, callback_function, callback_args={})`
+* #### `Ethers.get_erc20_info(network, address, contract, callback_node, callback_function, callback_args={})`
 _____
 
 ```
@@ -410,7 +410,7 @@ Ethers.get_erc20_info(
 
 _____
 
-#### `Ethers.transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={})`
+* #### `Ethers.transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={})`
 _____
 
 ```
@@ -433,7 +433,7 @@ Ethers.transfer_erc20(
 
 _____
 
-#### `Ethers.approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={})`
+* #### `Ethers.approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={})`
 _____
 
 ```
