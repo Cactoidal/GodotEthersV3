@@ -389,9 +389,11 @@ Ethers.transfer(
               )
 ```
 
+Sends ether from the account to a specified recipient.
+
 `recipient` is the receiving address, as a String.
 
-`amount` is the amount of ETH to transfer, expected as a BigNumber (Uint256) String with 18 decimals.
+`amount` is the amount of ether to transfer, expected as a BigNumber (Uint256) String with 18 decimals.
 
 _____
 
@@ -545,7 +547,7 @@ _____
 
 ## Transaction
 
-Primarily responsible for abstracting the transaction process, and preventing transactions from being submitted while one is already pending.
+Primarily responsible for abstracting the transaction process, and preventing a transaction from being submitted while one is already pending.
 
 When a transaction is initiated, the singleton will get the account's network gas balance and transaction count, then the gas price estimate, and finally submit the transaction, at which point it will update `recent_transactions` in Ethers with the transaction hash.  It will then monitor the network until it receives the transaction receipt.
 
@@ -557,4 +559,61 @@ _____
 
 ## Calldata
 
-ABI encoder/decoder
+ABI encoder/decoder that is primarily accessed through `Ethers.get_calldata()`.  However, it's entirely possible to access its lower level functions if needed.
+
+_____
+
+* #### `Calldata.abi_encode(inputs, _args)`
+_____
+
+`inputs` is an array of dictionaries each containing a "type" field, and a "components" field if the type is a tuple, 
+e.g.: [{"type": "uint256"}, {"type": "string"}] and [{"type": "tuple, "components": [{"type": "uint256"}. {"type":"string"}]
+
+`args` is an array of the values to be encoded, just as is used in `Ethers.get_calldata()`.
+
+_____
+
+* #### `Calldata.abi_decode(_outputs, calldata)`
+_____
+
+`inputs` is an array of dictionaries each containing a "type" field, and a "components" field if the type is a tuple.
+
+`calldata` is the raw calldata to decode, as a String.
+
+_____
+
+* #### `Calldata.get_function(abi, function_name)`
+_____
+
+If the given `function_name` is present in the provided `abi`, returns the function along with its inputs and outputs.
+
+_____
+
+* #### `Calldata.get_function_inputs(function)`
+_____
+
+Takes the `function` object you just received from `Calldata.get_function()` and returns the inputs as an array of dictionaries.
+
+_____
+
+* #### `Calldata.get_function_outputs(function)`
+_____
+
+Takes the `function` object you received from `Calldata.get_function()` and returns the outputs as an array of dictionaries.
+
+_____
+
+* #### `Calldata.get_function_selector(function)`
+_____
+
+Takes the `function` object you received from `Calldata.get_function()` and returns the 4 byte function selector.
+
+_____
+
+## GodotSigner
+
+Rust library
+
+_____
+
+
