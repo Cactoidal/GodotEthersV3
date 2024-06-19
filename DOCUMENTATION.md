@@ -615,7 +615,7 @@ _____
 
 At the heart of GodotEthers is [Ethers-rs](https://github.com/gakonst/ethers-rs), a complete Ethereum library, made accessible thanks to [Godot Rust](https://godot-rust.github.io).  Ethers-rs is responsible for RLP-encoding transaction data, ECDSA signing, address calculation, Keccak hashing, and BigNumber handling.  It also encodes and decodes the elementary Solidity types after they have been sorted by the Calldata singleton.
 
-[Alloy](https://github.com/alloy-rs) is the succesor of Ethers-rs, and will replace it in a future update of GodotEthers.
+[Alloy](https://github.com/alloy-rs) is the successor of Ethers-rs, and will replace it in a future update of GodotEthers.
 
 In addition to Ethers-rs, the Rust library also uses the following crates:
 
