@@ -504,7 +504,7 @@ func decode_arg(arg, calldata):
 	
 	# Fixed Bytes
 	elif arg_type.begins_with("bytes"):
-		decoded_value = decode_fixed_bytes(calldata)
+		decoded_value = decode_fixed_bytes(calldata, arg_type)
 	
 	# Enum
 	elif arg_type == "enum":
@@ -517,19 +517,13 @@ func decode_arg(arg, calldata):
 	return decoded_value
 	
 
-func decode_fixed_bytes(calldata):
-	var reversed = calldata.reverse()
-	var zero_count = 0
-	for character in reversed:
-		if character == "0":
-			zero_count += 1
-		else:
-			break
-	var bytes = reversed.substr(zero_count)
-	if bytes.length()%2 != 0:
-		bytes += "0"
-	
-	return bytes.reverse()
+func decode_fixed_bytes(bytes, _bytes_amount):
+	var bytes_amount = int(_bytes_amount.trim_prefix("bytes"))
+	var zero_count = 32 - bytes_amount
+	for zero in range(zero_count):
+		bytes = bytes.trim_prefix("0")
+
+	return bytes
 
 
 func decode_array(arg, calldata):
