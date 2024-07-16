@@ -426,7 +426,7 @@ Ethers.get_erc20_info(
               callback_args={}
               )
 ```
- Queries the supplied `token_contract`, bouncing through three calls: ERC20.name(), ERC20.decimals(), and ERC20.balanceOf() for a supplied `address`, and returns all 3 decoded values.
+ Queries the supplied `token_contract`, bouncing through three calls: ERC20.name(), ERC20.decimals(), and ERC20.balanceOf() for a supplied `address`, and returns all 3 decoded values in an Array.
 
 _____
 
