@@ -33,10 +33,7 @@ func _process(delta):
 		poll_speed = 1
 		# Monitors OnRamps for new outgoing CCIP messages
 		observe_onramps()
-	
-	# Checks Ethers.recent_transactions for new transaction hashes
-	look_for_hashes()
-	
+
 	# Spins shiny things 
 	$FogVolume.rotate_y(delta)
 	$Transporter/Pivot.rotate_y(delta/3)
@@ -74,6 +71,7 @@ func login(account, password):
 	password = Ethers.clear_memory()
 	password.clear()
 	
+	transaction_history[account] = {}
 	active_account = account
 	$Address/Address.text = Ethers.get_address(active_account)
 	
@@ -84,7 +82,6 @@ func login(account, password):
 	
 	# Get the gas and CCIP-BnM token balances for the account.
 	update_balances()
-	
 
 
 func update_balances():
@@ -488,35 +485,32 @@ func send_bridge_transaction(callback):
 
 #####      TRANSACTION MANAGEMENT      #####
 
-# Monitors Ethers.recent_transactions, a dictionary that maps the
-# most recently sent transactions to the networks on which they were sent.
-func look_for_hashes():
-	for network in networks:
-		# Ethers tracks the most recent transaction for each network,
-		# along with each transaction's callback_args.
-		if network in Ethers.recent_transactions.keys():
-			# Compare the transaction hashes to check for a new transaction.
-			if Ethers.recent_transactions[network]["transaction_hash"] != recent_transactions[network]["transaction_hash"]:
-				recent_transactions[network] = Ethers.recent_transactions[network]
-				add_new_transaction(network, recent_transactions[network])
 
+func receive_transaction_object(transaction):
+	var local_id = transaction["local_id"]
+	
+	if !local_id in transaction_history.keys():
+		add_new_tx_object(local_id, transaction)
+	else:
+		var tx_object = transaction_history[local_id]
+		update_transaction(tx_object, transaction)
+	
 
-# Constructs new transaction objects and puts them in the transaction log,
-# where their status can be updated later.
-func add_new_transaction(network, transaction):
+func add_new_tx_object(local_id, transaction):
+	var network = transaction["network"]
 	var transaction_type = transaction["callback_args"]["transaction_type"]
 	var transaction_hash = transaction["transaction_hash"]
 
 	# Build a transaction node for the UI
-	var transaction_object = instantiate_transaction(network, transaction_type, transaction_hash)
+	var tx_object = instantiate_transaction(network, transaction_type)
 	
 	# The new transaction node is mapped to the transaction hash, so
 	# its status can later be updated by the transaction receipt.
-	transaction_history[transaction_hash] = transaction_object
+	transaction_history[local_id] = tx_object
 	
 	# Position the new transaction node beneath the previous one
-	$Transactions/Transactions.add_child(transaction_object)
-	transaction_object.position.y += downshift
+	$Transactions/Transactions.add_child(tx_object)
+	tx_object.position.y += downshift
 	
 	# The Control node inside the Transactions ScrollContainer must be
 	# continuously expanded
@@ -525,35 +519,72 @@ func add_new_transaction(network, transaction):
 	# Increment the downshift for the next transaction object
 	downshift += 108
 	
-	transaction_object.modulate.a = 0
+	tx_object.modulate.a = 0
 	var fadein = create_tween()
-	fadein.tween_property(transaction_object,"modulate:a", 1, 2).set_trans(Tween.TRANS_LINEAR)
+	fadein.tween_property(tx_object,"modulate:a", 1, 2).set_trans(Tween.TRANS_LINEAR)
 	fadein.play()
 
 
-# The transaction receipt returns as a single value, a dictionary.
-func get_receipt(callback):	
-	if callback["success"]:
+func update_transaction(tx_object, transaction):
+	var transaction_hash = transaction["transaction_hash"]
+	var transaction_type = transaction["callback_args"]["transaction_type"]
+	var network = transaction["network"]
+	var tx_status = transaction["tx_status"]
+	
+	if transaction_hash != "":
+		var scan_url = Ethers.network_info[network]["scan_url"]
+		var scan_link = tx_object.get_node("Scan Link")
+		var ccip_link = tx_object.get_node("CCIP Link")
 		
+		if !scan_link.visible:
+			scan_link.connect("pressed", open_link.bind(scan_url + "tx/" + transaction_hash))
+			scan_link.visible = true
+		if transaction_type == "CCIP" && !ccip_link.visible:
+			ccip_link.connect("pressed", open_link.bind("https://ccip.chain.link/tx/" + transaction_hash))
+			ccip_link.visible = true
+	
+	if tx_status == "success":
+		tx_object.get_node("Status").color = Color.GREEN
+		if tx_object.get_node("Info").text.contains("CCIP"):
+			beam_message()
+		elif tx_object.get_node("Info").text.contains("Approval"):
+			# After approval, proceeds into the next part of 
+			# the bridging process: fee estimation
+			transaction["success"] = true
+			get_native_fee(transaction)
+	elif tx_status != "pending":
+		tx_object.get_node("Status").color = Color.RED
+
+
+# The transaction receipt returns as a single value, a dictionary.
+func get_receipt(callback):
+	
+	if callback["success"]:
 		# Update gas and token balances.
 		update_balances()
 		
-		var transaction_hash = callback["result"]["transactionHash"]
-		var status = callback["result"]["status"]
-		var tx_object = transaction_history[transaction_hash]
-	
-		# Update a transaction object's status, and trigger
-		# any transaction-dependent effects
-		if status == "0x1":
-			tx_object.get_node("Status").color = Color.GREEN
-			if tx_object.get_node("Info").text.contains("CCIP"):
-				beam_message()
-			elif tx_object.get_node("Info").text.contains("Approval"):
-				# After approval, proceeds into the next part of 
-				# the bridging process: fee estimation
-				get_native_fee(callback)
-		else:
-			tx_object.get_node("Status").color = Color.RED
+		
+		# DEBUG
+		# Commented out because it is unnecessary with the new 
+		# transaction logging system.
+		
+		#
+		#var transaction_hash = callback["result"]["transactionHash"]
+		#var status = callback["result"]["status"]
+		#var tx_object = transaction_history[transaction_hash]
+	#
+		## Update a transaction object's status, and trigger
+		## any transaction-dependent effects
+		#if status == "0x1":
+			#tx_object.get_node("Status").color = Color.GREEN
+			#if tx_object.get_node("Info").text.contains("CCIP"):
+				#beam_message()
+			#elif tx_object.get_node("Info").text.contains("Approval"):
+				## After approval, proceeds into the next part of 
+				## the bridging process: fee estimation
+				#get_native_fee(callback)
+		#else:
+			#tx_object.get_node("Status").color = Color.RED
 
 
 
@@ -568,6 +599,9 @@ func _ready():
 	$Log.connect("pressed", slide_log)
 	$Bridge.connect("pressed", slide_bridge)
 	$Bridge/Initiate.connect("pressed", initiate_bridge)
+	
+	Ethers.register_transaction_log(self, "receive_transaction_object")
+	
 	for network in $Balances/Networks.get_children():
 		network.get_node("Button").connect("pressed", mint_test_tokens.bind(network.name))
 	
@@ -629,8 +663,7 @@ func mint_test_tokens(network):
 
 # In practice, it may be easier to audit multiple simple scenes (within reason)
 # than to sort through dense blocks of node-building code.
-func instantiate_transaction(network, transaction_type, transaction_hash):
-	var scan_url = Ethers.network_info[network]["scan_url"]
+func instantiate_transaction(network, transaction_type):
 	var new_transaction = Panel.new()
 	new_transaction.size = Vector2(146,104)
 	var info = Label.new()
@@ -643,8 +676,12 @@ func instantiate_transaction(network, transaction_type, transaction_hash):
 	info.text = transaction_type + ":\n" + network
 	scan_link.text = "Scan"
 	ccip_link.text = "CCIP"
-	scan_link.connect("pressed", open_link.bind(scan_url + "tx/" + transaction_hash))
-	ccip_link.connect("pressed", open_link.bind("https://ccip.chain.link/tx/" + transaction_hash))
+	scan_link.name = "Scan Link"
+	ccip_link.name = "CCIP Link"
+	scan_link.visible = false
+	ccip_link.visible = false
+	#scan_link.connect("pressed", open_link.bind(scan_url + "tx/" + transaction_hash))
+	#ccip_link.connect("pressed", open_link.bind("https://ccip.chain.link/tx/" + transaction_hash))
 	scan_link.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	ccip_link.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	new_transaction.add_child(info)
@@ -655,8 +692,10 @@ func instantiate_transaction(network, transaction_type, transaction_hash):
 	scan_link.position = Vector2(12,65)
 	ccip_link.position = Vector2(86,65)
 	status.position = Vector2(127,3)
-	if transaction_type != "CCIP":
-		ccip_link.visible = false
+	
+	#if transaction_type != "CCIP":
+		#ccip_link.visible = false
+		
 	return new_transaction
 
 
