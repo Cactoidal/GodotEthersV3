@@ -6,7 +6,7 @@ Ethers for Godot 4.3, built with Godot Rust and Ethers-rs.  Featuring [implement
 
 [Quickstart](https://github.com/Cactoidal/GodotEthersV3/blob/main/DOCUMENTATION.md#quickstart-1)
 
-The Godot Engine 4.3 Beta is available [here](https://godotengine.org/download/archive/4.3-beta2/).
+The Godot Engine 4.3 Beta is available [here](https://godotengine.org/download/archive/4.3-beta3/).
 ___
 
 ### A Note on Security
