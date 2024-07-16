@@ -420,13 +420,31 @@ _____
 Ethers.get_erc20_info(
               network, 
               address,
-              contract,
+              token_contract,
               callback_node,
               callback_function,
               callback_args={}
               )
 ```
- Queries the supplied `contract`, bouncing through three calls: ERC20.name(), ERC20.decimals(), and ERC20.balanceOf() for a supplied `address`, and returns all 3 decoded values.
+ Queries the supplied `token_contract`, bouncing through three calls: ERC20.name(), ERC20.decimals(), and ERC20.balanceOf() for a supplied `address`, and returns all 3 decoded values.
+
+_____
+
+* #### `Ethers.get_erc20_balance(network, address, contract, decimals, callback_node, callback_function, callback_args={})`
+_____
+
+```gdscript
+Ethers.get_erc20_balance(
+              network, 
+              address,
+              contract,
+              decimals,
+              callback_node,
+              callback_function,
+              callback_args={}
+              )
+```
+ Queries the supplied `contract` to retrieve the ERC20.balanceOf() for a supplied `address`, and returns the decoded value as a String.
 
 _____
 
