@@ -12,7 +12,7 @@ var header = "Content-Type: application/json"
 var error
 
 var logins = {}
-var recent_transactions = {}
+var transaction_logs = []
 
 var env_enc_key
 var env_enc_iv
@@ -119,6 +119,7 @@ func login(account, _password):
 		_password.clear()
 		decryption_key = clear_memory()
 		decryption_key.clear()
+		
 		return true
 
 	else:
@@ -194,7 +195,7 @@ func logout():
 	logins = clear_memory()
 	logins.clear()
 	logins = {}
-	recent_transactions = {}
+	transaction_logs = []
 
 
 #########  NETWORK MANAGEMENT  #########
@@ -359,13 +360,6 @@ func decode_rpc_response(_callback):
 		callback_node.call(callback_function, callback)
 
 
-func pending_transaction(network):
-	if Transaction.pending_transaction(network):
-		return Transaction.pending_transactions[network]
-	else:
-		return false
-
-
 func send_transaction(account, network, contract, _calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
 	var calldata = _calldata["calldata"]
 	calldata = calldata.trim_prefix("0x")
@@ -426,6 +420,20 @@ func perform_request(method, params, network, callback_node, callback_function, 
 	JSON.new().stringify(tx))
 
 
+
+func register_transaction_log(callback_node, callback_function):
+	transaction_logs.push_back([callback_node, callback_function])
+
+
+func transmit_transaction_object(transaction):
+	for log in transaction_logs:
+		var callback_node = log[0]
+		var callback_function = log[1]
+		
+		if is_instance_valid(callback_node):
+			callback_node.call(callback_function, transaction)
+		else:
+			transaction_logs.erase(log)
 
 
 
