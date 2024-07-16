@@ -473,21 +473,32 @@ func return_erc20_decimals(callback):
 		var decimals = callback["result"][0]
 		callback_args["decimals"] = decimals
 		var address = callback_args["address"]
-		get_erc20_balance(address, decimals, network, contract, self, "get_erc20_balance", callback_args)
+		get_erc20_balance(network, address, contract, decimals, self, "get_erc20_balance", callback_args)
 
 
-func get_erc20_balance(address, decimals, network, contract, callback_node, callback_function, callback_args={}):
+func get_erc20_balance(network, address, contract, decimals, callback_node, callback_function, callback_args={}):
 	var calldata = get_calldata("READ", Contract.ERC20, "balanceOf", [address])
-	read_from_contract(network, contract, calldata, self, "return_erc20_balance", callback_args)
+	callback_args["decimals"] = decimals
+	callback_args["network"] = network
+	
+	if !"callback_node" in callback_args.keys():
+		callback_args["callback_node"] = callback_node
+	if !"callback_function" in callback_args.keys():
+		callback_args["callback_function"] = callback_function
+		
+	read_from_contract(network, contract, calldata, self, "return_erc20_info", callback_args)
 
 
-func return_erc20_balance(callback):
+func return_erc20_info(callback):
 	var callback_args = callback["callback_args"]
 	var callback_node = callback_args["callback_node"]
 	var callback_function = callback_args["callback_function"]
 	var network = callback_args["network"]
-	var name = callback_args["name"]
+	var name
 	var decimals = callback_args["decimals"]
+	
+	if "name" in callback_args.keys():
+		name = callback_args["name"]
 	
 	var next_callback = {
 		"callback_args": callback_args,
@@ -499,8 +510,12 @@ func return_erc20_balance(callback):
 	if callback["success"]:
 		next_callback["success"] = true
 		var balance = convert_to_smallnum(callback["result"][0], decimals)
-		next_callback["result"] = [name, str(decimals), balance]
 		next_callback["callback_args"]["balance"] = balance
+		
+		if name:
+			next_callback["result"] = [name, str(decimals), balance]
+		else:
+			next_callback["result"] = balance
 	
 	if is_instance_valid(callback_node):
 		callback_node.call(callback_function, next_callback)
@@ -510,7 +525,7 @@ func transfer_erc20(account, network, token_address, recipient, amount, callback
 	var calldata = get_calldata("WRITE", Contract.ERC20, "transfer", [recipient, amount])
 	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
 
-# Right now configured to approve the maximum uint256 value
+
 func approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={}):
 	if amount in ["MAX", "MAXIMUM"]:
 		amount = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
