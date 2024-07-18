@@ -57,7 +57,7 @@ func account_exists(account):
 		return false
 
 
-func create_account(account, _password):
+func create_account(account, _password, imported_key=""):
 	
 	if account_exists(account):
 		return
@@ -75,8 +75,12 @@ func create_account(account, _password):
 	# Generate the iv that will be used to encrypt the private key
 	var iv = Crypto.new().generate_random_bytes(16)
 	
-	# Generate a new private key
-	var private_key = Crypto.new().generate_random_bytes(32)
+	# Import the private key, or generate a new one
+	var private_key = imported_key
+	if private_key.length() != 64 || !private_key.is_valid_hex_number():
+		private_key = Crypto.new().generate_random_bytes(32)
+	else:
+		private_key = private_key.hex_decode()
 	var address = calculate_address(private_key)
 	
 	# Encrypt the private key with the password-derived encryption key
