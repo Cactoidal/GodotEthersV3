@@ -12,7 +12,7 @@ var header = "Content-Type: application/json"
 var error
 
 var logins = {}
-var recent_transactions = {}
+var transaction_logs = []
 
 var env_enc_key
 var env_enc_iv
@@ -57,7 +57,7 @@ func account_exists(account):
 		return false
 
 
-func create_account(account, _password):
+func create_account(account, _password, imported_key=""):
 	
 	if account_exists(account):
 		return
@@ -75,8 +75,12 @@ func create_account(account, _password):
 	# Generate the iv that will be used to encrypt the private key
 	var iv = Crypto.new().generate_random_bytes(16)
 	
-	# Generate a new private key
-	var private_key = Crypto.new().generate_random_bytes(32)
+	# Import the private key, or generate a new one
+	var private_key = imported_key
+	if private_key.length() != 64 || !private_key.is_valid_hex_number():
+		private_key = Crypto.new().generate_random_bytes(32)
+	else:
+		private_key = private_key.hex_decode()
 	var address = calculate_address(private_key)
 	
 	# Encrypt the private key with the password-derived encryption key
@@ -119,6 +123,7 @@ func login(account, _password):
 		_password.clear()
 		decryption_key = clear_memory()
 		decryption_key.clear()
+		
 		return true
 
 	else:
@@ -194,7 +199,7 @@ func logout():
 	logins = clear_memory()
 	logins.clear()
 	logins = {}
-	recent_transactions = {}
+	transaction_logs = []
 
 
 #########  NETWORK MANAGEMENT  #########
@@ -359,13 +364,6 @@ func decode_rpc_response(_callback):
 		callback_node.call(callback_function, callback)
 
 
-func pending_transaction(network):
-	if Transaction.pending_transaction(network):
-		return Transaction.pending_transactions[network]
-	else:
-		return false
-
-
 func send_transaction(account, network, contract, _calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
 	var calldata = _calldata["calldata"]
 	calldata = calldata.trim_prefix("0x")
@@ -426,6 +424,20 @@ func perform_request(method, params, network, callback_node, callback_function, 
 	JSON.new().stringify(tx))
 
 
+
+func register_transaction_log(callback_node, callback_function):
+	transaction_logs.push_back([callback_node, callback_function])
+
+
+func transmit_transaction_object(transaction):
+	for log in transaction_logs:
+		var callback_node = log[0]
+		var callback_function = log[1]
+		
+		if is_instance_valid(callback_node):
+			callback_node.call(callback_function, transaction)
+		else:
+			transaction_logs.erase(log)
 
 
 
