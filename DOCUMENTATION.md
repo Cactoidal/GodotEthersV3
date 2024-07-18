@@ -511,13 +511,8 @@ _____
 
 ## Ethers
 
-Of note in `Ethers.gd` is a variable called `recent_transactions`, which is a dictionary that logs the most recent transaction the application has sent on each network.
+In addition to the key management, general purpose, and built-in functions listed above, Ethers also contains functions to assist in transaction logging and network management.
 
-If your application needs to know a transaction's hash before the transaction completes (if, for example, you want your UI to show that a transaction is pending), you can monitor the dictionary by checking whether `recent_transactions.keys()` contains the name of a given network, and then checking `recent_transactions[<network_name>]`.
-
-Doing so will return a dictionary containing the transaction hash and the `callback_args` that were sent along with that transaction.
-
-In addition to the key management, general purpose, and built-in functions listed above, Ethers also contains functions for network management.
 The default testnets are: Ethereum Sepolia, Arbitrum Sepolia, Optimism Sepolia, Base Sepolia, and Avalanche Fuji.
 All of the `default_network_info` can be found at the bottom of the `Ethers.gd` script.
 
@@ -526,6 +521,45 @@ On start-up, the contents of this config file are loaded into `network_info`, wh
 
 If you want to manually edit `default_network_info`, you will need to also edit the `check_for_network_info()` function and allow it to overwrite the network config file.
 Otherwise, you can use the functions below to create a system for updating `network_info` while the application is running.
+
+_____
+
+* #### `Ethers.register_transaction_log(callback_node, callback_function)`
+_____
+
+Whenever a transaction is initiated, Ethers will transmit the transaction object to the `callback_function` on any `callback_node` that has been registered using this function.  This is useful for transaction logging, as the transaction object can be used to update your interface.  Transaction objects are transmitted when:
+
+* The transaction is submitted.
+* The transaction fails at any point in the transaction sequence.
+* The transaction hash is retrieved.
+* The transaction receipt is retrieved.
+
+A transaction object contains the following relevant values:
+
+* `local_id`, a randomly generated id that can be used to track a transaction locally
+* `tx_status`, a String indicating the transaction's status: "SUCCESS" when the transaction completes, "PENDING" while waiting for the hash and receipt, or an error indicating failure
+* `callback_args`, the callback_args that were sent with the transaction.  Can be used to track optional information, such as a transaction type
+* `network`, the network where the transaction was sent
+* `account`, the account sending the transaction
+* `contract`, the contract the transaction is interacting with (for ETH transfers, this value will be blank)
+* `tx_count`
+* `gas_price`
+* `transaction_hash`
+* `transaction_receipt`
+
+When calling `Ethers.register_transaction_log`, the specified `callback_function` must take a single parameter: the transaction object.  An example function:
+
+```gdscript
+func receive_transaction_object(transaction):
+	var local_id = transaction["local_id"]
+	
+	if !local_id in transaction_history.keys():
+		add_new_tx_object(local_id, transaction)
+	else:
+		var tx_object = transaction_history[local_id]
+		update_transaction(tx_object, transaction)
+```
+
 
 _____
 
