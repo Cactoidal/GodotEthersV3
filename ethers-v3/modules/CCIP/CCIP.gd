@@ -543,7 +543,7 @@ func update_transaction(tx_object, transaction):
 			ccip_link.connect("pressed", open_link.bind("https://ccip.chain.link/tx/" + transaction_hash))
 			ccip_link.visible = true
 	
-	if tx_status == "success":
+	if tx_status == "SUCCESS":
 		tx_object.get_node("Status").color = Color.GREEN
 		if tx_object.get_node("Info").text.contains("CCIP"):
 			beam_message()
@@ -552,7 +552,7 @@ func update_transaction(tx_object, transaction):
 			# the bridging process: fee estimation
 			transaction["success"] = true
 			get_native_fee(transaction)
-	elif tx_status != "pending":
+	elif tx_status != "PENDING":
 		tx_object.get_node("Status").color = Color.RED
 
 
