@@ -534,7 +534,7 @@ Whenever a transaction is initiated, Ethers will transmit the transaction object
 * The transaction hash is retrieved.
 * The transaction receipt is retrieved.
 
-A transaction object contains the following relevant values:
+A transaction object is a Dictionary containing the following relevant values:
 
 * `local_id`, a randomly generated id that can be used to track a transaction locally
 * `tx_status`, a String indicating the transaction's status: "SUCCESS" when the transaction completes, "PENDING" while waiting for the hash and receipt, or an error indicating failure
