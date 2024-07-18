@@ -42,10 +42,11 @@ func send_transaction(
 			"tx_count": 0,
 			"gas_price": 0,
 			"transaction_hash": "",
+			"transaction_receipt": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
 			"eth_transfer": false,
-			"tx_status": "pending",
+			"tx_status": "PENDING",
 			"local_id": Crypto.new().generate_random_bytes(32)
 			}
 			
@@ -239,7 +240,8 @@ func check_transaction_receipt(callback):
 				"account": account
 			}
 			
-			transaction["tx_status"] = "success"
+			transaction["transaction_receipt"] = callback["result"]
+			transaction["tx_status"] = "SUCCESS"
 			finish_transaction(account, network, transaction)
 			if is_instance_valid(tx_callback_node):
 				tx_callback_node.call(tx_callback_function, tx_callback)
@@ -289,10 +291,11 @@ func start_eth_transfer(
 			"tx_count": 0,
 			"gas_price": 0,
 			"transaction_hash": "",
+			"transaction_receipt": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
 			"eth_transfer": true,
-			"tx_status": "pending",
+			"tx_status": "PENDING",
 			"local_id": Crypto.new().generate_random_bytes(32)
 			}
 		
