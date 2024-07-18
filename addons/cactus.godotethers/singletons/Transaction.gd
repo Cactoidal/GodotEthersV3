@@ -4,8 +4,12 @@ var pending_transactions = {}
 var error
 
 
-func pending_transaction(network):
-	if network in pending_transactions.keys():
+func pending_transaction(account, network):
+	if !account in pending_transactions.keys():
+		pending_transactions[account] = {}
+		return false
+	
+	if network in pending_transactions[account].keys():
 		return true
 	else:
 		return false
@@ -22,7 +26,7 @@ func send_transaction(
 	callback_args={}
 	):
 		
-		if !pending_transaction(network):
+		if !pending_transaction(account, network):
 			
 			var transaction = {
 			"callback_node": callback_node,
@@ -38,22 +42,30 @@ func send_transaction(
 			"tx_count": 0,
 			"gas_price": 0,
 			"transaction_hash": "",
+			"transaction_receipt": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
-			"eth_transfer": false
+			"eth_transfer": false,
+			"tx_status": "PENDING",
+			"local_id": Crypto.new().generate_random_bytes(32)
 			}
 			
-			pending_transactions[network] = transaction
+			pending_transactions[account][network] = transaction
+			
+			# Ethers transmits transaction objects to all nodes that have
+			# called register_transaction_log()
+			Ethers.transmit_transaction_object(transaction.duplicate())
 
 
 func _process(delta):
-	for network in pending_transactions.keys():
-		var transaction = pending_transactions[network]
-		if !transaction["initialized"]:
-			transaction["initialized"] = true
-			initiate(transaction)
-		elif transaction["check_for_receipt"]:
-			check_for_tx_receipt(transaction, delta)
+	for account in pending_transactions.keys():
+		for network in pending_transactions[account].keys():
+			var transaction = pending_transactions[account][network]
+			if !transaction["initialized"]:
+				transaction["initialized"] = true
+				initiate(transaction)
+			elif transaction["check_for_receipt"]:
+				check_for_tx_receipt(transaction, delta)
 
 
 func initiate(transaction):
@@ -71,6 +83,7 @@ func initiate(transaction):
 func update_gas_balance(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
+	var account = transaction["account"]
 	
 	if callback["success"]:
 		var balance = str(callback["result"].hex_to_int())
@@ -90,14 +103,15 @@ func update_gas_balance(callback):
 					{"transaction": transaction}
 					)
 		else:
-			emit_error("Not enough gas", network)
+			emit_error("Not enough gas", account, network)
 	else:
-		emit_error("RPC error: Failed to update gas balance", network)
+		emit_error("RPC error: Failed to update gas balance", account, network)
 
 
 func get_tx_count(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
+	var account = transaction["account"]
 	
 	if callback["success"]:
 		transaction["tx_count"] = callback["result"].hex_to_int()
@@ -110,12 +124,13 @@ func get_tx_count(callback):
 			{"transaction": transaction}
 			)
 	else:
-		emit_error("RPC error: Failed to get TX count", network)
+		emit_error("RPC error: Failed to get TX count", account, network)
 
 
 func get_gas_price(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
+	var account = transaction["account"]
 	
 	if callback["success"]:
 		transaction["gas_price"] = int(ceil((callback["result"].hex_to_int() * 1.1))) #adjusted up
@@ -127,11 +142,8 @@ func get_gas_price(callback):
 		
 		if maximum_gas_fee != "":
 			if transaction["gas_price"] > int(maximum_gas_fee):
-				emit_error("Gas fee too high", network)
+				emit_error("Gas fee too high", account, network)
 				return
-		
-		var account = transaction["account"]
-		
 		
 		
 		if !transaction["eth_transfer"]:
@@ -174,27 +186,22 @@ func get_gas_price(callback):
 			)
 	
 	else:
-		emit_error("RPC error: Failed to get gas price", network)
+		emit_error("RPC error: Failed to get gas price", account, network)
 
 
 func get_transaction_hash(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
+	var account = transaction["account"]
 	var scan_url = Ethers.network_info[network]["scan_url"]
 	
 	if callback["success"]:
 			transaction["transaction_hash"] = callback["result"]
-			
-			# Ethers tracks the most recent transaction for each network,
-			# along with each transaction's callback_args.
-			Ethers.recent_transactions[network] = {
-				"transaction_hash": transaction["transaction_hash"],
-				"callback_args": transaction["callback_args"]
-				}
+			Ethers.transmit_transaction_object(transaction.duplicate())
 
 			transaction["check_for_receipt"] = true
 	else:
-		emit_error("RPC error: Failed to get TX hash", network)
+		emit_error("RPC error: Failed to get TX hash", account, network)
 
 
 func check_for_tx_receipt(transaction, delta):
@@ -215,6 +222,7 @@ func check_transaction_receipt(callback):
 	var transaction = callback["callback_args"]["transaction"]
 	var network = transaction["network"]
 	var account = transaction["account"]
+	
 		
 	if callback["success"]:
 		if callback["result"] != null:
@@ -232,23 +240,28 @@ func check_transaction_receipt(callback):
 				"account": account
 			}
 			
-			finish_transaction(network)
+			transaction["transaction_receipt"] = callback["result"]
+			transaction["tx_status"] = "SUCCESS"
+			finish_transaction(account, network, transaction)
 			if is_instance_valid(tx_callback_node):
 				tx_callback_node.call(tx_callback_function, tx_callback)
 			
 	else:
-		emit_error("RPC error: Failed to get TX receipt", network)
+		emit_error("RPC error: Failed to get TX receipt", account, network)
 		
 		
 
-func finish_transaction(network):
-	pending_transactions.erase(network)
+func finish_transaction(account, network, transaction):
+	Ethers.transmit_transaction_object(transaction.duplicate())
+	pending_transactions[account].erase(network)
 
 
-func emit_error(error_string, network):
+func emit_error(error_string, account, network):
 	error = error_string
 	print(error + " on " + network)
-	finish_transaction(network)
+	var transaction = pending_transactions[account][network]
+	transaction["tx_status"] = error
+	finish_transaction(account, network, transaction)
 
 
 # Used by Ethers.transfer() for sending ETH
@@ -263,7 +276,7 @@ func start_eth_transfer(
 	callback_args={}
 	):
 		
-		if !pending_transaction(network):
+		if !pending_transaction(account, network):
 			
 			var transaction = {
 			"callback_node": callback_node,
@@ -278,9 +291,12 @@ func start_eth_transfer(
 			"tx_count": 0,
 			"gas_price": 0,
 			"transaction_hash": "",
+			"transaction_receipt": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
-			"eth_transfer": true
+			"eth_transfer": true,
+			"tx_status": "PENDING",
+			"local_id": Crypto.new().generate_random_bytes(32)
 			}
 		
-			pending_transactions[network] = transaction
+			pending_transactions[account][network] = transaction
