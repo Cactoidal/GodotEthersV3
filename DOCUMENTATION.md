@@ -141,13 +141,16 @@ The password is decrypted, and subsequently used to decrypt the keystore, whenev
 The encrypted password and session keys are wiped from memory when the application is closed, or when `Ethers.logout()` is called.
 
 _____
-* #### `Ethers.create_account(account, password)`
+* #### `Ethers.create_account(account, password, imported_key="")`
 _____
 
 `account` is the name of a new account, as a String.  This function will automatically revert if the account already exists.  You can use `Ethers.account_exists(account)` to check beforehand whether the name is already in use.
 
 
-`password` is the account password, as a String.  It will be combined with a randomly generated salt and iv to encrypt a new private key.
+`password` is the account password, as a String.  It will be combined with a randomly generated salt and iv to encrypt the private key.
+
+
+`imported_key` is a private key, as a 64-character hex String.  This parameter is optional, and a new private key will be generated if this parameter is left blank.
 
 _____
 
@@ -426,7 +429,7 @@ Ethers.get_erc20_info(
               callback_args={}
               )
 ```
- Queries the supplied `token_contract`, bouncing through three calls: ERC20.name(), ERC20.decimals(), and ERC20.balanceOf() for a supplied `address`, and returns all 3 decoded values in an Array.
+ Queries the supplied `token_contract`, bouncing through three calls: ERC20.name(), ERC20.decimals(), and ERC20.balanceOf() for a supplied `address`, and returns all 3 decoded values in an Array: [name, decimals, balance].
 
 _____
 
