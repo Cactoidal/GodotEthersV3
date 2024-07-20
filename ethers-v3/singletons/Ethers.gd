@@ -77,10 +77,14 @@ func create_account(account, _password, imported_key=""):
 	
 	# Import the private key, or generate a new one
 	var private_key = imported_key
-	if private_key.length() != 64 || !private_key.is_valid_hex_number():
-		private_key = Crypto.new().generate_random_bytes(32)
-	else:
+	imported_key.clear_memory()
+	imported_key.clear()
+	
+	if private_key.length() == 64 && private_key.is_valid_hex_number():
 		private_key = private_key.hex_decode()
+	else:
+		private_key = Crypto.new().generate_random_bytes(32)
+		
 	var address = calculate_address(private_key)
 	
 	# Encrypt the private key with the password-derived encryption key
@@ -100,7 +104,6 @@ func create_account(account, _password, imported_key=""):
 	FileAccess.open(path + "_LOGIN", FileAccess.WRITE).store_buffer(encrypted_salt)
 	FileAccess.open(path + "_ADDRESS", FileAccess.WRITE).store_string(address)
 	
-
 
 func login(account, _password):
 	var path = "user://" + account
