@@ -77,7 +77,7 @@ func create_account(account, _password, imported_key=""):
 	
 	# Import the private key, or generate a new one
 	var private_key = imported_key
-	imported_key = Ethers.clear_memory()
+	imported_key = clear_memory()
 	imported_key.clear()
 	
 	if private_key.length() == 64 && private_key.is_valid_hex_number():
