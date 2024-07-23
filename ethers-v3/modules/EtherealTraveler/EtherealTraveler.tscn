@@ -1,6 +1,6 @@
-[gd_scene load_steps=10 format=3 uid="uid://c8snfdsueffog"]
+[gd_scene load_steps=10 format=3 uid="uid://rdqryr6b4wir"]
 
-[ext_resource type="Script" path="res://modules/EtherealTraveler/EtherealTraveler.gd" id="1_u5csm"]
+[ext_resource type="Script" path="res://addons/cactus.godotethers/modules/EtherealTraveler/EtherealTraveler.gd" id="1_udidb"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0rutk"]
 sky_top_color = Color(0.670654, 0.459829, 0.255133, 1)
@@ -136,7 +136,7 @@ subdivide_depth = 200
 orientation = 1
 
 [node name="EtherealTraveler" type="Node3D"]
-script = ExtResource("1_u5csm")
+script = ExtResource("1_udidb")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_0x0k8")

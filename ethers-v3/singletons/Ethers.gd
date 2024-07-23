@@ -13,6 +13,7 @@ var error
 
 var logins = {}
 var transaction_logs = []
+var transaction_queue = {}
 
 var env_enc_key
 var env_enc_iv
@@ -44,6 +45,10 @@ func _notification(quit):
 
 func clear_memory():
 	return Crypto.new().generate_random_bytes(256)
+
+
+func _process(delta):
+	send_queued_transaction()
 
 
 #########  KEY MANAGEMENT  #########
@@ -127,6 +132,8 @@ func login(account, _password):
 		decryption_key = clear_memory()
 		decryption_key.clear()
 		
+		transaction_queue[account] = {}
+		
 		return true
 
 	else:
@@ -203,6 +210,7 @@ func logout():
 	logins.clear()
 	logins = {}
 	transaction_logs = []
+	transaction_queue = {}
 
 
 #########  NETWORK MANAGEMENT  #########
@@ -367,24 +375,26 @@ func decode_rpc_response(_callback):
 		callback_node.call(callback_function, callback)
 
 
-func send_transaction(account, network, contract, _calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0"):
+func send_transaction(account, network, contract, _calldata, callback_node, callback_function, callback_args={}, maximum_gas_fee="", value="0"):
 	var calldata = _calldata["calldata"]
 	calldata = calldata.trim_prefix("0x")
-	Transaction.send_transaction(account, network, contract, gas_limit, value, calldata, callback_node, callback_function, callback_args)
+	Transaction.send_transaction(account, network, contract, maximum_gas_fee, value, calldata, callback_node, callback_function, callback_args, false)
 
 
 # For ETH transfers
-func transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}):
-	Transaction.start_eth_transfer(
-		account,
-		network,
-		"placeholder",
-		"transfer",
-		[recipient, amount],
-		callback_node,
-		callback_function,
-		callback_args
-	)
+func transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}, maximum_gas_fee=""):
+	Transaction.send_transaction(
+			account, 
+			network, 
+			"", 
+			maximum_gas_fee, 
+			"0", 
+			"", 
+			callback_node, 
+			callback_function, 
+			callback_args, 
+			[recipient, amount]
+			)
 
 
 func perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3):
@@ -441,6 +451,47 @@ func transmit_transaction_object(transaction):
 			callback_node.call(callback_function, transaction)
 		else:
 			transaction_logs.erase(log)
+
+
+func queue_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, maximum_gas_fee="", value="0"):
+
+	var transaction = {
+		"network": network,
+		"contract": contract,
+		"calldata": calldata,
+		"callback_node": callback_node,
+		"callback_function": callback_function,
+		"callback_args": callback_args,
+		"maximum_gas_fee": maximum_gas_fee,
+		"value": value
+	}
+	
+	if !network in transaction_queue[account].keys():
+		transaction_queue[account][network] = []
+	
+	transaction_queue[account][network].push_back(transaction)
+
+
+func send_queued_transaction():
+	for account in transaction_queue.keys():
+		for network in transaction_queue[account].keys():
+			var queue = transaction_queue[account][network]
+			if !queue.is_empty():
+				var transaction = queue[0].duplicate()
+				if !Transaction.pending_transaction(account, network):
+					
+					send_transaction(
+						account,
+						network,
+						transaction["contract"],
+						transaction["calldata"],
+						transaction["callback_node"],
+						transaction["callback_function"],
+						transaction["callback_args"],
+						transaction["maximum_gas_fee"],
+						transaction["value"]
+					)
+					transaction_queue[account][network].pop_front()
 
 
 
@@ -536,16 +587,16 @@ func return_erc20_info(callback):
 		callback_node.call(callback_function, next_callback)
 
 
-func transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}):
+func transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}, maximum_gas_fee=""):
 	var calldata = get_calldata("WRITE", Contract.ERC20, "transfer", [recipient, amount])
-	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
+	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, maximum_gas_fee)
 
 
-func approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={}):
+func approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={}, maximum_gas_fee=""):
 	if amount in ["MAX", "MAXIMUM"]:
 		amount = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 	var calldata = get_calldata("WRITE", Contract.ERC20, "approve", [spender_address, amount])
-	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, "50000")
+	send_transaction(account, network, token_address, calldata, callback_node, callback_function, callback_args, maximum_gas_fee)
 
 
 
@@ -612,6 +663,17 @@ func convert_to_smallnum(bignum, token_decimals=18):
 		smallnum = smallnum.left(zero_parse_index).trim_suffix(".")
 	
 	return smallnum
+
+
+func big_uint_math(number1, operation, number2):
+	var output
+	if operation in ["ADD", "SUBTRACT", "DIVIDE", "MULTIPLY"]:
+		output = GodotSigner.arithmetic(number1, number2, operation)
+	if operation in ["GREATER THAN", "LESS THAN", "GREATER THAN OR EQUAL", "LESS THAN OR EQUAL", "EQUAL"]:
+		output = GodotSigner.compare(number1, number2, operation)
+	return output
+
+
 
 
 func emit_error(error_string):
