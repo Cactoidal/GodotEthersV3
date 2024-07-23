@@ -281,7 +281,7 @@ callback, which will be a dictionary containing the following fields:
 ```
 _____
 
-* #### `Ethers.send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, gas_limit="900000", value="0")`
+* #### `Ethers.send_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, maximum_gas_fee="", value="0")`
 _____
 
 ```gdscript
@@ -293,7 +293,7 @@ Ethers.send_transaction(
               callback_node,
               callback_function,
               callback_args={},
-              gas_limit="900000",
+              maximum_gas_fee="",
               value="0"
               )
 ```
@@ -303,9 +303,32 @@ Ethers.send_transaction(
 `network`, `contract`, `calldata`, and the `callback` parameters are all the same as they are for `Ethers.read_from_contract()`. 
 When receiving a successful callback, note that the `callback["result"]` field will be the transaction receipt.
 
-`gas_limit` is the transaction gas limit, as a String, and by default is set to 900,000, which is quite high. You can adjust this default as needed.
+`maximum_gas_fee` is the maximum fee the account will pay for the sent transaction, as a decimal "small number" String.  When the transaction sequence estimates the gas fee, it will revert if the estimated fee exceeds this value.
 
 `value` is the amount of Ether to send with the transaction, typically 0, as a String.
+
+
+_____
+
+* #### `Ethers.queue_transaction(account, network, contract, calldata, callback_node, callback_function, callback_args={}, maximum_gas_fee="", value="0")`
+_____
+
+```gdscript
+Ethers.queue_transaction(
+              account,
+              network, 
+              contract, 
+              calldata, 
+              callback_node,
+              callback_function,
+              callback_args={},
+              maximum_gas_fee="",
+              value="0"
+              )
+```
+
+Identical to `Ethers.send_transaction()`.  The only difference is that queued transactions will automatically execute in sequence.
+
 
 _____
 
@@ -377,7 +400,7 @@ _____
 The Ethers singleton implements several common operations, such as transferring ETH, retrieving the user gas balance, and working with ERC20 tokens.
 _____
 
-* #### `Ethers.transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={})`
+* #### `Ethers.transfer(account, network, recipient, amount, callback_node, callback_function, callback_args={}, maximum_gas_fee="")`
 _____
 
 ```gdscript
@@ -388,7 +411,8 @@ Ethers.transfer(
               amount,
               callback_node,
               callback_function,
-              callback_args={}
+              callback_args={},
+              maximum_gas_fee=""
               )
 ```
 
@@ -451,7 +475,7 @@ Ethers.get_erc20_balance(
 
 _____
 
-* #### `Ethers.transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={})`
+* #### `Ethers.transfer_erc20(account, network, token_address, recipient, amount, callback_node, callback_function, callback_args={}, maximum_gas_fee="")`
 _____
 
 ```gdscript
@@ -463,7 +487,8 @@ Ethers.transfer_erc20(
               amount,
               callback_node,
               callback_function,
-              callback_args={}
+              callback_args={},
+              maximum_gas_fee=""
               )
 ```
 `token_address` is the address of the token contract, as a String.
@@ -474,7 +499,7 @@ Ethers.transfer_erc20(
 
 _____
 
-* #### `Ethers.approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={})`
+* #### `Ethers.approve_erc20_allowance(account, network, token_address, spender_address, amount, callback_node, callback_function, callback_args={}, maximum_gas_fee="")`
 _____
 
 ```gdscript
@@ -486,7 +511,8 @@ Ethers.approve_erc20_allowance(
               amount,
               callback_node,
               callback_function,
-              callback_args={}
+              callback_args={},
+              maximum_gas_fee=""
               )
 ```
 
