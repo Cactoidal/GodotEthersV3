@@ -5,7 +5,7 @@ use ethers::{core::{abi::{AbiDecode, AbiEncode}, k256::elliptic_curve::consts::{
 use ethers_contract::{abigen};
 use ethers::core::types::transaction::eip2718::TypedTransaction;
 use std::{convert::TryFrom, sync::Arc};
-use hex::*;
+//use hex::*;
 use num_bigint::{BigUint, BigInt};
 use pbkdf2::{pbkdf2_hmac, pbkdf2_hmac_array};
 use sha2::Sha256;
@@ -451,6 +451,113 @@ fn decode_int256 (_message: GString) -> GString {
     let return_string: GString = format!("{:?}", decoded).into();
     return_string
 }
+
+
+//      BIGNUMBER FUNCTIONS       //
+
+// Common operations for large unsigned integers
+
+#[func]
+fn arithmetic(_number1: GString, _number2: GString, _operation: GString) -> GString {
+
+    let number1: BigUint = _number1.to_string().parse().unwrap();
+
+    let number2: BigUint = _number2.to_string().parse().unwrap();
+
+    let output: BigUint;
+
+    let operation: String = _operation.to_string();
+
+    assert!(["ADD", "SUBTRACT", "DIVIDE", "MULTIPLY"].contains(&&*operation) == true);
+
+    if operation == "ADD" {
+        output = number1 + number2;
+    }
+    else if operation == "SUBTRACT" {
+        assert!(Self::compare(_number1, _number2, "GREATER THAN OR EQUAL".into()) == true);
+        output = number1 - number2;
+    }
+    else if operation == "DIVIDE" {
+        assert!(Self::compare(_number1, _number2, "GREATER THAN OR EQUAL".into()) == true);
+        output = number1 / number2;
+        }
+    else if operation == "MULTIPLY" {
+        output = number1 * number2;
+    }
+    else {
+        // Unreachable due to earlier assert
+        output = number1;
+    }
+    
+    output.to_string().into()
+
+}
+
+
+#[func]
+fn compare(_number1: GString, _number2: GString, _operation: GString) -> bool {
+    let number1: BigUint = _number1.to_string().parse().unwrap();
+
+    let number2: BigUint = _number2.to_string().parse().unwrap();
+
+    let output: bool;
+
+    let operation: String = _operation.to_string();
+
+    assert!(["GREATER THAN", "LESS THAN", "GREATER THAN OR EQUAL", "LESS THAN OR EQUAL", "EQUAL"].contains(&&*operation) == true);
+
+    if operation == "GREATER THAN" {
+        if number1 > number2 {
+            output = true;
+        }
+        else {
+            output = false;
+        }
+    }
+    else if operation == "LESS THAN" {
+        if number1 < number2 {
+            output = true;
+        }
+        else {
+            output = false;
+        }
+    }
+    else if operation == "GREATER THAN OR EQUAL" {
+        if number1 >= number2 {
+            output = true;
+        }
+        else {
+            output = false;
+        }
+    }
+    else if operation == "LESS THAN OR EQUAL" {
+        if number1 <= number2 {
+            output = true;
+        }
+        else {
+            output = false;
+        }
+    }
+    else if operation == "EQUAL" { 
+        if number1 == number2 {
+            output = true;
+        }
+        else {
+            output = false;
+        }
+    }
+    else {
+        // Unreachable due to earlier assert
+        output = false;
+    }
+
+
+    output
+
+}
+
+
+
 
 
 }
