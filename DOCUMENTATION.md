@@ -543,7 +543,7 @@ _____
 
 ## Ethers
 
-In addition to the key management, general purpose, and built-in functions listed above, Ethers also contains functions to assist in transaction logging and network management.
+In addition to the key management, general purpose, and built-in functions listed above, Ethers also contains functions to assist in transaction logging, BigNumber math, and network management.
 
 The default testnets are: Ethereum Sepolia, Arbitrum Sepolia, Optimism Sepolia, Base Sepolia, and Avalanche Fuji.
 All of the `default_network_info` can be found at the bottom of the `Ethers.gd` script.
@@ -595,7 +595,7 @@ func receive_transaction_object(transaction):
 
 _____
 
-* #### `Ethers.big_uint_math(number1, operation, number2)
+* #### `Ethers.big_uint_math(number1, operation, number2)`
 _____
 
 `number1` is the BigNumber String that will be the left side of the expression.
