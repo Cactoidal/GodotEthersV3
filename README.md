@@ -15,7 +15,7 @@ ___
 
 This is experimental, alpha software, in a state of ongoing development, intended for usage on testnets.  
 
-When exporting a project, __*do not*__ "Export With Debug".  If you decide to recompile the Rust library, use the --release tag when building.
+When exporting a project, __*do not*__ "Export With Debug".  If you decide to recompile the Rust library, use the `--release` tag when building.
 ___
 
 ## Add GodotEthers to your Godot 4.3 Project
