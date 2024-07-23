@@ -234,6 +234,12 @@ A Note on Numbers
 You can use Ethers.convert_to_smallnum() to convert a BigNumber into a more readable form, and use 
 Ethers.convert_to_bignum() before passing the value as an argument in get_calldata(). 
 You must transport BigNumbers as Strings, otherwise they will overflow.
+
+Ethers.big_uint_math() has been added for use on BigNumber Strings.  The available operations are:
+ADD, SUBTRACT, MULTIPLY, DIVIDE,
+GREATER THAN, LESS THAN, GREATER THAN OR EQUAL, LESS THAN OR EQUAL, and EQUAL
+
+See the Ethers singleton section for more information.
 ```
 _____
 
@@ -585,6 +591,20 @@ func receive_transaction_object(transaction):
 		var tx_object = transaction_history[local_id]
 		update_transaction(tx_object, transaction)
 ```
+
+
+_____
+
+* #### `Ethers.big_uint_math(number1, operation, number2)
+_____
+
+`number1` is the BigNumber String that will be the left side of the expression.
+
+`operation` is a String containing either an arithmetic operation ("ADD", "SUBTRACT", "DIVIDE", "MULTIPLY") or a comparison operation ("GREATER THAN", "LESS THAN", "GREATER THAN OR EQUAL", "LESS THAN OR EQUAL", and "EQUAL")
+
+`number2` is the BigNumber String that will be the right side of the expression.
+
+This function will return the computed value for an arithmetic operation, and a bool for a comparison operation.
 
 
 _____
