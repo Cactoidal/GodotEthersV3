@@ -117,7 +117,7 @@ ___
 
 GodotEthers combines the orchestration abilities of Godot with the signing capability of [Ethers-rs](https://github.com/gakonst/ethers-rs), made possible by [Godot Rust](https://godot-rust.github.io).  
 
-Ethers-rs is responsible for RLP-encoding transaction data, ECDSA signing, address calculation, Keccak hashing, and BigNumber handling.  It also encodes and decodes the elementary Solidity types after they have been sorted by the Calldata singleton.
+Ethers-rs is responsible for RLP-encoding transaction data, ECDSA signing, address calculation, and Keccak hashing.  It also encodes and decodes the elementary Solidity types after they have been sorted by the Calldata singleton.
 
 [Alloy](https://github.com/alloy-rs) is the successor of Ethers-rs, and will replace it in a future update of GodotEthers.
 
