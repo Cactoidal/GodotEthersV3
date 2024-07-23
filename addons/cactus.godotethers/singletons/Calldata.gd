@@ -513,7 +513,11 @@ func decode_arg(arg, calldata):
 	# Uint, Int, Address, Bool
 	else:
 		decoded_value = GodotSigner.call("decode_" + arg_type, calldata)
-	
+		if arg_type == "bool":
+			if decoded_value == "true":
+				decoded_value = true
+			elif decoded_value == "false":
+				decoded_value = false
 	return decoded_value
 	
 

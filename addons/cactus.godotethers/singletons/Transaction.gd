@@ -18,12 +18,13 @@ func send_transaction(
 	account,
 	network,
 	contract,
-	gas_limit,
+	maximum_gas_fee,
 	value,
 	calldata, 
 	callback_node, 
 	callback_function, 
-	callback_args={}
+	callback_args={},
+	eth_transfer_args=false
 	):
 		
 		if !pending_transaction(account, network):
@@ -35,7 +36,8 @@ func send_transaction(
 			"network": network,
 			"account": account,
 			"contract": contract,
-			"gas_limit": gas_limit,
+			"gas_limit": "0",
+			"maximum_gas_fee": maximum_gas_fee,
 			"value": value,
 			"calldata": calldata,
 			"initialized": false,
@@ -45,7 +47,7 @@ func send_transaction(
 			"transaction_receipt": "",
 			"check_for_receipt": false,
 			"tx_receipt_poll_timer": 4,
-			"eth_transfer": false,
+			"eth_transfer_args": eth_transfer_args,
 			"tx_status": "PENDING",
 			"local_id": Crypto.new().generate_random_bytes(32)
 			}
@@ -87,14 +89,13 @@ func update_gas_balance(callback):
 	
 	if callback["success"]:
 		var balance = str(callback["result"].hex_to_int())
-		balance = Ethers.convert_to_smallnum(balance, 18)
+		transaction["balance"] = balance
 		
 		var network_info = Ethers.network_info.duplicate()
 		
 		var user_address = Ethers.get_address(transaction["account"])
-		
-		if float(balance) > float(network_info[network]["minimum_gas_threshold"]):
-				Ethers.perform_request(
+	
+		Ethers.perform_request(
 					"eth_getTransactionCount", 
 					[user_address, "latest"], 
 					network, 
@@ -102,8 +103,7 @@ func update_gas_balance(callback):
 					"get_tx_count", 
 					{"transaction": transaction}
 					)
-		else:
-			emit_error("Not enough gas", account, network)
+	
 	else:
 		emit_error("RPC error: Failed to update gas balance", account, network)
 
@@ -133,20 +133,65 @@ func get_gas_price(callback):
 	var account = transaction["account"]
 	
 	if callback["success"]:
-		transaction["gas_price"] = int(ceil((callback["result"].hex_to_int() * 1.1))) #adjusted up
+		transaction["gas_price"] = int(ceil((callback["result"].hex_to_int() * 1.1))) 
+		var gas_price_hex = "%x" % transaction["gas_price"]
+		
+		var to = transaction["contract"]
+		var data = ""
+		if transaction["eth_transfer_args"]:
+			to = transaction["eth_transfer_args"][0]
+		else:
+			data = "0x" + transaction["calldata"]
+		
+		var params = [{
+			"to": to,
+			"from": Ethers.get_address(account),
+			"gas": "0x0",
+			"value": "0x" + transaction["value"],
+			"data": data
+		}, "latest", 
+		# State override of the balance is required 
+		# to estimate gas for complex transactions (I guess?)
+		{Ethers.get_address(account) : {"balance": "0x" + Ethers.convert_to_bignum("7777777", 18)}}]
+		
+		Ethers.perform_request(
+			"eth_estimateGas", 
+			params, 
+			network, 
+			self, 
+			"estimate_gas_fee", 
+			{"transaction": transaction}
+			)
+
+
+func estimate_gas_fee(callback):
+	var transaction = callback["callback_args"]["transaction"]
+	var network = transaction["network"]
+	var account = transaction["account"]
+	
+	if callback["success"]:
+		
+		transaction["gas_limit"] = str(   int(callback["result"].hex_to_int() * 1.1)  )
+		
+		var predicted_gas_cost = Ethers.big_uint_math(transaction["gas_limit"], "MULTIPLY", str(transaction["gas_price"]))
+		
+		# Check gas cost against balance
+		if Ethers.big_uint_math(transaction["balance"], "LESS THAN", predicted_gas_cost):
+			emit_error("Gas fee " + str(predicted_gas_cost) + " greater than gas balance", account, network)
+			return
+		
+		# Check gas cost against maximum gas fee
+		if transaction["maximum_gas_fee"] != "":
+			var maximum_gas_fee = Ethers.convert_to_bignum(transaction["maximum_gas_fee"])
+			if Ethers.big_uint_math(predicted_gas_cost, "GREATER THAN", maximum_gas_fee):
+				emit_error("Gas fee " + str(predicted_gas_cost) + " too high", account, network)
+				return
 		
 		var network_info = Ethers.network_info.duplicate()
 		var chain_id = network_info[network]["chain_id"]
-		var maximum_gas_fee = network_info[network]["maximum_gas_fee"]
 		var rpc = network_info[network]["rpcs"][0]
 		
-		if maximum_gas_fee != "":
-			if transaction["gas_price"] > int(maximum_gas_fee):
-				emit_error("Gas fee too high", account, network)
-				return
-		
-		
-		if !transaction["eth_transfer"]:
+		if !transaction["eth_transfer_args"]:
 			
 			# Contract Interaction
 			
@@ -169,10 +214,10 @@ func get_gas_price(callback):
 		# ETH transfer
 		
 		var params = [Ethers.get_key(account), chain_id, transaction["contract"], rpc, transaction["gas_price"], transaction["tx_count"]]
-		for arg in transaction["contract_args"]:
+		for arg in transaction["eth_transfer_args"]:
 			params.push_back(arg)
 		
-		var calldata = "0x" + GodotSigner.callv(transaction["contract_function"], params)
+		var calldata = "0x" + GodotSigner.callv("transfer", params)
 		params = Ethers.clear_memory()
 		params.clear()
 		
@@ -186,7 +231,7 @@ func get_gas_price(callback):
 			)
 	
 	else:
-		emit_error("RPC error: Failed to get gas price", account, network)
+		emit_error("RPC error: Failed to estimate gas fee", account, network)
 
 
 func get_transaction_hash(callback):
@@ -262,41 +307,3 @@ func emit_error(error_string, account, network):
 	var transaction = pending_transactions[account][network]
 	transaction["tx_status"] = error
 	finish_transaction(account, network, transaction)
-
-
-# Used by Ethers.transfer() for sending ETH
-func start_eth_transfer(
-	account,
-	network,
-	contract, 
-	contract_function, 
-	contract_args,
-	callback_node, 
-	callback_function, 
-	callback_args={}
-	):
-		
-		if !pending_transaction(account, network):
-			
-			var transaction = {
-			"callback_node": callback_node,
-			"callback_function": callback_function,
-			"callback_args": callback_args,
-			"network": network,
-			"account": account,
-			"contract": contract,
-			"contract_function": contract_function,
-			"contract_args": contract_args,
-			"initialized": false,
-			"tx_count": 0,
-			"gas_price": 0,
-			"transaction_hash": "",
-			"transaction_receipt": "",
-			"check_for_receipt": false,
-			"tx_receipt_poll_timer": 4,
-			"eth_transfer": true,
-			"tx_status": "PENDING",
-			"local_id": Crypto.new().generate_random_bytes(32)
-			}
-		
-			pending_transactions[account][network] = transaction
