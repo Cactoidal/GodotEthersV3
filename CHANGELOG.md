@@ -3,7 +3,7 @@
 ## v0.4
 
 ```
-Update currently ongoing.  This updated included a change to the Rust library,
+Update currently ongoing.  This update included a change to the Rust library,
 and the new version has not yet been compiled for X11 and Windows.
 I will remove this notice once the update is complete.
 ```
