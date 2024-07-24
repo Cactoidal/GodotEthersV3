@@ -367,9 +367,12 @@ func decode_rpc_response(_callback):
 		}
 	
 	if _callback["success"]:
+		if _callback["result"] == "0x":
+			callback["success"] = false
+		else:
 		# The decoded_result will be an array containing the decoded values.
-		var decoded_result = Calldata.abi_decode(outputs, _callback["result"])
-		callback["result"] = decoded_result
+			var decoded_result = Calldata.abi_decode(outputs, _callback["result"])
+			callback["result"] = decoded_result
 	
 	if is_instance_valid(callback_node):
 		callback_node.call(callback_function, callback)

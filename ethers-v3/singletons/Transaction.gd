@@ -49,7 +49,7 @@ func send_transaction(
 			"tx_receipt_poll_timer": 4,
 			"eth_transfer_args": eth_transfer_args,
 			"tx_status": "PENDING",
-			"local_id": Crypto.new().generate_random_bytes(32)
+			"local_id": Crypto.new().generate_random_bytes(32).hex_encode()
 			}
 			
 			pending_transactions[account][network] = transaction
