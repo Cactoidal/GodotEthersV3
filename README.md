@@ -123,6 +123,6 @@ Ethers-rs is responsible for RLP-encoding transaction data, ECDSA signing, addre
 
 Having a Rust library also gives GodotEthers access to Rust crates containing useful cryptographic primitives.  For example, the pbkdf2 crate is used to derive the keystore encryption/decryption key from an account password.  Crates like openssl could also be easily integrated into the library, if needed.
 
-In addition to games, GodotEthers can be used to decentralize dApp interfaces.  Instead of connecting to a website and using a web wallet, a contract interface can now be easily built in Godot and distributed to users in open source format.  Blockchain bots can also be made more accessible, with user-friendly interfaces.
+In addition to games, GodotEthers can be used to decentralize dApp interfaces.  Instead of connecting to a website and using a web wallet, a contract interface can now be built in Godot and distributed to users in open source format.  Blockchain bots can also be made more accessible, with user-friendly interfaces.
 
 [Check out the Documentation](https://github.com/Cactoidal/GodotEthersV3/blob/main/DOCUMENTATION.md)
