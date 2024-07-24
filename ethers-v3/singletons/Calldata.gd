@@ -525,7 +525,7 @@ func decode_fixed_bytes(bytes, _bytes_amount):
 	var bytes_amount = int(_bytes_amount.trim_prefix("bytes"))
 	var zero_count = 32 - bytes_amount
 	for zero in range(zero_count):
-		bytes = bytes.trim_prefix("0")
+		bytes = bytes.trim_suffix("0")
 
 	return bytes
 
