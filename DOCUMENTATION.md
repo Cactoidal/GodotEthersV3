@@ -333,7 +333,7 @@ Ethers.queue_transaction(
               )
 ```
 
-Identical to `Ethers.send_transaction()`.  The only difference is that queued transactions will automatically execute in sequence.  The queue is a Dictionary that maps accounts to networks to queued transactions, which means that accounts all have separate queues, and an account will queue transactions independently across networks.
+Identical to `Ethers.send_transaction()`.  The only difference is that queued transactions will pend in the transaction queue, and automatically execute in sequence.  The queue is a Dictionary that maps accounts to networks to queued transactions, which means that accounts all have separate queues, and an account will queue transactions independently across networks.
 
 
 _____
