@@ -2,12 +2,6 @@
 
 ## v0.4
 
-```
-Update currently ongoing.  This update included a change to the Rust library,
-and the new version has not yet been compiled for X11 and Windows.
-I will remove this notice once the update is complete.
-```
-
 * Gas estimations have been added to the transaction sequence.
 
 * Instead of the optional `gas_limit` parameter, transactions now have an optional `maximum_gas_fee`, which will cause a revert if the gas estimate is higher than the provided fee.
