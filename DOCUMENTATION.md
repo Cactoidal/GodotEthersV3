@@ -650,7 +650,7 @@ _____
 
 Primarily responsible for abstracting the transaction process, and preventing a transaction from being submitted while one is already pending.
 
-When a transaction is initiated, the singleton will get the account's network gas balance and transaction count, then the gas price estimate, and finally submit the transaction, at which point it will update `recent_transactions` in Ethers with the transaction hash.  It will then monitor the network until it receives the transaction receipt.
+When a transaction is initiated, the singleton will get the account's network gas balance and transaction count, then the gas price estimate, and finally submit the transaction.  It will then monitor the network until it receives the transaction receipt.  Throughout the process, it will transmit transaction objects to any nodes that have registered via `Ethers.register_transaction_log()`.
 
 The Transaction singleton is multichain-capable, and will allow transactions to occur simultaneously across chains.  It will also automatically block transaction attempts for a given network if that network is still processing a transaction.
 
