@@ -736,6 +736,8 @@ The [.gdextension file](https://github.com/Cactoidal/GodotEthersV3/blob/main/add
 
 When exporting for Linux, you will need to either change this filepath to `res://libgodot_ethers.so`, or you will need to manually create files matching that filepath (addons > cactus.godotethers > gdextension > libgodot_ethers.so) and keep the nested file in the same directory as your application.
 
+The same is true when exporting for Windows, with respect to `libgodot_ethers.dll`.
+
 Exports for MacOS should work without any modification.
 
 Turn off the Debug Console and uncheck the Debug box when exporting.
