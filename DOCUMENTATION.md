@@ -27,6 +27,7 @@ use the --release tag when building.
 - [Calldata](#calldata)
 - [GodotSigner](#godotsigner)
 
+### [Exporting](#exporting-1)
 _________
 
 # Quickstart
@@ -729,4 +730,10 @@ If your application needs functionality not currently provided by the GodotSigne
 
 _____
 
+# Exporting
 
+The [.gdextension file](https://github.com/Cactoidal/GodotEthersV3/blob/main/addons/cactus.godotethers/gdextension/GodotEthers.gdextension) defines the filepaths for the dynamic libraries.  This remains true when your application is exported.  
+
+When exporting for Linux, you will need to either change this filepath to `res://libgodot_ethers.so`, or you will need to manually create files matching that filepath (addons > cactus.godotethers > gdextension > libgodot_ethers.so) and keep the nested file in the same directory as your application.
+
+Exports for MacOS should work without any modification.
