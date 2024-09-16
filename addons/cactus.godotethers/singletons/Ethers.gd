@@ -500,23 +500,24 @@ func send_queued_transaction():
 
 #########  MESSAGE SIGNING AND ACCOUNT ABSTRACTION  #########
 
-func keccak(bytes):
-	return GodotSigner.keccak(bytes)
+# Addon dynamic library has not yet been updated to include these functions
+#func keccak(bytes):
+#	return GodotSigner.keccak(bytes)
 
-func get_signature(account, message, is_prefixed=false):
-	var signature
-	var key = Ethers.get_key(account)
+#func get_signature(account, message, is_prefixed=false):
+#	var signature
+#	var key = Ethers.get_key(account)
 	# Calldata string
-	if typeof(message) == 4:
-		signature = GodotSigner.sign_calldata(Ethers.get_key(account), message, false)
+#	if typeof(message) == 4:
+#		signature = GodotSigner.sign_calldata(Ethers.get_key(account), message, false)
 	# PackedByteArray
-	elif typeof(message) == 29:
-		signature = GodotSigner.sign_bytes(Ethers.get_key(account), message, false)
+#	elif typeof(message) == 29:
+#		signature = GodotSigner.sign_bytes(Ethers.get_key(account), message, false)
 	
-	key = clear_memory()
-	key.clear()
+#	key = clear_memory()
+#	key.clear()
 
-	return signature
+#	return signature
 
 
 
