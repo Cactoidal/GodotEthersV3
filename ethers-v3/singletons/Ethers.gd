@@ -520,6 +520,14 @@ func send_queued_transaction():
 #	return signature
 
 
+#func recover_signer(message, signature, recover_public_key=false):
+#	var public_key = GodotSigner.recover_signer(message, signature)
+#	if recover_public_key:
+#		return public_key
+#	var signer_address = GodotSigner.get_address_from_public_key(public_key)
+#	return signer_address
+
+
 
 #########  ERC20 API  #########
 
