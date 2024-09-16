@@ -179,6 +179,15 @@ fn sign_raw_calldata(_key: PackedByteArray, _chain_id: GString, _contract_addres
 
 //////     ABI ENCODING AND DECODING       //////
 
+#[func]
+fn keccak(bytes: PackedByteArray) -> PackedByteArray {
+    let keccak_hash = ethers::utils::keccak256(&bytes.to_vec()[..]);
+    
+    keccak_hash.to_vec().into()
+
+}
+
+
 
 #[func]
 fn get_function_selector(function_bytes: PackedByteArray) -> GString {
