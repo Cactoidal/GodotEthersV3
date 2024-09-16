@@ -4,6 +4,8 @@
 
 * Added `Ethers.get_signature()`, for creating signatures used on-chain by `ecrecover` or by off-chain applications.
 
+* `Ethers.recover_signer()` is also now available for recovering the public key and address used to sign a message.
+
 * Keccak256 hashes can now be obtained using `Ethers.keccak()`.
 
 ## v0.4
