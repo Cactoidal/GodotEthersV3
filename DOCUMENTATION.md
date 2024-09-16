@@ -370,7 +370,7 @@ Ethers.recover_signer(
               )
 ```
 
-`message` is a PACKED BYTE ARRAY containing some arbitrary data.
+`message` can be a PACKED BYTE ARRAY containing some arbitrary data, or it can be a calldata STRING.
 
 `signature` is another PACKED BYTE ARRAY, ostensibly produced by signing the `message`.
 
