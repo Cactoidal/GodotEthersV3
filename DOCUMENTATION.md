@@ -349,7 +349,7 @@ Ethers.get_signature(
               )
 ```
 
-Signs the provided `message` with the  `account` private key. This function has two modes:
+Signs the provided `message` with the  `account` private key, returning the signature as a PACKED BYTE ARRAY. This function has two modes:
 
 `message` can be a STRING of formatted calldata, useful for using `ecrecover` on-chain to prove an account has signed a set of parameters (i.e. for account abstraction or multisignature applications).  To do this, use the `Calldata.abi_encode()` function to get the parameter calldata, and pass the resulting STRING as the `message`.  On-chain, your smart contract should use `keccak256(abi.encode())` on the parameters to get the message hash for use by `ecrecover`.  Make sure to familiarize yourself with the security implications of `ecrecover` before creating your contract, as precautions must be taken against a variety of attacks.
 
