@@ -10,6 +10,10 @@ use num_bigint::{BigUint, BigInt};
 use pbkdf2::{pbkdf2_hmac, pbkdf2_hmac_array};
 use sha2::Sha256;
 use zeroize::*;
+use rlp::*;
+use k256::ecdsa::{Signature, VerifyingKey};
+use k256::PublicKey as K256PublicKey;
+use k256::elliptic_curve::sec1::ToEncodedPoint;
 
 struct GodotEthers;
 
@@ -611,6 +615,54 @@ fn sign_bytes(_key: PackedByteArray, _message: PackedByteArray, _with_prefix: bo
     let signature = wallet.sign_hash(message_hash).unwrap().to_vec();
 
     signature.into()
+}
+
+
+#[func]
+fn recover_signer(_message: PackedByteArray, _signature: PackedByteArray) -> PackedByteArray {
+    let sig_vec = _signature.to_vec();
+    let _message_hash = Self::keccak(_message);
+    let message_hash_vec = _message_hash.to_vec();
+    let message_hash = message_hash_vec.as_slice();
+
+    let recovery_signature: ethers::types::Signature = ethers::types::Signature::try_from(sig_vec.as_slice()).unwrap();
+    let recovery_id = recovery_signature.recovery_id().unwrap();
+
+    let short_sig = sig_vec.as_slice()[..64].to_vec();
+    let signature: k256::ecdsa::Signature = k256::ecdsa::Signature::try_from(short_sig.as_slice()).unwrap();
+    
+    let verifying_key = VerifyingKey::recover_from_prehash(
+        message_hash,
+        &signature,
+        recovery_id,
+    ).unwrap();
+
+    let public_key = K256PublicKey::from(&verifying_key);
+    let public_key = public_key.to_encoded_point(/* compress = */ false);
+    let public_key = public_key.as_bytes().to_vec();
+
+    public_key.into()
+    
+}
+
+
+#[func]
+fn get_address_from_public_key(public_key: PackedByteArray) -> GString {
+    let public_key_hash = Self::keccak(public_key.to_vec()[1..].into());
+    let _signer = public_key_hash.to_vec();
+    
+    let signer = Address::from_slice(&_signer[12..]);
+
+    let signer_hex = signer.encode_hex();
+
+    let key_slice = match signer_hex.char_indices().nth(*&0 as usize) {
+        Some((_pos, _)) => (&signer_hex[26..]).to_string(),
+        None => "".to_string(),
+        };
+
+    let return_string: GString = format!("0x{}", key_slice).into();
+
+    return_string
 }
 
 
