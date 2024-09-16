@@ -11,7 +11,7 @@ use pbkdf2::{pbkdf2_hmac, pbkdf2_hmac_array};
 use sha2::Sha256;
 use zeroize::*;
 use rlp::*;
-use k256::ecdsa::{Signature, VerifyingKey};
+use k256::ecdsa::{Signature, VerifyingKey, SigningKey};
 use k256::PublicKey as K256PublicKey;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
 
