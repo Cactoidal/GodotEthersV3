@@ -336,6 +336,26 @@ Ethers.queue_transaction(
 
 Identical to `Ethers.send_transaction()`.  The only difference is that queued transactions will pend in the transaction queue, and automatically execute in sequence.  The queue is a Dictionary that maps accounts to networks to queued transactions, which means that accounts all have separate queues, and an account will queue transactions independently across networks.
 
+_____
+
+* #### `Ethers.get_signature(account, message, is_prefixed=false)`
+_____
+
+```gdscript
+Ethers.get_signature(
+              account,
+              message, 
+              is_prefixed=false
+              )
+```
+
+Signs the provided `message` with the  `account` private key. This function has two modes:
+
+`message` can be a STRING of formatted calldata, useful for using `ecrecover` on-chain to prove an account has signed a set of parameters (i.e. for account abstraction or multisignature applications).  To do this, use the `Calldata.abi_encode()` function to get the parameter calldata, and pass the resulting STRING as the `message`.  On-chain, your smart contract should use `keccak256(abi.encode())` on the parameters to get the message hash for use by `ecrecover`.  Make sure to familiarize yourself with the security implications of `ecrecover` before creating your contract, as precautions must be taken against a variety of attacks.
+
+`message` can also be a PACKED BYTE ARRAY formed from encoding any arbitrary data.  Signing such data can be useful for both on- and off-chain applications.
+
+`is_prefixed` is a boolean (set to false by default) that appends the standard prefix of `"\x19Ethereum Signed Message:\n" + message.length` to the message before hashing.
 
 _____
 
