@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.41 (in progress, not yet uploaded)
+## v0.42
 
 * Added `Ethers.get_signature()`, for creating signatures used on-chain by `ecrecover` or by off-chain applications.
 
