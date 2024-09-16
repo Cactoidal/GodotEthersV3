@@ -586,7 +586,7 @@ fn sign_calldata(_key: PackedByteArray, _message: GString, _with_prefix: bool) -
     let message_hash: H256;
     let message = string_to_bytes(_message);
 
-    if (_with_prefix) {
+    if _with_prefix {
         message_hash = ethers::utils::hash_message(message);
     }
     else {
@@ -611,7 +611,7 @@ fn sign_bytes(_key: PackedByteArray, _message: PackedByteArray, _with_prefix: bo
  
     let message_hash: H256;
   
-    if (_with_prefix) {
+    if _with_prefix {
         let message = _message.to_vec();
         message_hash = ethers::utils::hash_message(message);
     }
