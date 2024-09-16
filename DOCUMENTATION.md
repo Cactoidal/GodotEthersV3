@@ -374,7 +374,7 @@ Ethers.recover_signer(
 
 `signature` is another PACKED BYTE ARRAY, ostensibly produced by signing the `message`.
 
-Typically this function will return the signer address as a STRING.  However, if `recover_public_key` is set to true, it will instead return the signer's public key as a PAKCED BYTE ARRAY.
+Typically this function will return the signer address as a STRING.  However, if `recover_public_key` is set to true, it will instead return the signer's public key as a PACKED BYTE ARRAY.
 
 _____
 
