@@ -558,6 +558,95 @@ fn compare(_number1: GString, _number2: GString, _operation: GString) -> bool {
 
 
 
+//      COMMUNICATION       //
+
+// Helper functions for signing and communicating with bootnodes and peers
+
+#[func]
+fn sign_calldata(_key: PackedByteArray, _message: GString, _with_prefix: bool) -> PackedByteArray{
+    let mut _key = &mut _key.to_vec();
+
+    let (wallet, chain_id, user_address, client) = get_signer(_key, "1".into(), "https://rpc.com".into());
+
+    _key.zeroize();
+ 
+    let message_hash: H256;
+    let message = string_to_bytes(_message);
+
+    if (_with_prefix) {
+        message_hash = ethers::utils::hash_message(message);
+    }
+    else {
+        let keccak_hash = ethers::utils::keccak256(message);
+        message_hash = H256::from(keccak_hash);
+    }
+
+    let signature = wallet.sign_hash(message_hash).unwrap().to_vec();
+
+    signature.into()
+}
+
+
+
+#[func]
+fn sign_bytes(_key: PackedByteArray, _message: PackedByteArray, _with_prefix: bool) -> PackedByteArray{
+    let mut _key = &mut _key.to_vec();
+
+    let (wallet, chain_id, user_address, client) = get_signer(_key, "1".into(), "https://rpc.com".into());
+
+    _key.zeroize();
+ 
+    let message_hash: H256;
+  
+    if (_with_prefix) {
+        let message = _message.to_vec();
+        message_hash = ethers::utils::hash_message(message);
+    }
+    else {
+        let _message_hash = Self::keccak(_message);
+        let message_array: [u8; 32] = _message_hash.to_vec().as_slice().try_into().unwrap();
+        message_hash = H256::from(message_array);
+    }
+
+    let signature = wallet.sign_hash(message_hash).unwrap().to_vec();
+
+    signature.into()
+}
+
+
+#[func]
+fn get_public_key(key: PackedByteArray) -> GString {
+    let key: [u8; 32] = key.to_vec().try_into().unwrap();
+
+    let key = SigningKey::from_bytes(&key.into()).unwrap();
+
+    let verifying_key = key.verifying_key().to_encoded_point(false);
+
+    key.to_bytes().zeroize();
+
+    let _public_key = verifying_key.as_bytes();
+
+    let public_key = hex::encode(_public_key);
+
+    public_key.into()
+}
+
+
+#[func]
+fn rlp_encode(_message: GString) -> PackedByteArray {
+    let message: String = _message.into();
+    let bytes = rlp::encode(&message).to_vec();
+    bytes.into()
+}
+
+
+#[func]
+fn rlp_decode(_bytes: PackedByteArray) -> GString {
+    let bytes = _bytes.to_vec();
+    let message: String = rlp::decode(&bytes).unwrap();
+    message.into()
+}
+
 
 
 }
