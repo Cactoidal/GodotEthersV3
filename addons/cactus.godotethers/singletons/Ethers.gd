@@ -509,10 +509,10 @@ func send_queued_transaction():
 #	var key = Ethers.get_key(account)
 	# Calldata string
 #	if typeof(message) == 4:
-#		signature = GodotSigner.sign_calldata(Ethers.get_key(account), message, false)
+#		signature = GodotSigner.sign_calldata(Ethers.get_key(account), message, is_prefixed)
 	# PackedByteArray
 #	elif typeof(message) == 29:
-#		signature = GodotSigner.sign_bytes(Ethers.get_key(account), message, false)
+#		signature = GodotSigner.sign_bytes(Ethers.get_key(account), message, is_prefixed)
 	
 #	key = clear_memory()
 #	key.clear()
