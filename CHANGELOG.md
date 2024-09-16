@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.41 (in progress, not yet uploaded)
+
+* Added `Ethers.get_signature()`, for creating signatures used on-chain by `ecrecover` or by off-chain applications.
+
+* Keccak256 hashes can now be obtained using `Ethers.keccak()`.
+
 ## v0.4
 
 * Gas estimations have been added to the transaction sequence.
