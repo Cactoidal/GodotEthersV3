@@ -500,32 +500,42 @@ func send_queued_transaction():
 
 #########  MESSAGE SIGNING AND ACCOUNT ABSTRACTION  #########
 
-# Addon dynamic library has not yet been updated to include these functions
-#func keccak(bytes):
-#	return GodotSigner.keccak(bytes)
+func keccak(bytes):
+	return GodotSigner.keccak(bytes)
 
-#func get_signature(account, message, is_prefixed=false):
-#	var signature
-#	var key = Ethers.get_key(account)
+
+func get_signature(account, message, is_prefixed=false):
+	var signature
+	var key = Ethers.get_key(account)
 	# Calldata string
-#	if typeof(message) == 4:
-#		signature = GodotSigner.sign_calldata(Ethers.get_key(account), message, is_prefixed)
+	if typeof(message) == 4:
+		signature = GodotSigner.sign_calldata(Ethers.get_key(account), message, is_prefixed)
 	# PackedByteArray
-#	elif typeof(message) == 29:
-#		signature = GodotSigner.sign_bytes(Ethers.get_key(account), message, is_prefixed)
+	elif typeof(message) == 29:
+		signature = GodotSigner.sign_bytes(Ethers.get_key(account), message, is_prefixed)
 	
-#	key = clear_memory()
-#	key.clear()
+	key = clear_memory()
+	key.clear()
 
-#	return signature
+	return signature
 
 
-#func recover_signer(message, signature, recover_public_key=false):
-#	var public_key = GodotSigner.recover_signer(message, signature)
-#	if recover_public_key:
-#		return public_key
-#	var signer_address = GodotSigner.get_address_from_public_key(public_key)
-#	return signer_address
+func recover_signer(message, signature, recover_public_key=false):
+	
+	var public_key
+	
+	# Calldata string
+	if typeof(message) == 4:
+		public_key = GodotSigner.recover_signer_string(message, signature)
+	# PackedByteArray
+	elif typeof(message) == 29:
+		public_key = GodotSigner.recover_signer(message, signature)
+	
+	if recover_public_key:
+		return public_key
+		
+	var signer_address = GodotSigner.get_address_from_public_key(public_key)
+	return signer_address
 
 
 
