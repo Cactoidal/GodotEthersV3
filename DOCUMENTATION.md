@@ -627,6 +627,14 @@ _____
 
 This function will return the computed value for an arithmetic operation, and a bool for a comparison operation.
 
+_____
+
+* #### `Ethers.keccak(bytes)`
+_____
+
+`bytes` is a PACKED BYTE ARRAY formed from encoding arbitrary data.
+
+Returns a Keccak256 hash of the data, as a PACKED BYTE ARRAY.
 
 _____
 
