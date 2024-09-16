@@ -359,6 +359,25 @@ Signs the provided `message` with the  `account` private key, returning the sign
 
 _____
 
+* #### `Ethers.recover_signer(message, signature, recover_public_key=false)`
+_____
+
+```gdscript
+Ethers.recover_signer(
+              message,
+              signature, 
+              recover_public_key=false
+              )
+```
+
+`message` is a PACKED BYTE ARRAY containing some arbitrary data.
+
+`signature` is another PACKED BYTE ARRAY, ostensibly produced by signing the `message`.
+
+Typically this function will return the signer address as a STRING.  However, if `recover_public_key` is set to true, it will instead return the signer's public key as a PAKCED BYTE ARRAY.
+
+_____
+
 * #### `Ethers.perform_request(method, params, network, callback_node, callback_function, callback_args={}, specified_rpc=false, retries=3)`
 _____
 
