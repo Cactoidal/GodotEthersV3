@@ -619,9 +619,19 @@ fn sign_bytes(_key: PackedByteArray, _message: PackedByteArray, _with_prefix: bo
 
 
 #[func]
-fn recover_signer(_message: PackedByteArray, _signature: PackedByteArray) -> PackedByteArray {
+fn recover_signer_string(_message: GString, _signature: PackedByteArray) -> PackedByteArray {
+    let message = string_to_bytes(_message);
+    let public_key = Self::recover_signer(message.to_vec().into(), _signature);
+    public_key
+    
+}
+
+
+#[func]
+fn recover_signer(_message_bytes: PackedByteArray, _signature: PackedByteArray) -> PackedByteArray {
     let sig_vec = _signature.to_vec();
-    let _message_hash = Self::keccak(_message);
+
+    let _message_hash = Self::keccak(_message_bytes);
     let message_hash_vec = _message_hash.to_vec();
     let message_hash = message_hash_vec.as_slice();
 
@@ -642,7 +652,7 @@ fn recover_signer(_message: PackedByteArray, _signature: PackedByteArray) -> Pac
     let public_key = public_key.as_bytes().to_vec();
 
     public_key.into()
-    
+
 }
 
 
